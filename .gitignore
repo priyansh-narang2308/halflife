@@ -1,0 +1,23 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Build output
+bin/
+dist/
+*.test
+*.out
+coverage.*
+
+# Local runtime data
+data/
+*.db
+*.sqlite
+logs/*.log
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
