@@ -21,3 +21,6 @@ logs/*.log
 .DS_Store
 .idea/
 .vscode/
+
+# Bifrost fork: its own Git repo, reproduced by scripts/bootstrap-bifrost.sh
+/bifrost/

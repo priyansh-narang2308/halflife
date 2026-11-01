@@ -102,3 +102,54 @@ $ git check-ignore -v .env .env.example
 - Bifrost v2.4.0 provider: `ModelProvider OpenRouter = "openrouter"` (`core/schemas/bifrost.go:72`); implementation in `core/providers/openrouter/`.
 - https://openrouter.ai/docs/api-reference/limits: `:free` models allow 20 req/min; 50 req/day with < 10 credits ever purchased, 1,000 req/day with ≥ 10. A negative balance can return 402 even on free models.
 - `GET https://openrouter.ai/api/v1/models`: 452 models, 14 `:free`. Free models that advertise `structured_outputs`: `nvidia/nemotron-3.5-super-vl:free`, `dots-studio/dots-3-note-preview:free`, `xingchen-agi/xing4.0-29b-a4b:free`, `liquid/lfm-2.5-2.6b:free`. The free catalog changes; the model is chosen in Task 27.
+
+## Task 03: Bifrost source at the pinned commit (2026-11-01)
+
+Live: GitHub. Command: `./scripts/bootstrap-bifrost.sh` (blobless, depth-1 clone of the tag, sparse checkout without `docs/`).
+
+First run (clone, 1 min 31 s):
+
+```
+Cloning into '/Users/priyanshnarang/Developer/global-ai/bifrost'...
+warning: refs/tags/transports/v2.4.0 9c6ac22ceb9794b7dafdceced5f25d93a43f18e4 is not a commit!
+OK  pinned commit  e869c3f9adc96ea53c38694a21bb04a8e1085487 (transports/v2.4.0)
+OK  GitHub tag     e869c3f9adc96ea53c38694a21bb04a8e1085487
+OK  branches       upstream=e869c3f halflife=e869c3f (current: halflife)
+OK  our commits    0 on halflife
+```
+
+The warning only means the tag is annotated (tag object `9c6ac22`); it peels to `e869c3f`. The script checks the local tag, the `upstream` branch and GitHub's `ls-remote` peeled tag against the pinned hash, and fails on any mismatch. A second run verifies the existing checkout without re-cloning or resetting it (same four `OK` lines).
+
+Working-tree integrity:
+
+```
+$ git -C bifrost status --porcelain        # (empty: clean)
+files on disk: 4760   skipped by sparse (docs/): 1453   total in commit: 6213
+$ du -sh bifrost bifrost/.git
+130M  bifrost      24M  bifrost/.git
+$ git log -1 --format='%H %an %cd %s'
+e869c3f9adc96ea53c38694a21bb04a8e1085487 Akshay Deo Thu Oct 29 12:42:08 2026 -0700 fix failing tests (#9306) --skip-ci
+```
+
+Blob hashes of the files the plan depends on match `HEAD`:
+
+| File | Working tree = `HEAD` |
+|---|---|
+| `core/schemas/plugin.go` | `de2ce03e` |
+| `transports/bifrost-http/server/plugins.go` | `c83231fe` |
+| `plugins/semanticcache/main.go` | `7296e62d` |
+| `plugins/governance/relays.go` | `a0f94928` |
+| `core/relay/usage.go` | `beab8de4` |
+
+Result: **pass**.
+
+### Findings that shape later tasks
+
+- `transports/go.mod` requires published versions (core v1.14.1, framework v1.11.1, semanticcache v1.7.4, governance v1.11.1, …) and has no `replace` lines. Release builds use `GOWORK=off` (`Makefile` L393–L410), so our plugin needs a `require` + `replace` there (Task 08).
+- `make setup-workspace` (`Makefile` L1865–L1886) builds a `go.work` from `cli`, `core`, `framework`, `transports` and every `plugins/*` folder, so `plugins/halflife` will be included automatically in dev builds.
+- `transports/bifrost-http/main.go:74` embeds the UI with `//go:embed all:ui`; `make build` runs `build-ui` (npm build and copy) first. Task 04 must satisfy this embed.
+- Upstream ships `plugins/mocker` (an indirect dependency of transports). Task 05 will check whether it can serve as the mock provider before writing our own.
+
+### Broken partial clone
+
+The interrupted clone from the earlier session (480 MB `.git`, no commit checked out) was moved, not deleted, to `/private/tmp/claude-501/-Users-priyanshnarang--claude-spares-spare-BohcTC/c4f4f9a8-0738-42d0-8760-1277e9feef1c/scratchpad/broken-clone/bifrost`.
