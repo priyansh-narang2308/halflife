@@ -15,7 +15,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | # | Task | Done when | Needs |
 |---|---|---|---|
 | [x] 01 | Pre-flight checks and Git workspace | Window, rules, tools and key presence recorded; repo initialised; this plan committed | — |
-| [ ] 02 | Go 1.27.3 toolchain | `go version` reports go1.27.3 inside the Bifrost module; reproducible via `GOTOOLCHAIN` | — |
+| [x] 02 | Go 1.27.3 toolchain | `go version` reports go1.27.3 inside the Bifrost module; reproducible via `GOTOOLCHAIN` | — |
 | [ ] 03 | Bifrost source at the pinned commit | Fork checked out at `e869c3f`, commit verified, `upstream` and `halflife` branches, layout decided and documented | — |
 | [ ] 04 | Build and run unmodified Bifrost | Gateway binary builds from source; starts; health check passes; build log saved | — |
 | [ ] 05 | Deterministic mock servers | Mock OpenAI-compatible provider (scripted replies, injected failures, latency, streaming) and mock Tavily (recorded fixtures, error codes 401/429/432/433/434); unit tests pass | — |
@@ -64,13 +64,13 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 |---|---|---|---|
 | [ ] 24 | Minimal verifier | Worker picks one factual claim (simple heuristic), builds a query, calls Tavily via the relay, stores sources | — |
 | [ ] 25 | Report store and endpoint | In-memory/SQLite store; in-tree handler `GET /api/halflife/reports/{id}`; report linked to the gateway request | — |
-| [ ] 26 | M1 end-to-end proof and decision | One script: request → Bifrost → capture → Tavily → report; M1 report (sections A–H) with GO / CONDITIONAL GO / PIVOT | LLM key optional |
+| [ ] 26 | M1 end-to-end proof and decision | One script: request → Bifrost → capture → Tavily → report; M1 report (sections A–H) with GO / CONDITIONAL GO / PIVOT | `OPENROUTER_API_KEY` optional |
 
 ## Milestone 2: Verification engine
 
 | # | Task | Done when | Needs |
 |---|---|---|---|
-| [ ] 27 | Verifier LLM client | Calls go through Bifrost with the verifier key; structured JSON output with schema validation and retries | ≥1 LLM key |
+| [ ] 27 | Verifier LLM client | Calls go through Bifrost with the verifier key; structured JSON output with schema validation and retries | `OPENROUTER_API_KEY` (free models OK) |
 | [ ] 28 | Atomic claim extraction | Claims with verbatim source spans; span check rejects paraphrase drift; unit tests on fixtures | — |
 | [ ] 29 | Temporal scope classifier | CURRENT / HISTORICAL / TIMELESS / FUTURE / UNCLEAR; historical claims skipped | — |
 | [ ] 30 | Volatility and priority | 5 volatility bands (from RecencyQA's scale); knowledge-cutoff table; HIGH / MEDIUM / LOW / SKIP priority | — |
@@ -95,7 +95,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 |---|---|---|---|
 | [ ] 40 | Adaptive verification budget | Per-tenant spend cap drives claim selection; behaviour tested | — |
 | [ ] 41 | Freshness-aware cache | TTL from volatility; evict on OUTDATED; tombstones; deterministic tests | — |
-| [ ] 42 | Fallback and spend experiments | Provider-fallback demo; measured spend and reliability runs | — |
+| [ ] 42 | Fallback and spend experiments | Provider-fallback demo; measured spend and reliability runs | Optional 2nd provider key |
 
 ## Milestone 5: Evaluation
 
@@ -103,7 +103,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 |---|---|---|---|
 | [ ] 43 | HL-Claims dataset | Claims mined from FreshQA snapshot diffs, RecencyQA and curated sources; labelled; dev/test split frozen before tuning | Your labelling review |
 | [ ] 44 | Baselines and replay harness | Systems S0–S4 runnable; recorded-response replay makes runs reproducible | — |
-| [ ] 45 | Run the evaluation | Precision, recall, F1, cost, latency, cache effectiveness, failure injection on the held-out set | Keys, credit budget |
+| [ ] 45 | Run the evaluation | Precision, recall, F1, cost, latency, cache effectiveness, failure injection on the held-out set | Keys; free-model cap is 50 req/day below $10 of OpenRouter credit (1,000/day at ≥$10) |
 | [ ] 46 | Evaluation write-up | `EVALUATION.md` with methods, numbers and limitations; nothing unmeasured is claimed | — |
 
 ## Milestone 6: Presentation and submission

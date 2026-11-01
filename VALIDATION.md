@@ -56,3 +56,49 @@ CLAUDE_CODE_MESSAGING_TOKEN
 ### Existing files preserved
 
 `research/hackathon-strategy-report.md` and `research/phase2-engineering-audit.md` are unchanged and committed as-is.
+
+## Task 02: Go 1.27.3 toolchain (2026-11-01)
+
+Live: official Go module proxy and checksum database.
+
+```
+$ curl -s https://proxy.golang.org/golang.org/toolchain/@v/list | grep 'go1\.27\..*darwin-arm64'
+v0.0.1-go1.27.0 … v0.0.1-go1.27.3.darwin-arm64
+$ go env GOPROXY GOSUMDB
+https://proxy.golang.org,direct
+sum.golang.org
+$ GOTOOLCHAIN=go1.27.3 go version
+go: downloading go1.27.3 (darwin/arm64)
+go version go1.27.3 darwin/arm64
+$ cat ~/go/pkg/mod/cache/download/golang.org/toolchain/@v/v0.0.1-go1.27.3.darwin-arm64.ziphash
+h1:yCdfDZ+GhmDNz9efAMlsprJWmFX/baYtnSkwvgeWipA=
+```
+
+Auto-switch check (scratch module with `go 1.27.3` in `go.mod`, as Bifrost's modules declare):
+
+```
+--- default GOTOOLCHAIN=auto, outside module:
+go version go1.25.1 darwin/arm64
+--- inside module declaring go 1.27.3:
+go version go1.27.3 darwin/arm64
+compiled with go1.27.3        # go run, prints runtime.Version()
+vet ok
+```
+
+Result: **pass**. The base install is untouched; Go switches to 1.27.3 per module. Final confirmation inside the Bifrost modules happens in Task 04.
+
+### Environment template
+
+`.env.example` (committed) lists every key: `TAVILY_API_KEY`, `OPENROUTER_API_KEY`, optional `GROQ_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY`, and `REDIS_ADDR`. `.env` was created from it with mode 600 and empty values.
+
+```
+$ git check-ignore -v .env .env.example
+.gitignore:2:.env	.env
+.gitignore:4:!.env.example	.env.example     # negated: tracked
+```
+
+### OpenRouter (live: public docs and catalog, no key used)
+
+- Bifrost v2.4.0 provider: `ModelProvider OpenRouter = "openrouter"` (`core/schemas/bifrost.go:72`); implementation in `core/providers/openrouter/`.
+- https://openrouter.ai/docs/api-reference/limits: `:free` models allow 20 req/min; 50 req/day with < 10 credits ever purchased, 1,000 req/day with ≥ 10. A negative balance can return 402 even on free models.
+- `GET https://openrouter.ai/api/v1/models`: 452 models, 14 `:free`. Free models that advertise `structured_outputs`: `nvidia/nemotron-3.5-super-vl:free`, `dots-studio/dots-3-note-preview:free`, `xingchen-agi/xing4.0-29b-a4b:free`, `liquid/lfm-2.5-2.6b:free`. The free catalog changes; the model is chosen in Task 27.

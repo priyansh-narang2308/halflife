@@ -12,3 +12,4 @@ Status: early engineering. See [TASKS.md](TASKS.md) for the plan and [PROGRESS.m
 - `TASKS.md`: the 50-task plan
 - `PROGRESS.md`: completed work, decisions, blockers
 - `VALIDATION.md`: commands, outputs, and live-vs-mock status for every test
+- `.env.example`: every key the project needs; copy to `.env` (gitignored)
