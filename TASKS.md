@@ -17,7 +17,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | [x] 01 | Pre-flight checks and Git workspace | Window, rules, tools and key presence recorded; repo initialised; this plan committed | — |
 | [x] 02 | Go 1.27.3 toolchain | `go version` reports go1.27.3 inside the Bifrost module; reproducible via `GOTOOLCHAIN` | — |
 | [x] 03 | Bifrost source at the pinned commit | Fork checked out at `e869c3f`, commit verified, `upstream` and `halflife` branches, layout decided and documented | — |
-| [ ] 04 | Build and run unmodified Bifrost | Gateway binary builds from source; starts; health check passes; build log saved | — |
+| [x] 04 | Build and run unmodified Bifrost | Gateway binary builds from source; starts; health check passes; build log saved | — |
 | [ ] 05 | Deterministic mock servers | Mock OpenAI-compatible provider (scripted replies, injected failures, latency, streaming) and mock Tavily (recorded fixtures, error codes 401/429/432/433/434); unit tests pass | — |
 | [ ] 06 | Local infrastructure | Redis running (Docker or Homebrew); `make` / script targets to start gateway, mocks and Redis in one command | Start Docker Desktop, or OK to use Homebrew Redis |
 
@@ -110,7 +110,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 
 | # | Task | Done when | Needs |
 |---|---|---|---|
-| [ ] 47 | Developer dashboard | Report viewer with claims, verdicts, sources, spend and cache events | — |
+| [ ] 47 | Halflife inside Bifrost's dashboard | A Halflife view in Bifrost's own UI (built from source, Task 04): claims, verdicts, sources, spend and cache events, next to Bifrost's logs and governance pages | — |
 | [ ] 48 | Deployment | Docker Compose stack plus a hosted demo | Hosting choice |
 | [ ] 49 | Docs and demo video | README, ARCHITECTURE, sponsor explanations; recorded before/after demo | You record or approve |
 | [ ] 50 | Submission | Checklist complete, AI-use disclosure, submitted on HackCulture before 15 Nov 23:59 IST | You submit |

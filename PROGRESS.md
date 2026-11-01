@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 03 (Bifrost source at the pinned commit), 1 Nov 2026.
-- **Next:** Task 04 (build and run unmodified Bifrost).
+- **Last completed:** Task 04 (build and run unmodified Bifrost), 1 Nov 2026.
+- **Next:** Task 05 (deterministic mock servers).
 
 ## Completed
 
@@ -14,6 +14,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 01 | 2026-11-01 | Build window confirmed open; rules re-read; tools inventoried; Git repo initialised; 50-task plan written |
 | 02 | 2026-11-01 | Go 1.27.3 fetched via the official toolchain mechanism; modules declaring `go 1.27.3` auto-switch and compile. `.env.example` added with every key the project needs |
 | 03 | 2026-11-01 | Bifrost cloned at `e869c3f` and verified against GitHub's tag; `upstream` and `halflife` branches; reproducible via `scripts/bootstrap-bifrost.sh`; layout decided (D6); `UPSTREAM_DIFF.md` started |
+| 04 | 2026-11-01 | Unmodified gateway + dashboard built from source (`scripts/build-gateway.sh`, reproducible SHA-256); runs and passes health, UI and shutdown checks via `scripts/run-gateway.sh`; compiled modules confirmed identical to the audited source |
 
 ## Decisions
 
@@ -25,6 +26,9 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D4 | OpenRouter is the LLM provider, using free models for development and the demo | Bifrost v2.4.0 has a native `openrouter` provider (`core/schemas/bifrost.go:72`, `core/providers/openrouter/`). 14 free models listed on 1 Nov, 4 with structured outputs. Free cap: 20 req/min; 50 req/day below $10 of purchased credit, 1,000/day at ≥$10. The evaluation (Task 45) will need the higher cap or recorded replays. |
 | D5 | Go toolchain via `GOTOOLCHAIN=auto`, not a system upgrade | Base install stays go1.25.1. Any module declaring `go 1.27.3` (as Bifrost's do) switches automatically to the checksum-verified go1.27.3 toolchain. |
 | D6 | Repo layout: project repo `global-ai/` + Bifrost fork in `bifrost/` (its own Git repo, gitignored here). Our plugin will live at `bifrost/plugins/halflife/` as its own Go module | Mirrors upstream's one-module-per-plugin convention, so `make setup-workspace` picks it up and the work stays upstreamable. `git diff upstream..halflife` shows every change we make. For submission, the fork goes to your GitHub (needs your OK) and is linked here as a submodule, so one URL shows everything. |
+| D7 | The gateway always runs with a clean environment (`scripts/run-gateway.sh`) | Bifrost auto-imports `OPENAI_*`/`ANTHROPIC_*`/`MISTRAL_*` keys when there's no `config.json`; on the first run it picked up Claude Code's `ANTHROPIC_API_KEY`. |
+| D8 | Gateway port 8090 | 8080 is taken on this machine by an Apache `httpd`. |
+| D9 | Halflife's UI lives inside Bifrost's own dashboard (Task 47) | The dashboard builds from source here, so Halflife can appear as a native Bifrost page, which is a stronger story than a separate site. |
 
 ## Blockers and inputs needed
 
@@ -36,6 +40,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | Go 1.27.3 | Task 02 | Resolved |
 
 ## Open assumptions
+
+- Upstream `ui/.npmrc` (`legacy-peer-deps=true`) skips a lockfile peer dependency and breaks a clean UI build. Worked around in `scripts/build-gateway.sh`; possibly worth reporting upstream.
 
 - The organizers have not stated the timezone in words; D2 rests on the page's own timestamps.
 - Discord membership is mandatory (rule 3). Worth asking there: video requirement, and whether Bifrost and Tavily judge separately.

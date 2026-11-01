@@ -153,3 +153,76 @@ Result: **pass**.
 ### Broken partial clone
 
 The interrupted clone from the earlier session (480 MB `.git`, no commit checked out) was moved, not deleted, to `/private/tmp/claude-501/-Users-priyanshnarang--claude-spares-spare-BohcTC/c4f4f9a8-0738-42d0-8760-1277e9feef1c/scratchpad/broken-clone/bifrost`.
+
+## Task 04: Build and run unmodified Bifrost (2026-11-01)
+
+Live: npm registry, Go module proxy. Local: gateway on 127.0.0.1. No provider calls were made with project keys (none exist yet).
+
+### Build
+
+Command: `scripts/build-gateway.sh` (mirrors `make build` for a native macOS build; see the script header for the two UI-install differences).
+
+```
+$ GOWORK=off go mod download -x   (in transports/)      # 1,212 module fetches, 5 min 35 s
+$ GOWORK=off go mod verify
+all modules verified
+$ go version          (in transports/)
+go version go1.27.3 darwin/arm64                          # closes Task 02's last check
+$ npm ci --ignore-scripts --legacy-peer-deps=false        # added 544 packages in 7s
+$ npm run build                                           # vite build ✓ 9,446 modules; tsc --noEmit ✓; copy-build ✓
+$ CGO_ENABLED=1 GOWORK=off go build -ldflags="-w -s -X main.Version=v2.4.0" -a -trimpath -tags sqlite_static -o ../../tmp/bifrost-http .
+$ file bifrost/tmp/bifrost-http
+Mach-O 64-bit executable arm64   (140,440,162 bytes, go1.27.3)
+$ shasum -a 256 bifrost/tmp/bifrost-http
+cae546ef7ee52e6e8445b0ce7f0c92407ab1d5caa494e5dd7e7ae36f80fb518b
+```
+
+Full scripted rebuild from a deleted binary: 1 min 6 s, **same SHA-256**, so the build is reproducible. `git -C bifrost status --porcelain` stays empty (all build outputs are gitignored upstream).
+
+**UI build failure, root-caused and fixed without touching upstream files.** The first `npm ci` + `npm run build` failed:
+
+```
+Error: [vite]: Rolldown failed to resolve import "react-is" from ".../node_modules/recharts/es6/util/ReactUtils.js".
+```
+
+`ui/.npmrc` sets `legacy-peer-deps=true`. `react-is@19.2.6` is in `package-lock.json` but flagged `"peer": true` (a peer dependency of `recharts@3.8.1`), so `npm ci` skipped it. Passing `--legacy-peer-deps=false` installs exactly the lockfile version (543 → 544 packages) and the build passes. This may be an upstream issue worth reporting.
+
+### Compiled modules = the source we audited
+
+The binary links published module versions, not the tag's local folders (`transports/go.mod` has no `replace`):
+
+```
+dep github.com/maximhq/bifrost/core                  v1.14.1
+dep github.com/maximhq/bifrost/framework             v1.11.1
+dep github.com/maximhq/bifrost/plugins/governance    v1.11.1
+dep github.com/maximhq/bifrost/plugins/semanticcache v1.7.4
+dep github.com/maximhq/bifrost/plugins/logging       v1.11.1
+… compat v0.5.3, maxim v1.7.14, mocker v1.6.14, modelcatalogresolver v1.1.14, otel v1.6.4, prompts v1.1.14, routing v1.2.4, telemetry v1.9.4
+```
+
+`diff -rq` of each published module against the tag's folder (excluding tests and `go.sum`): core, semanticcache, governance and logging differ only in `LICENSE` and `changelog.md`. Framework additionally differs in `warp/prompt.go` and `warp/topics.go`, which Halflife doesn't use. **The Phase 2 source findings apply to the compiled code.**
+
+### Run (smoke test)
+
+Command: `scripts/run-gateway.sh data/upstream-smoke-clean 8090`
+
+```
+health=200 after ~6s
+GET  /health                 → 200 {"components":{"db_pings":"ok"},"status":"ok"}
+GET  /                       → 200 text/html (Bifrost dashboard, <title>Bifrost</title>)
+POST /v1/chat/completions    → 400 "failed to get config for provider openai: not found" (expected: no providers configured)
+env var names seen by the gateway: HOME LANG PATH REDIS_ADDR TMPDIR
+log: "successfully started bifrost, serving UI on http://127.0.0.1:8090"
+log: plugin status active: routing, compat, model-catalog-resolver, telemetry, prompts, logging, governance
+log: 0 error lines; 0 auto-detect lines
+SIGTERM → "server gracefully shutdown" … "🏁 server stopped", exit 0
+```
+
+Result: **pass**.
+
+### Findings
+
+1. **Credential auto-detection.** The first smoke run (plain shell, port 8080) logged `auto-detected anthropic provider from environment variable ANTHROPIC_API_KEY` and called Anthropic list-models, which returned `invalid x-api-key`. Bifrost does this whenever the app dir has no `config.json` (`transports/bifrost-http/lib/config.go:9870`, for `OPENAI_*`, `ANTHROPIC_*`, `MISTRAL_*`). The key is Claude Code's session credential (decision D3), and the rejection confirms it isn't a direct Anthropic key. Checked without printing the value: `config.db` holds only the reference `env.ANTHROPIC_API_KEY`, never the value; `logs.db` holds neither. **Fix:** `scripts/run-gateway.sh` starts the gateway with `env -i`, passing only `PATH`, `HOME`, `TMPDIR`, `LANG` and non-empty `.env` values. Halflife runs will also use explicit `config.json` files.
+2. **Port 8080 is taken** on this machine by an Apache `httpd` (PID 1587, `*:8080`). Halflife uses **8090**. The first run still served Bifrost on `127.0.0.1:8080` (`Server: fasthttp`), but 8090 avoids ambiguity.
+3. **Management API is locked by default.** `GET /api/plugins` → 403 "dashboard auth is not configured and no setup token is set". Governance setup (virtual keys, budgets, relays) needs `BIFROST_SETUP_TOKEN` or `config.json`. A placeholder is now in `.env.example`.
+4. **Default plugins** in a zero-config instance: routing, compat, model-catalog-resolver, telemetry, prompts, logging, governance. The semantic cache is off until configured (Task 16).
