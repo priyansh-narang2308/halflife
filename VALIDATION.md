@@ -291,3 +291,57 @@ Gateway log: one error-level line, the injected 503 request (`http.status_code: 
 2. **`allowed_models: ["*"]` means "any model in Bifrost's catalog", not "anything".** `ModelCatalog.IsModelAllowedForProvider` (`framework/modelcatalog/models.go:330`) defers `*` to catalog lookup (datasheet plus live list-models). Unknown names → 403 `model_blocked`. Explicit names match without the catalog. Provider-key `models` behave the same: an unrestricted key on a provider with a catalog only serves catalog models (→ 400 `no_key_supports_model`). Consequence: OpenRouter free models must be in the catalog or listed explicitly (Tasks 21 and 27).
 3. **The gateway rebuilds the response JSON.** It adds `extra_fields` (routing info, latency), `logprobs:null` and `system_fingerprint`, and reorders fields. Task 15's "unchanged response" test must compare gateway output with Halflife on vs off, not against the provider's raw bytes.
 4. **Fallbacks reach the provider once per attempt with `max_retries: 0`.** That gives clean attempt counting for Task 13.
+
+## Task 06: Local infrastructure (2 Nov 2026)
+
+**Status:** done. Everything here runs locally with synthetic keys; no live API was called.
+
+### Which Redis the semantic cache can use
+
+Bifrost's Redis vector store refuses to start without the search module: "search module not available: please use Redis Stack or a Valkey bundle with search support (FT.* commands required)" (`framework/vectorstore/redis.go:82,95,112`).
+
+| Candidate | `MODULE LIST` | `FT.CREATE` (vector index) | Usable |
+|---|---|---|---|
+| Homebrew `redis` 8.6.3 | `vectorset` only | `ERR unknown command` | No |
+| Docker `redis:8.2.2` | `search`, `vectorset`, `ReJSON`, `bf`, `timeseries` | `OK`, index listed by `FT._LIST` | **Yes** |
+
+Port 6379 was already taken by the user's own `falkordb` container, so Halflife's Redis listens on **127.0.0.1:6380** (D14). That container and `socraticode-qdrant` were not touched (checked before and after).
+
+### One-command stack
+
+`make up` → `scripts/dev-stack.sh up`:
+
+```
+redis       up
+mockllm     up
+mocktavily  up
+gateway     up
+make up  1.25s user 1.39s system 21% cpu 12.449 total
+```
+
+Per-service checks against the running stack:
+
+```
+--- redis via host port 6380
+redis_version:8.2.2
+vectorset timeseries search bf ReJSON
+FT.CREATE stackprobe … VECTOR HNSW … DIM 2 → OK; FT._LIST → stackprobe; FT.DROPINDEX → OK
+--- gateway -> mockllm (x-bf-vk: sk-bf-halflife-smoke)
+The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.
+--- mocktavily
+{"n":1,"url":"https://acme.example/pricing","usage":{"credits":1}}
+--- second up is idempotent
+mockllm already running / mocktavily already running / all 4 up
+--- down
+stack stopped; halflife-redis containers: 0; status: all 4 DOWN (exit 1)
+--- user containers untouched
+falkordb socraticode-qdrant
+```
+
+After `make down`, `make test` (15/15 under `-race`) and `make smoke` (12/12, ALL PASS) still pass.
+
+### Design notes
+
+- The gateway's app dir is recreated on each `up`, so it always loads `config.json` and never a stale config DB. The config defaults to `testenv/configs/mock-llm`; `STACK_CONFIG=…` overrides it (Task 16 adds the cache config).
+- Redis runs with `--save '' --appendonly no`: the cache is disposable, so a restart gives a cold cache, which suits the cache tests.
+- PIDs live in `data/dev-stack/run/`, and logs go to `logs/stack-<service>.log`. `scripts/dev-stack.sh logs gateway` tails them.

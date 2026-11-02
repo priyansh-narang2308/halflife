@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 05 (deterministic mock servers), 2 Nov 2026.
-- **Next:** Task 06 (local infrastructure: Redis and one-command startup).
+- **Last completed:** Task 06 (local infrastructure), 2 Nov 2026.
+- **Next:** Task 07 (plugin skeleton registered in the gateway).
 
 ## Completed
 
@@ -16,6 +16,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 03 | 2026-11-01 | Bifrost cloned at `e869c3f` and verified against GitHub's tag; `upstream` and `halflife` branches; reproducible via `scripts/bootstrap-bifrost.sh`; layout decided (D6); `UPSTREAM_DIFF.md` started |
 | 04 | 2026-11-01 | Unmodified gateway + dashboard built from source (`scripts/build-gateway.sh`, reproducible SHA-256); runs and passes health, UI and shutdown checks via `scripts/run-gateway.sh`; compiled modules confirmed identical to the audited source |
 | 05 | 2026-11-02 | Mock LLM provider and mock Tavily (`testenv/`), 15/15 unit tests under `-race`, ~90%+ coverage; real gateway → mock provider smoke test passes 12/12 checks, including streaming and a fallback with one attempt per model |
+| 06 | 2026-11-02 | `make up` / `make down` / `make status` start and stop Redis 8.2.2 (Docker, search module verified with `FT.CREATE`), both mocks and the gateway in about 12 s; idempotent, and leaves your other containers alone |
 
 ## Decisions
 
@@ -34,6 +35,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D11 | Keep `enforce_auth_on_inference` on (its default); every test request carries a virtual key | Matches a real deployment, and per-app identity (virtual keys) is what Halflife attributes reports and spend to. |
 | D12 | Tavily budget: 9,000 credits (Researcher plan + add-on), pay-as-you-go off | Spend stops at the cap with `432`, no billing. Plan: ~50 for live validation, ≤6,000 for evaluation, rest for demo/judging; every call sends `include_usage`. See `research/tavily-api-notes.md`. |
 | D13 | Use Tavily's `max_age_hours` (content freshness, new in Oct 2026) as the core freshness lever, `X-Project-ID` = tenant and `X-Session-Id` = report for attribution inside Tavily | Directly matches Tavily #01 and gives tenant attribution that doesn't depend on Bifrost alone. Header forwarding through the relay is checked in Task 20. |
+| D14 | Redis for the semantic cache = Docker `redis:8.2.2` on **127.0.0.1:6380**, ephemeral (no RDB/AOF) | Homebrew Redis 8.6.3 has no search module (`FT.*` → unknown command) and Bifrost's Redis vector store requires it (`framework/vectorstore/redis.go:82`). The official `redis:8` image bundles search, vectorset, JSON, bloom and timeseries. Port 6379 belongs to your `falkordb` container. The embedded `chromem` store stays as a zero-infrastructure fallback. |
 
 ## Blockers and inputs needed
 
@@ -41,7 +43,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 |---|---|---|
 | `TAVILY_API_KEY` in `.env` | Task 21 (live validation) | Account ready (9,000 credits); key not yet in `.env`. Mock Tavily is used until then. |
 | `OPENROUTER_API_KEY` in `.env` (optional 2nd provider for the fallback demo) | Tasks 26, 27, 42 | Missing. Mock provider is used until then. |
-| Docker daemon running, or approval to use Homebrew Redis | Task 06 | Docker installed but not running; Redis 8.6.3 installed but not started |
+| Docker daemon running | Task 06 | Resolved: Docker Desktop started; `make up` checks for it |
 | Go 1.27.3 | Task 02 | Resolved |
 
 ## Open assumptions
