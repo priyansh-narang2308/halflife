@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 04 (build and run unmodified Bifrost), 1 Nov 2026.
-- **Next:** Task 05 (deterministic mock servers).
+- **Last completed:** Task 05 (deterministic mock servers), 2 Nov 2026.
+- **Next:** Task 06 (local infrastructure: Redis and one-command startup).
 
 ## Completed
 
@@ -15,6 +15,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 02 | 2026-11-01 | Go 1.27.3 fetched via the official toolchain mechanism; modules declaring `go 1.27.3` auto-switch and compile. `.env.example` added with every key the project needs |
 | 03 | 2026-11-01 | Bifrost cloned at `e869c3f` and verified against GitHub's tag; `upstream` and `halflife` branches; reproducible via `scripts/bootstrap-bifrost.sh`; layout decided (D6); `UPSTREAM_DIFF.md` started |
 | 04 | 2026-11-01 | Unmodified gateway + dashboard built from source (`scripts/build-gateway.sh`, reproducible SHA-256); runs and passes health, UI and shutdown checks via `scripts/run-gateway.sh`; compiled modules confirmed identical to the audited source |
+| 05 | 2026-11-02 | Mock LLM provider and mock Tavily (`testenv/`), 15/15 unit tests under `-race`, ~90%+ coverage; real gateway → mock provider smoke test passes 12/12 checks, including streaming and a fallback with one attempt per model |
 
 ## Decisions
 
@@ -29,6 +30,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D7 | The gateway always runs with a clean environment (`scripts/run-gateway.sh`) | Bifrost auto-imports `OPENAI_*`/`ANTHROPIC_*`/`MISTRAL_*` keys when there's no `config.json`; on the first run it picked up Claude Code's `ANTHROPIC_API_KEY`. |
 | D8 | Gateway port 8090 | 8080 is taken on this machine by an Apache `httpd`. |
 | D9 | Halflife's UI lives inside Bifrost's own dashboard (Task 47) | The dashboard builds from source here, so Halflife can appear as a native Bifrost page, which is a stronger story than a separate site. |
+| D10 | Test configs list mock model names explicitly in both the virtual key and the provider key | `["*"]` only admits models in Bifrost's catalog; the mock's names aren't in it. Same rule will apply to OpenRouter free models. |
+| D11 | Keep `enforce_auth_on_inference` on (its default); every test request carries a virtual key | Matches a real deployment, and per-app identity (virtual keys) is what Halflife attributes reports and spend to. |
 
 ## Blockers and inputs needed
 

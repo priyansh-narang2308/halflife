@@ -226,3 +226,68 @@ Result: **pass**.
 2. **Port 8080 is taken** on this machine by an Apache `httpd` (PID 1587, `*:8080`). Halflife uses **8090**. The first run still served Bifrost on `127.0.0.1:8080` (`Server: fasthttp`), but 8090 avoids ambiguity.
 3. **Management API is locked by default.** `GET /api/plugins` → 403 "dashboard auth is not configured and no setup token is set". Governance setup (virtual keys, budgets, relays) needs `BIFROST_SETUP_TOKEN` or `config.json`. A placeholder is now in `.env.example`.
 4. **Default plugins** in a zero-config instance: routing, compat, model-catalog-resolver, telemetry, prompts, logging, governance. The semantic cache is off until configured (Task 16).
+
+## Task 05: Deterministic mock servers (2026-11-02)
+
+**All mocked.** No real LLM or Tavily calls. The synthetic keys `sk-halflife-mock`, `sk-bf-halflife-smoke` and `tvly-mock` are test values only.
+
+Code: `testenv/` (Go module `github.com/priyansh-narang2308/halflife/testenv`, stdlib only).
+
+| Component | What it does |
+|---|---|
+| `mockllm` | OpenAI-compatible `/v1/chat/completions` and `/v1/models`. Model name picks behaviour: `ok`, `slow-<ms>`, `fail-<status>` (429 adds `Retry-After`). Scripted replies by last user message; deterministic IDs (hash of request body) and timestamps; SSE streaming with optional usage chunk; optional bearer check; `/_mock/requests` and `/_mock/reset` counters |
+| `mocktavily` | `/search` and `/extract` with bearer auth (401). Credits: basic/fast/ultra-fast 1, advanced 2; Extract 1 credit block per 5 successful URLs (×2 advanced). `usage.credits` only when `include_usage`. Query markers `[mock:400/429/432/433/434/500]` inject errors with Tavily's `{"detail":{"error":…}}` shape. Failed requests charge no credits |
+| `fixtures/` | Synthetic data about a fictional company, Acme Cloud, on reserved `.example` domains. The LLM replies are deliberately stale against the Tavily fixtures (price $20 → $29, SDK 3.2.0 → 4.1.0, CEO changed) |
+
+**Assumptions to reconcile in Task 21 (live Tavily):** the exact `usage` field shape, Extract's credit rounding, 434's message text, `response_time` type, and `published_date` presence.
+
+Why not upstream's `plugins/mocker`: it answers inside `PreLLMHook` with a short-circuit (`plugins/mocker/main.go:516`, `:575`), so no provider attempt happens. Halflife must be tested on Bifrost's real provider path (attempts, failures, fallbacks, post-hooks), which needs an HTTP provider.
+
+### Unit tests
+
+```
+$ go vet ./... && go test -race -count=1 -v ./...
+--- PASS: TestScriptedAndDefaultReplies   --- PASS: TestDeterministicBodies
+--- PASS: TestContentParts                --- PASS: TestInjectedFailures
+--- PASS: TestLatency (0.12s)             --- PASS: TestStreaming
+--- PASS: TestAuthAndValidation           --- PASS: TestCountsAndReset
+--- PASS: TestModelsList
+ok  github.com/priyansh-narang2308/halflife/testenv/mockllm     coverage: 94.2%
+--- PASS: TestAuth                        --- PASS: TestSearchFixturesAndLimits
+--- PASS: TestSearchCredits               --- PASS: TestSearchErrors
+--- PASS: TestExtract                     --- PASS: TestStatsAndReset
+ok  github.com/priyansh-narang2308/halflife/testenv/mocktavily  coverage: 90.8%
+```
+
+15/15 pass with the race detector; `gofmt -l` clean. The first run had 1 failure, a bug in the test (usage struct missing JSON tags), not in the mock.
+
+### Gateway smoke test (real Bifrost binary + mock provider)
+
+Command: `testenv/smoke-mock-llm.sh` (config: `testenv/configs/mock-llm/config.json`; gateway on 8090, mock on 9101).
+
+```
+PASS  no virtual key: refused
+PASS  no virtual key: never reached provider
+PASS  scripted reply: status
+PASS  scripted reply: content
+PASS  scripted reply: usage passed through
+PASS  injected 503: status
+PASS  streaming: reassembled text
+PASS  streaming: terminated
+PASS  fallback: status
+PASS  fallback: served by fallback model
+PASS  fallback: primary attempted once
+PASS  fallback: fallback attempted once
+mock request counts after fallback test: {"by_model":{"fail-500":1,"ok":1},"total":2}
+fallback response extra_fields: {"provider":"openai","model_requested":"fail-500","resolved":"ok"}
+ALL PASS
+```
+
+Gateway log: one error-level line, the injected 503 request (`http.status_code: 503`). The fallback request's failed primary attempt is not logged as a request error, because the request succeeded.
+
+### Findings (each found by a failing run, then confirmed in source)
+
+1. **Virtual keys are mandatory by default.** With a `config.json`, inference without `x-bf-vk` → 401 `virtual_key_required` (`plugins/governance/main.go:795`). `client.enforce_auth_on_inference` defaults to `true` on new deployments (`config.schema.json` L197). We keep it on; Halflife's per-app identity depends on it.
+2. **`allowed_models: ["*"]` means "any model in Bifrost's catalog", not "anything".** `ModelCatalog.IsModelAllowedForProvider` (`framework/modelcatalog/models.go:330`) defers `*` to catalog lookup (datasheet plus live list-models). Unknown names → 403 `model_blocked`. Explicit names match without the catalog. Provider-key `models` behave the same: an unrestricted key on a provider with a catalog only serves catalog models (→ 400 `no_key_supports_model`). Consequence: OpenRouter free models must be in the catalog or listed explicitly (Tasks 21 and 27).
+3. **The gateway rebuilds the response JSON.** It adds `extra_fields` (routing info, latency), `logprobs:null` and `system_fingerprint`, and reorders fields. Task 15's "unchanged response" test must compare gateway output with Halflife on vs off, not against the provider's raw bytes.
+4. **Fallbacks reach the provider once per attempt with `max_retries: 0`.** That gives clean attempt counting for Task 13.

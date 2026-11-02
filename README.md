@@ -17,3 +17,4 @@ Status: early engineering. See [TASKS.md](TASKS.md) for the plan and [PROGRESS.m
 - `scripts/bootstrap-bifrost.sh`: checks out and verifies the pinned Bifrost source into `bifrost/`
 - `scripts/build-gateway.sh`: builds the dashboard and `bifrost/tmp/bifrost-http` the way upstream does
 - `scripts/run-gateway.sh`: runs the gateway on 127.0.0.1:8090 with only `.env` credentials visible
+- `testenv/`: deterministic mock LLM provider and mock Tavily, with unit tests; `testenv/smoke-mock-llm.sh` runs the real gateway against the mock provider

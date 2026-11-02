@@ -1,0 +1,8 @@
+{
+  "_comment": "Synthetic. Acme Cloud is fictional; these replies are deliberately stale against fixtures/tavily.json.",
+  "replies": {
+    "How much does the Acme Cloud Pro plan cost?": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+    "What is the latest version of the Acme SDK?": "The latest version of the Acme SDK is 3.2.0, released in March 2025.",
+    "Who is the CEO of Acme Cloud?": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015."
+  }
+}
