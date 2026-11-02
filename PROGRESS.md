@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 07 (plugin skeleton), 2 Nov 2026.
-- **Next:** Task 08 (register Halflife in the gateway and build it).
+- **Last completed:** Task 09 (plugin load smoke test), 2 Nov 2026.
+- **Next:** Task 10 (final-response capture).
 
 ## Completed
 
@@ -18,6 +18,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 05 | 2026-11-02 | Mock LLM provider and mock Tavily (`testenv/`), 15/15 unit tests under `-race`, ~90%+ coverage; real gateway → mock provider smoke test passes 12/12 checks, including streaming and a fallback with one attempt per model |
 | 06 | 2026-11-02 | `make up` / `make down` / `make status` start and stop Redis 8.2.2 (Docker, search module verified with `FT.CREATE`), both mocks and the gateway in about 12 s; idempotent, and leaves your other containers alone |
 | 07 | 2026-11-02 | `bifrost/plugins/halflife` module (fork commit `ff8784d`): config with defaults and validation, all LLM and HTTP transport hooks as pass-through no-ops; 8/8 tests under `-race`, 100% coverage, against the published core v1.14.1 |
+| 08 | 2026-11-02 | Halflife registered as a built-in (fork commit `c7c0589`): 3 upstream files, +24 lines; placement `pre_builtin`/`MinInt`; gateway builds with `GOWORK=off`, `go.sum` unchanged; upstream server/lib tests pass in a clean env |
+| 09 | 2026-11-02 | `testenv/smoke-halflife.sh`: 27/27 checks, 5/5 runs. Plugin loads (`active`), stops cleanly; hook order verified from the gateway's debug log; 6 request types return identical bodies and headers with Halflife on vs off. `make up` now runs Halflife by default |
 
 ## Decisions
 
@@ -38,6 +40,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D13 | Use Tavily's `max_age_hours` (content freshness, new in Oct 2026) as the core freshness lever, `X-Project-ID` = tenant and `X-Session-Id` = report for attribution inside Tavily | Directly matches Tavily #01 and gives tenant attribution that doesn't depend on Bifrost alone. Header forwarding through the relay is checked in Task 20. |
 | D14 | Redis for the semantic cache = Docker `redis:8.2.2` on **127.0.0.1:6380**, ephemeral (no RDB/AOF) | Homebrew Redis 8.6.3 has no search module (`FT.*` → unknown command) and Bifrost's Redis vector store requires it (`framework/vectorstore/redis.go:82`). The official `redis:8` image bundles search, vectorset, JSON, bloom and timeseries. Port 6379 belongs to your `falkordb` container. The embedded `chromem` store stays as a zero-infrastructure fallback. |
 | D15 | Module path `github.com/maximhq/bifrost/plugins/halflife` | Same namespace as the fork's other plugins, so `make setup-workspace` and the `replace` in `transports/go.mod` work like the built-ins. Authorship is ours and is recorded in `UPSTREAM_DIFF.md`; the path is only the fork's module namespace. |
+| D16 | Halflife is placement `pre_builtin`, order `math.MinInt`, fixed in code (not configurable) | Post-hooks run in reverse (`core/bifrost.go` `RunPostLLMHooks`; `handlers/middlewares.go`), so Halflife's post-hooks run last and see the final response, and its pre-hook runs before the semantic cache can short-circuit. Cost: its own hook time falls outside the telemetry plugin's measurement, so overhead is measured directly instead (Task 15). |
 
 ## Blockers and inputs needed
 

@@ -376,3 +376,52 @@ ok  github.com/maximhq/bifrost/plugins/halflife  coverage: 100.0% of statements
 **Mutation check:** making `PostLLMHook` drop the response and `StreamChunkHook` drop the chunk fails `TestLLMHooksPassThrough` and `TestHTTPHooksPassThrough`. Restoring the code makes them pass again, so the pass-through tests catch a hook that alters traffic.
 
 Not yet tested: loading inside the gateway (Tasks 08–09).
+
+## Task 08: In-tree registration (2 Nov 2026)
+
+**Status:** done. Fork commit `c7c0589`; details in `UPSTREAM_DIFF.md` (v1).
+
+- `scripts/build-gateway.sh --skip-ui` builds `bifrost/tmp/bifrost-http` (SHA-256 `31c0e896…c01c2`). `go version -m` shows `dep github.com/maximhq/bifrost/plugins/halflife v0.1.0 => ../plugins/halflife`.
+- `transports/go.sum` is byte-identical before and after (`cmp`).
+- `go test ./bifrost-http/server/` passes. `go test ./bifrost-http/lib/` fails 5 tests in this shell ("expected 1 keys for provider anthropic, got 2") and passes with `env -i` (clean environment). Cause: Bifrost auto-imports the shell's `ANTHROPIC_API_KEY`, as found in Task 04 (D7). Unrelated to Halflife.
+
+## Task 09: Plugin load smoke test (2 Nov 2026)
+
+**Status:** done. Command: `testenv/smoke-halflife.sh` (also `make smoke`). Mock provider only; no live API called.
+
+The script sends 6 request types to the gateway twice: with `testenv/configs/mock-llm` (no Halflife) and with `testenv/configs/halflife` (same config plus the `halflife` plugin entry), both at debug log level.
+
+```
+PASS  startup log: plugin initialized
+PASS  startup log: plugin status active
+PASS  shutdown log: plugin stopped
+PASS  baseline has no halflife
+PASS  debug log: halflife pre-hook ran on every attempt
+PASS  pre-hooks: halflife always immediately before telemetry (first overall)
+PASS  post-hooks: halflife always immediately after telemetry (last overall)
+pre-hook order (one attempt):  halflife telemetry prompts logging governance routing compat model-catalog-resolver
+post-hook order (one attempt): model-catalog-resolver compat routing governance logging prompts telemetry halflife
+PASS  body non-empty / body identical / headers identical: ok, default, stream, fail503, fallback, novk  (18 checks)
+PASS  status codes: ok/503/fallback/novk
+ALL PASS
+```
+
+27/27 on 5 consecutive runs; exit 0; no ports left open.
+
+### What "identical" means here
+
+- Bodies are compared byte for byte after one normalisation: the gateway writes its own timing into `extra_fields.latency` and `extra_fields.upstream_latency` (ms). These differ by about 1 ms between identical requests **without** Halflife (shown by streaming the same request three times through one gateway), so they are zeroed on both sides. Nothing else is touched.
+- Headers are compared after removing `Date`, `X-Bifrost-Request-Id`, `X-Request-Id`, `X-Bifrost-Trace-Id` and the latency headers, which change on every request.
+- Task 15 repeats this at scale (N ≥ 1,000) with latency percentiles.
+
+### Lifecycle facts observed (inputs to Tasks 10–14)
+
+1. **Halflife's hooks see requests that governance rejects.** The no-VK request is refused inside governance's `PreLLMHook`, which runs after Halflife's, so Halflife's pre-hook runs (7 runs for 6 request types + 1 fallback attempt) and its post-hook gets the 401 as an error. Capture must only finalise successful responses.
+2. **`PostLLMHook` runs once per stream chunk.** 20 post-hook runs: 6 for non-streaming attempts and 14 for the 14-chunk stream. Capture can't treat each `PostLLMHook` call as "the answer".
+3. **The gateway issues a request ID** (`X-Bifrost-Request-Id`, same value as `X-Request-Id`), usable to link a Halflife report to the gateway's own logs (Task 11).
+
+### Also changed
+
+- `scripts/run-gateway.sh` takes `GATEWAY_LOG_LEVEL` (default `info`).
+- `make up` now runs the gateway with Halflife enabled (`testenv/configs/halflife`); confirmed with `plugin status: halflife - active` in `logs/stack-gateway.log`.
+- `make smoke` runs both smoke tests.

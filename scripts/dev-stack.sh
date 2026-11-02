@@ -8,7 +8,7 @@
 #   mockllm     127.0.0.1:9101  synthetic key sk-halflife-mock
 #   mocktavily  127.0.0.1:9102  synthetic key tvly-halflife-mock
 #   gateway     127.0.0.1:8090  app dir data/dev-stack, config from
-#                               testenv/configs/mock-llm (override: STACK_CONFIG)
+#                               testenv/configs/halflife (override: STACK_CONFIG)
 #
 # Homebrew Redis is not enough: Bifrost's Redis vector store needs FT.*
 # (framework/vectorstore/redis.go), which ships only in builds with the search
@@ -19,7 +19,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RUN="$ROOT/data/dev-stack/run"
 APP_DIR="$ROOT/data/dev-stack/app"
 LOGS="$ROOT/logs"
-CONFIG="${STACK_CONFIG:-$ROOT/testenv/configs/mock-llm/config.json}"
+CONFIG="${STACK_CONFIG:-$ROOT/testenv/configs/halflife/config.json}"
 REDIS_IMAGE=redis:8.2.2
 REDIS_CONTAINER=halflife-redis
 REDIS_PORT="${REDIS_PORT:-6380}"

@@ -26,8 +26,8 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | # | Task | Done when | Needs |
 |---|---|---|---|
 | [x] 07 | Halflife plugin skeleton | Go module with `Init`, `GetName`, `Cleanup`, LLM and HTTP transport hooks (no-ops); config struct; unit tests pass | — |
-| [ ] 08 | In-tree registration | Plugin registered in `transports/bifrost-http/server/plugins.go` with placement and order; minimal upstream diff; gateway builds | — |
-| [ ] 09 | Plugin load smoke test | Gateway starts with Halflife enabled; startup log names it; requests pass through unchanged; `UPSTREAM_DIFF.md` v1 | — |
+| [x] 08 | In-tree registration | Plugin registered in `transports/bifrost-http/server/plugins.go` with placement and order; minimal upstream diff; gateway builds | — |
+| [x] 09 | Plugin load smoke test | Gateway starts with Halflife enabled; startup log names it; requests pass through unchanged; `UPSTREAM_DIFF.md` v1 | — |
 
 ## Milestone 1-B: Response capture
 

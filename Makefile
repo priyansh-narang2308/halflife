@@ -15,5 +15,6 @@ build:   ## Build the Bifrost gateway from bifrost/
 test:    ## Unit tests for the mocks
 	cd testenv && go test -race ./...
 
-smoke:   ## Gateway against the mock LLM (stops the stack's gateway first: same port)
+smoke:   ## Gateway smoke tests (need port 8090 free: run "make down" first)
 	testenv/smoke-mock-llm.sh
+	testenv/smoke-halflife.sh

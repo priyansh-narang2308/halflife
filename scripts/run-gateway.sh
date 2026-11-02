@@ -2,6 +2,7 @@
 # Run the Bifrost gateway with a clean environment.
 #
 # Usage: scripts/run-gateway.sh <app-dir> [port]
+# GATEWAY_LOG_LEVEL=debug|info|warn|error (default info).
 #
 # The gateway only sees PATH, HOME, TMPDIR, LANG and the non-empty values in
 # .env. Without this, Bifrost picks up any OPENAI_*/ANTHROPIC_*/MISTRAL_* key
@@ -27,4 +28,4 @@ if [ -f "$ROOT/.env" ]; then
   done < "$ROOT/.env"
 fi
 
-exec env -i "${env_args[@]}" "$BIN" -host 127.0.0.1 -port "$PORT" -app-dir "$APP_DIR" -log-style json
+exec env -i "${env_args[@]}" "$BIN" -host 127.0.0.1 -port "$PORT" -app-dir "$APP_DIR" -log-style json -log-level "${GATEWAY_LOG_LEVEL:-info}"
