@@ -91,6 +91,11 @@ func TestSearchFixturesAndLimits(t *testing.T) {
 		t.Error("usage present without include_usage")
 	}
 
+	_, out = call(t, ts, "/search", key, map[string]any{"query": "acme price"})
+	if n := len(out["results"].([]any)); n != 3 { // default max_results (10) keeps all 3
+		t.Errorf("default max_results kept %d of 3", n)
+	}
+
 	_, out = call(t, ts, "/search", key, map[string]any{"query": "unknown topic", "include_answer": true})
 	if n := len(out["results"].([]any)); n != 2 || out["answer"] != "Mock answer for: unknown topic" {
 		t.Errorf("default results=%d answer=%v", n, out["answer"])
@@ -126,10 +131,19 @@ func TestSearchErrors(t *testing.T) {
 		"missing query": map[string]any{},
 		"bad depth":     map[string]any{"query": "q", "search_depth": "deep"},
 		"bad max":       map[string]any{"query": "q", "max_results": 21},
+		"mode only":     map[string]any{"query": "q", "include_domains_mode": "prefer"},
 	} {
 		if resp, _ := call(t, ts, "/search", key, body); resp.StatusCode != 400 {
 			t.Errorf("%s: status %d", name, resp.StatusCode)
 		}
+	}
+	resp, out := call(t, ts, "/search", key, map[string]any{"query": []string{"not", "a", "string"}})
+	if detail, ok := out["detail"].([]any); resp.StatusCode != 422 || !ok || len(detail) != 1 {
+		t.Errorf("type error: status %d body %v", resp.StatusCode, out)
+	}
+	resp, _ = call(t, ts, "/search", key, map[string]any{"query": "q", "include_domains": []string{"acme.example"}, "include_domains_mode": "prefer"})
+	if resp.StatusCode != 200 {
+		t.Errorf("prefer with domains: status %d", resp.StatusCode)
 	}
 }
 
@@ -147,12 +161,16 @@ func TestExtract(t *testing.T) {
 	if results[0].(map[string]any)["raw_content"] != "full page" {
 		t.Errorf("fixture content = %v", results[0])
 	}
-	if got, _ := credits(t, out); got != 2 { // 6 successes, basic: ceil(6/5) = 2
+	if got, _ := credits(t, out); got != 1 { // 6 successes: one full block of 5
 		t.Errorf("basic credits = %v", got)
 	}
+	_, out = call(t, ts, "/extract", key, map[string]any{"urls": urls[:2], "include_usage": true})
+	if got, _ := credits(t, out); got != 0 { // 8 total: no new block, reports 0
+		t.Errorf("accruing credits = %v", got)
+	}
 	_, out = call(t, ts, "/extract", key, map[string]any{"urls": urls[:2], "extract_depth": "advanced", "include_usage": true})
-	if got, _ := credits(t, out); got != 2 { // ceil(2/5) * 2
-		t.Errorf("advanced credits = %v", got)
+	if got, _ := credits(t, out); got != 2 { // 10 total: second block, advanced rate
+		t.Errorf("advanced block credits = %v", got)
 	}
 	_, out = call(t, ts, "/extract", key, map[string]any{"urls": "https://a.example/mock-fail", "include_usage": true})
 	if got, _ := credits(t, out); got != 0 {
@@ -174,7 +192,7 @@ func TestStatsAndReset(t *testing.T) {
 	call(t, ts, "/search", key, map[string]any{"query": "q", "search_depth": "advanced"})
 	call(t, ts, "/search", key, map[string]any{"query": "q [mock:500]"})
 	call(t, ts, "/extract", key, map[string]any{"urls": "https://x.example"})
-	if searches, extracts, credits := s.Stats(); searches != 1 || extracts != 1 || credits != 3 {
+	if searches, extracts, credits := s.Stats(); searches != 1 || extracts != 1 || credits != 2 {
 		t.Errorf("stats = %d %d %d (failed requests must not count)", searches, extracts, credits)
 	}
 	if resp, err := http.Post(ts.URL+"/_mock/reset", "", nil); err != nil || resp.StatusCode != 204 {

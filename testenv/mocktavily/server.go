@@ -1,9 +1,9 @@
 // Package mocktavily is a deterministic stand-in for Tavily's Search and
 // Extract APIs, used until live behaviour is recorded (Task 21).
 //
-// Response shapes follow Tavily's public API reference. Fields we have not yet
-// observed live (notably usage.credits and Extract's per-request credit
-// rounding) are assumptions and must be reconciled against real responses.
+// Shapes, defaults, costs and error texts follow Tavily's OpenAPI spec and
+// docs as read on 2026-11-02 (see research/tavily-api-notes.md). Behaviour not
+// yet observed live is marked as an assumption and is reconciled in Task 21.
 //
 // Errors are injected by putting a marker in the search query:
 //
@@ -17,6 +17,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -58,6 +59,9 @@ type Server struct {
 	searches int
 	extracts int
 	credits  int
+	// extracted counts successful URL extractions. Tavily bills Extract per 5
+	// successful URLs across requests, so a single request can cost 0.
+	extracted int
 }
 
 // New returns a Server for cfg.
@@ -94,18 +98,20 @@ var injected = map[string]struct {
 	"[mock:429]": {429, "Your request has been blocked due to excessive requests. Please reduce the rate of requests."},
 	"[mock:432]": {432, "This request exceeds your plan's set usage limit. Please upgrade your plan or contact support."},
 	"[mock:433]": {433, "This request exceeds the pay-as-you-go limit. You can increase your limit on the Tavily dashboard."},
-	"[mock:434]": {434, "Live fetch capacity is unavailable for your plan right now. Retry without max_age_hours or later."},
+	"[mock:434]": {434, "Live content fetching is temporarily unavailable on your plan due to high demand. Retry shortly, or omit max_age_hours/fetch_timeout to be served from cache."},
 	"[mock:500]": {500, "Internal server error."},
 }
 
 var depthCredits = map[string]int{"basic": 1, "fast": 1, "ultra-fast": 1, "advanced": 2}
 
 type searchRequest struct {
-	Query         string `json:"query"`
-	SearchDepth   string `json:"search_depth"`
-	MaxResults    *int   `json:"max_results"`
-	IncludeAnswer any    `json:"include_answer"`
-	IncludeUsage  bool   `json:"include_usage"`
+	Query              string   `json:"query"`
+	SearchDepth        string   `json:"search_depth"`
+	MaxResults         *int     `json:"max_results"`
+	IncludeAnswer      any      `json:"include_answer"`
+	IncludeUsage       bool     `json:"include_usage"`
+	IncludeDomains     []string `json:"include_domains"`
+	IncludeDomainsMode string   `json:"include_domains_mode"`
 }
 
 func (s *Server) search(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +122,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	}
 	var req searchRequest
 	if err := json.Unmarshal(body, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid JSON body.")
+		writeDecodeError(w, err)
 		return
 	}
 	if strings.TrimSpace(req.Query) == "" {
@@ -141,7 +147,11 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, fmt.Sprintf("Invalid search_depth %q.", depth))
 		return
 	}
-	maxResults := 5
+	if req.IncludeDomainsMode != "" && len(req.IncludeDomains) == 0 {
+		writeError(w, http.StatusBadRequest, "include_domains_mode requires include_domains.")
+		return
+	}
+	maxResults := 10 // OpenAPI default; the best-practices page says 5
 	if req.MaxResults != nil {
 		if *req.MaxResults < 0 || *req.MaxResults > 20 {
 			writeError(w, http.StatusBadRequest, "max_results must be between 0 and 20.")
@@ -192,7 +202,7 @@ func (s *Server) extract(w http.ResponseWriter, r *http.Request) {
 	}
 	var req extractRequest
 	if err := json.Unmarshal(body, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid JSON body.")
+		writeDecodeError(w, err)
 		return
 	}
 	urls, err := parseURLs(req.URLs)
@@ -223,8 +233,13 @@ func (s *Server) extract(w http.ResponseWriter, r *http.Request) {
 		}
 		results = append(results, map[string]any{"url": u, "raw_content": content, "images": []any{}})
 	}
-	// Assumption until observed live: one credit block per 5 successful URLs, rounded up.
-	credits := (len(results) + 4) / 5 * perBlock
+	// Per the docs, every 5 successful extractions cost one block, accrued
+	// across requests. Assumption until observed live: accrual is per key.
+	s.mu.Lock()
+	before := s.extracted
+	s.extracted += len(results)
+	credits := (s.extracted/5 - before/5) * perBlock
+	s.mu.Unlock()
 
 	s.record(&s.extracts, credits)
 	resp := map[string]any{
@@ -281,7 +296,7 @@ func (s *Server) requests(w http.ResponseWriter, _ *http.Request) {
 
 func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
 	s.mu.Lock()
-	s.searches, s.extracts, s.credits = 0, 0, 0
+	s.searches, s.extracts, s.credits, s.extracted = 0, 0, 0, 0
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -291,6 +306,19 @@ func normalise(q string) string { return strings.ToLower(strings.TrimSpace(q)) }
 func digest(b []byte) string {
 	sum := sha256.Sum256(b)
 	return hex.EncodeToString(sum[:8])
+}
+
+// writeDecodeError mirrors Tavily: type mismatches are 422 with a detail
+// array; malformed JSON is 400.
+func writeDecodeError(w http.ResponseWriter, err error) {
+	var typeErr *json.UnmarshalTypeError
+	if errors.As(err, &typeErr) {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"detail": []any{map[string]any{
+			"type": typeErr.Value + "_type", "loc": []string{"body", typeErr.Field}, "msg": "Input should be a valid " + typeErr.Type.String(),
+		}}})
+		return
+	}
+	writeError(w, http.StatusBadRequest, "Invalid JSON body.")
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
