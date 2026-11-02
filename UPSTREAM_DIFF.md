@@ -36,15 +36,27 @@ git -C bifrost diff --stat upstream..halflife
 | `plugins/halflife/*_test.go`, `version` | Unit tests; version `0.1.0` |
 - **Upstream:** everything else, unchanged.
 
-## Modified upstream files
+## Modified upstream files (v1)
 
-None yet. Planned for Task 08, kept minimal:
+Three upstream files, 24 added lines, nothing removed or rewritten (fork commit `c7c0589`).
+
+| File | Change | Why |
+|---|---|---|
+| `transports/bifrost-http/server/plugins.go` | +1 import; +6 lines: a `halflife` case in `loadBuiltinPlugin` (same pattern as `semanticcache`); +11 lines: block 11 in `loadBuiltinPlugins`, which registers Halflife only when enabled in `plugins` and sets placement `pre_builtin`, order `math.MinInt` | Release binaries are static, so plugins can't be loaded as `.so` files; built-ins are compiled in here. The placement puts Halflife first in pre-hooks and **last** in post-hooks, so it sees the final response (verified from the gateway's debug log, Task 09). |
+| `transports/bifrost-http/lib/config.go` | +1 import; `halflife.PluginName` appended to `builtinPluginNames` | That list is the single source of truth for built-ins. Being in it stops the custom-plugin loader from loading Halflife a second time, and keeps its fixed placement from being overridden by config. |
+| `transports/go.mod` | `require …/plugins/halflife v0.1.0` + `replace … => ../plugins/halflife` | Release builds run with `GOWORK=off` and resolve published versions; the local module needs an explicit `replace`. `go.sum` unchanged: the plugin adds no dependency the gateway didn't already have. |
+
+Planned:
 
 | File | Planned change | Why |
 |---|---|---|
-| `transports/bifrost-http/server/plugins.go` | Register Halflife as a built-in plugin | Release binaries are static, so plugins can't be loaded as `.so` files; built-ins must be compiled in through this file |
-| `transports/go.mod`, `transports/go.sum` | `require` + `replace` for the local plugin module | Release builds run with `GOWORK=off` and resolve published module versions; a local module needs an explicit `replace` |
 | `transports/bifrost-http/handlers/` (Task 25) | Add a report endpoint handler | Plugins can't add HTTP routes |
+
+## Checks after the change
+
+- `GOWORK=off go build ./...` and `go vet` in `transports/` succeed. `go version -m` on the binary shows `github.com/maximhq/bifrost/plugins/halflife v0.1.0 => ../plugins/halflife`.
+- Upstream tests in `transports/bifrost-http/server` and `.../lib` pass when run with a clean environment. In a shell that exports `ANTHROPIC_API_KEY`, 5 `lib` tests fail with "expected 1 keys for provider anthropic, got 2". That's Bifrost's provider auto-detection reading the shell (D7), and it's unrelated to Halflife.
+- `gofmt -l` flags `lib/config.go` at line ~6825. That's upstream code, unformatted before our change; we leave it as is.
 
 ## Compatibility
 
