@@ -48,6 +48,25 @@
             "weight": 1.0
           }
         ]
+      },
+      {
+        "name": "Halflife verifier",
+        "id": "vk-verifier",
+        "value": "sk-bf-halflife-verifier",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "fail-500"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
       }
     ]
   },
@@ -59,7 +78,8 @@
         "queue_size": 256,
         "workers": 2,
         "max_claims_per_response": 5,
-        "tavily_relay": "tavily"
+        "tavily_relay": "tavily",
+        "verifier_virtual_key": "vk-verifier"
       }
     }
   ]

@@ -48,6 +48,25 @@
             "weight": 1.0
           }
         ]
+      },
+      {
+        "name": "Halflife verifier",
+        "id": "vk-verifier",
+        "value": "sk-bf-halflife-verifier",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "fail-500"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
       }
     ]
   }

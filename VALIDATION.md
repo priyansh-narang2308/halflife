@@ -604,3 +604,39 @@ Per run: `halflife: stopped (enqueued=5 dropped=0 audited=5 failed=0 abandoned=0
 
 1. **Retries are invisible to plugins.** With `max_retries: 2`, each failing attempt reaches the provider 3 times, but Halflife's pre-hook still runs 11 times in both modes: once per attempt (primary or fallback), never per retry. So a retried attempt can't produce duplicate captures.
 2. **All attempts failing returns the primary's error.** The response is 500 (from `fail-500`), not the last fallback's 503. The script's first run expected 503; that was a wrong guess on my part, now recorded as observed.
+
+## Task 14: Recursion guard and streaming status (2 Nov 2026)
+
+**Status:** done. Fork commit `d1c2f45`. Real gateway and mock provider only.
+
+### Behaviour
+
+- **Recursion guard.** New config `verifier_virtual_key`: the governance virtual key **ID** the verifier uses for its own LLM calls through the gateway. If a request's resolved VK ID matches, `PostLLMHook` records it as `verifier` on every attempt (the reason is sticky, like streaming), so it is never captured, queued or audited. Empty disables the guard; it never matches a request with no VK.
+- **Other paths can't recurse either.** Tavily searches go through a Bifrost relay, and Halflife does not implement `RelayPlugin`, so relay calls never reach its hooks. In-process calls that skip the HTTP transport have no slot, so they are never captured.
+- **`X-Halflife-Status` on every response:** `queued` (with `X-Halflife-Report`), or `not-audited; reason=<failed|streaming|unsupported|verifier|queue-full>`. It is added to `Access-Control-Expose-Headers` like the report header.
+- **Streams are explicitly not audited in M1.** For streams the gateway writes headers before the stream's post-hooks run, so the status comes from `Content-Type: text/event-stream` when the outcome isn't known yet.
+
+### Unit tests (`go test -race -count=3`: all pass; coverage 95.1%)
+
+| Test | Proves |
+|---|---|
+| `TestVerifierTrafficNeverAudited` | Verifier VK: plain, primary-fail + fallback-success, and streaming requests all produce 0 captures (`SkippedVerifier: 3`); a tenant request right after is captured |
+| `TestVerifierGuardDisabledByDefault` | No `verifier_virtual_key` → a request with an empty VK ID is still captured |
+| `TestStatusHeaderWhenNotAudited` | failed, non-2xx, unsupported, streaming, verifier → matching `not-audited` status, no report, header exposed |
+| `TestStatusHeaderBeforeFinalize` | Buffered response before finalize → no headers; SSE response before its post-hooks → `not-audited; reason=streaming` |
+| `TestPluginQueuesCapturesForAudit` (extended) | Full queue → `not-audited; reason=queue-full` |
+| `TestConfigDefaults` / `TestConfigJSON` (extended) | `verifier_virtual_key` decoded and trimmed |
+
+### Real gateway (`testenv/smoke-halflife.sh`, 60 checks, 2/2 runs; `make smoke` all pass)
+
+Both test configs gain a second virtual key, `vk-verifier` (synthetic value `sk-bf-halflife-verifier`); the Halflife config sets `verifier_virtual_key: "vk-verifier"`. A seventh request is sent with that key.
+
+| Request | Status | `X-Halflife-Status` | Captured |
+|---|---|---|---|
+| ok, default, fallback | 200 | `queued` | yes (3) |
+| stream | 200 | `not-audited; reason=streaming` | no |
+| fail503 | 503 | `not-audited; reason=failed` | no |
+| novk | 401 | `not-audited; reason=failed` | no |
+| verifier | 200 | `not-audited; reason=verifier` | **no**: `halflife: verifier request not audited` logged once; no capture with `vk=vk-verifier` |
+
+The verifier request still reaches the provider and its body is byte-identical with Halflife off. Shutdown totals are unchanged: `enqueued=3 … audited=3`. The on/off header comparison now removes all `X-Halflife-*` headers and their expose-list entries.

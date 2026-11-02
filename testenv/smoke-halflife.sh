@@ -13,6 +13,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GW=http://127.0.0.1:8090
 MOCK=http://127.0.0.1:9101
 VK=sk-bf-halflife-smoke
+VERIFIER_VK=sk-bf-halflife-verifier # Halflife's own key (id vk-verifier); its traffic is never audited
 TMP="$(mktemp -d)"
 mock_pid="" gw_pid=""
 stop_gateway() { [ -n "$gw_pid" ] && { kill "$gw_pid" 2>/dev/null || true; wait "$gw_pid" 2>/dev/null || true; }; gw_pid=""; }
@@ -47,11 +48,11 @@ run_cases() {
     # it varies between identical requests with or without Halflife, so it is zeroed.
     sed -E 's/"(upstream_)?latency":[0-9.]+/"\1latency":0/g' "$out/$name.body" > "$out/$name.norm"
     tr -d '\r' < "$out/$name.raw" | grep -viE '^(date|x-bifrost-request-id|x-request-id|x-bifrost-trace-id|x-bifrost-upstream-latency-ms|x-bifrost-latency-ms):' > "$out/$name.headers"
-    # Halflife's only intended change: the report header, and its name added to
+    # Halflife's only intended change: its X-Halflife-* headers, and their names added to
     # Access-Control-Expose-Headers. Removed for the on/off comparison and checked separately.
     # Rewriting a header moves it to the end in fasthttp, and header order carries no
     # meaning in HTTP, so lines are compared sorted (status line kept first).
-    grep -viE '^x-halflife-report:' "$out/$name.headers" | sed 's/, x-halflife-report$//' \
+    grep -viE '^x-halflife-' "$out/$name.headers" | sed -E 's/(, x-halflife-[a-z]+)+$//' \
       | { IFS= read -r status; echo "$status"; sort; } > "$out/$name.cmp"
   }
   req ok        '{"model":"openai/ok","messages":[{"role":"user","content":"How much does the Acme Cloud Pro plan cost?"}]}' -H "x-bf-vk: $VK"
@@ -60,6 +61,7 @@ run_cases() {
   req fail503   '{"model":"openai/fail-503","messages":[{"role":"user","content":"q"}]}' -H "x-bf-vk: $VK"
   req fallback  '{"model":"openai/fail-500","fallbacks":["openai/ok"],"messages":[{"role":"user","content":"What is the latest version of the Acme SDK?"}]}' -H "x-bf-vk: $VK"
   req novk      '{"model":"openai/ok","messages":[{"role":"user","content":"q"}]}'
+  req verifier  '{"model":"openai/ok","messages":[{"role":"user","content":"How much does the Acme Cloud Pro plan cost?"}]}' -H "x-bf-vk: $VERIFIER_VK"
 }
 
 fails=0
@@ -76,7 +78,7 @@ start_gateway halflife "$LOG"
 run_cases "$TMP/on"
 stop_gateway
 
-check "startup log: plugin initialized" "$(grep -c '"halflife: initialized (queue_size=256 workers=2 max_claims=5 tavily_relay=tavily)"' "$LOG")" 1
+check "startup log: plugin initialized" "$(grep -c '"halflife: initialized (queue_size=256 workers=2 max_claims=5 tavily_relay=tavily verifier_vk=vk-verifier)"' "$LOG")" 1
 check "startup log: plugin status active" "$(grep -c '"plugin status: halflife - active"' "$LOG")" 1
 # Shutdown drains the audit queue: everything queued was audited, nothing lost.
 check "shutdown log: queue drained" "$(grep -c '"halflife: stopped (enqueued=3 dropped=0 audited=3 failed=0 abandoned=0 queued=0)"' "$LOG")" 1
@@ -88,7 +90,7 @@ pre=$(grep -o '"running pre-hook for plugin [^"]*"' "$LOG" | sed 's/.*plugin //;
 post=$(grep -o '"running post-hook for plugin [^"]*"' "$LOG" | sed 's/.*plugin //; s/"$//' || true)
 # The no-VK request counts too: governance rejects it in its own PreLLMHook,
 # which runs after Halflife's, so Halflife's post-hook receives the 401 error.
-check "debug log: halflife pre-hook ran on every attempt" "$(echo "$pre" | grep -cx halflife)" 7  # ok, default, stream, 503, fallback x2, novk
+check "debug log: halflife pre-hook ran on every attempt" "$(echo "$pre" | grep -cx halflife)" 8  # ok, default, stream, 503, fallback x2, novk, verifier
 check "pre-hooks: halflife always immediately before telemetry (first overall)" \
   "$(echo "$pre" | awk '(prev=="halflife")!=($0=="telemetry"){bad=1} {prev=$0} END{print bad?"no":"yes"}')" yes
 check "post-hooks: halflife always immediately after telemetry (last overall)" \
@@ -106,6 +108,9 @@ check "capture: scripted answer" "$(echo "$captures" | grep -c '^chat_completion
 check "capture: request id and tenant recorded" "$(echo "$captures" | grep -cE ' request=[0-9a-f-]{36} vk=vk-smoke$')" 3
 check "capture: fallback taken from the successful attempt" "$(echo "$captures" | grep -c 'fallback=true')" 1
 check "capture: stream marked, not captured" "$(grep -c '"halflife: streaming response not audited"' "$LOG")" 1
+# Recursion guard: the verifier's own request reached the provider but was not captured.
+check "capture: verifier request marked, not captured" "$(grep -c '"halflife: verifier request not audited"' "$LOG")" 1
+check "capture: no capture for the verifier key" "$(echo "$captures" | grep -c 'vk=vk-verifier' || true)" 0
 
 # Report identity: captured responses carry X-Halflife-Report, matching the
 # capture log and the gateway's own request ID; other responses carry none.
@@ -115,11 +120,19 @@ for c in ok default fallback; do
   id=$(report "$c")
   check "report header: $c" "$(echo "$id" | grep -cE '^hlr_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')" 1
   check "report header matches capture and request id: $c" "$(echo "$captures" | grep -c "report=$id request=$(reqid "$c") ")" 1
-  check "report header exposed to browsers: $c" "$(grep -ciE '^access-control-expose-headers:.*, x-halflife-report$' "$TMP/on/$c.headers")" 1
+  check "report header exposed to browsers: $c" "$(grep -ciE '^access-control-expose-headers:.*, x-halflife-status, x-halflife-report$' "$TMP/on/$c.headers")" 1
 done
-for c in stream fail503 novk; do
+for c in stream fail503 novk verifier; do
   check "no report header: $c" "$(report "$c" | grep -c . || true)" 0
 done
+# Every response says whether its answer will be audited, and why not.
+status() { tr -d '\r' < "$TMP/on/$1.raw" | awk -F': ' 'tolower($1)=="x-halflife-status"{print $2}'; }
+for c in ok default fallback; do check "status header: $c" "$(status "$c")" queued; done
+check "status header: stream (not audited in M1)" "$(status stream)" "not-audited; reason=streaming"
+check "status header: fail503" "$(status fail503)" "not-audited; reason=failed"
+check "status header: novk" "$(status novk)" "not-audited; reason=failed"
+check "status header: verifier" "$(status verifier)" "not-audited; reason=verifier"
+check "status header exposed to browsers: stream" "$(grep -ciE '^access-control-expose-headers:.*, x-halflife-status$' "$TMP/on/stream.headers")" 1
 check "report ids distinct" "$(for c in ok default fallback; do report "$c"; done | sort -u | grep -c .)" 3
 
 # Audit queue: each reported ID reached a worker exactly once.
@@ -128,12 +141,12 @@ check "audits: one per report header" "$(echo "$audits" | grep -c .)" 3
 check "audits: exactly the reported ids" "$(echo "$audits" | tr '\n' ' ')" "$(for c in ok default fallback; do report "$c"; done | sort | tr '\n' ' ')"
 
 # 3. Responses identical with and without Halflife.
-for c in ok default stream fail503 fallback novk; do
+for c in ok default stream fail503 fallback novk verifier; do
   check "body non-empty: $c" "$([ -s "$TMP/on/$c.body" ] && echo yes || echo no)" yes
   check "body identical: $c" "$(cmp -s "$TMP/off/$c.norm" "$TMP/on/$c.norm" && echo same || echo different)" same
-  check "headers identical apart from the report header: $c" "$(diff -q "$TMP/off/$c.cmp" "$TMP/on/$c.cmp" >/dev/null && echo same || echo different)" same
+  check "headers identical apart from X-Halflife-*: $c" "$(diff -q "$TMP/off/$c.cmp" "$TMP/on/$c.cmp" >/dev/null && echo same || echo different)" same
 done
-check "status codes: ok/503/fallback/novk" \
-  "$(for c in ok fail503 fallback novk; do head -1 "$TMP/on/$c.headers" | awk '{printf "%s ", $2}'; done)" "200 503 200 401 "
+check "status codes: ok/503/fallback/novk/verifier" \
+  "$(for c in ok fail503 fallback novk verifier; do head -1 "$TMP/on/$c.headers" | awk '{printf "%s ", $2}'; done)" "200 503 200 401 200 "
 
 [ "$fails" -eq 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
