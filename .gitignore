@@ -24,3 +24,6 @@ logs/*.log
 
 # Bifrost fork: its own Git repo, reproduced by scripts/bootstrap-bifrost.sh
 /bifrost/
+
+# Local snapshots of third-party docs (reference only, not redistributed)
+/research/vendor/

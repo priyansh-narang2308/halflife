@@ -32,12 +32,14 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D9 | Halflife's UI lives inside Bifrost's own dashboard (Task 47) | The dashboard builds from source here, so Halflife can appear as a native Bifrost page, which is a stronger story than a separate site. |
 | D10 | Test configs list mock model names explicitly in both the virtual key and the provider key | `["*"]` only admits models in Bifrost's catalog; the mock's names aren't in it. Same rule will apply to OpenRouter free models. |
 | D11 | Keep `enforce_auth_on_inference` on (its default); every test request carries a virtual key | Matches a real deployment, and per-app identity (virtual keys) is what Halflife attributes reports and spend to. |
+| D12 | Tavily budget: 9,000 credits (Researcher plan + add-on), pay-as-you-go off | Spend stops at the cap with `432`, no billing. Plan: ~50 for live validation, ≤6,000 for evaluation, rest for demo/judging; every call sends `include_usage`. See `research/tavily-api-notes.md`. |
+| D13 | Use Tavily's `max_age_hours` (content freshness, new in Oct 2026) as the core freshness lever, `X-Project-ID` = tenant and `X-Session-Id` = report for attribution inside Tavily | Directly matches Tavily #01 and gives tenant attribution that doesn't depend on Bifrost alone. Header forwarding through the relay is checked in Task 20. |
 
 ## Blockers and inputs needed
 
 | Item | Needed by | Status |
 |---|---|---|
-| `TAVILY_API_KEY` in `.env` | Task 21 (live validation) | Missing. Mock Tavily is used until then. |
+| `TAVILY_API_KEY` in `.env` | Task 21 (live validation) | Account ready (9,000 credits); key not yet in `.env`. Mock Tavily is used until then. |
 | `OPENROUTER_API_KEY` in `.env` (optional 2nd provider for the fallback demo) | Tasks 26, 27, 42 | Missing. Mock provider is used until then. |
 | Docker daemon running, or approval to use Homebrew Redis | Task 06 | Docker installed but not running; Redis 8.6.3 installed but not started |
 | Go 1.27.3 | Task 02 | Resolved |
