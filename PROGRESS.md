@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 12 (bounded worker pool), 2 Nov 2026.
-- **Next:** Task 13 (fallback correctness).
+- **Last completed:** Task 13 (fallback correctness), 2 Nov 2026.
+- **Next:** Task 14 (recursion guard and streaming).
 
 ## Completed
 
@@ -23,6 +23,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 10 | 2026-11-02 | Final-answer capture (fork commit `749649c`): per-request slot bridges core and transport hooks; question + answer copied out of pooled objects, finalized once; failed/streaming/non-text counted. 13 new unit tests (95.7% coverage, `-race`); smoke test 31/31 ×3 with 3 captures from the real gateway |
 | 11 | 2026-11-02 | Report identity (fork commit `ee3c559`): UUIDv7 report ID in `X-Halflife-Report` (exposed to browsers); capture records gateway request ID and the tenant's virtual key ID/name, never its secret. 5 new unit tests; smoke test 45/45 ×3, header IDs matched to capture log and `X-Bifrost-Request-Id` |
 | 12 | 2026-11-02 | Bounded worker pool (fork commit `33dfa10`): non-blocking submit, drop + count when full (report header withdrawn), per-audit timeout on the pool's context, bounded drain on shutdown. 9 pool tests ×10 under `-race`; smoke test 47/47 ×3: 3 reports → 3 audits, clean drain |
+| 13 | 2026-11-02 | `testenv/fallback-halflife.sh`: 6 scenarios × {max_retries 0, 2}, 71/71 ×3. Any number of failed attempts or retries + 1 success → exactly 1 audit of the served answer; all attempts fail → 0 audits, no report header |
 
 ## Decisions
 

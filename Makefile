@@ -18,3 +18,4 @@ test:    ## Unit tests for the mocks
 smoke:   ## Gateway smoke tests (need port 8090 free: run "make down" first)
 	testenv/smoke-mock-llm.sh
 	testenv/smoke-halflife.sh
+	testenv/fallback-halflife.sh

@@ -582,3 +582,25 @@ PASS  shutdown log: queue drained
 ```
 
 Not tested through the gateway: saturation. With the placeholder audit, workers never fall behind; the unit tests cover it, and Task 15's load run reports drops.
+
+## Task 13: Fallback correctness (2 Nov 2026)
+
+**Status:** done. Command: `testenv/fallback-halflife.sh` (part of `make smoke`). Real gateway, mock provider. No plugin code changed: this tests Tasks 10–12 against every fallback shape.
+
+Each scenario checks the attempts that reached the mock provider (per model), the HTTP status, the `X-Halflife-Report` header, and, after shutdown drains the queue, that the reported ID was captured once with the right fallback flag and audited exactly once. The whole set runs twice: `max_retries` 0 and 2.
+
+| Scenario | Provider attempts (r=0 / r=2) | Status | Audits |
+|---|---|---|---|
+| `ok`, no fallbacks | ok×1 | 200 | 1, `fallback=false` |
+| `fail-500` → `ok` | fail-500×1 / ×3, ok×1 | 200 | 1, `fallback=true` |
+| `fail-500` → `fail-503` → `ok` | fail-500×1/×3, fail-503×1/×3, ok×1 | 200 | 1, `fallback=true` |
+| `fail-429` → `ok` | fail-429×1 / ×3, ok×1 | 200 | 1, `fallback=true` |
+| `fail-500` → `fail-503` | each ×1 / ×3 | 500 | **0**, no report header |
+| `ok` → `fail-500` (unused) | ok×1 | 200 | 1, `fallback=false` |
+
+Per run: `halflife: stopped (enqueued=5 dropped=0 audited=5 failed=0 abandoned=0 queued=0)`. 71/71 checks on 3 consecutive runs.
+
+### Observed gateway behaviour
+
+1. **Retries are invisible to plugins.** With `max_retries: 2`, each failing attempt reaches the provider 3 times, but Halflife's pre-hook still runs 11 times in both modes: once per attempt (primary or fallback), never per retry. So a retried attempt can't produce duplicate captures.
+2. **All attempts failing returns the primary's error.** The response is 500 (from `fail-500`), not the last fallback's 503. The script's first run expected 503; that was a wrong guess on my part, now recorded as observed.
