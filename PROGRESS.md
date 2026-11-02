@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 09 (plugin load smoke test), 2 Nov 2026.
-- **Next:** Task 10 (final-response capture).
+- **Last completed:** Task 10 (final-response capture), 2 Nov 2026.
+- **Next:** Task 11 (report identity).
 
 ## Completed
 
@@ -20,6 +20,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 07 | 2026-11-02 | `bifrost/plugins/halflife` module (fork commit `ff8784d`): config with defaults and validation, all LLM and HTTP transport hooks as pass-through no-ops; 8/8 tests under `-race`, 100% coverage, against the published core v1.14.1 |
 | 08 | 2026-11-02 | Halflife registered as a built-in (fork commit `c7c0589`): 3 upstream files, +24 lines; placement `pre_builtin`/`MinInt`; gateway builds with `GOWORK=off`, `go.sum` unchanged; upstream server/lib tests pass in a clean env |
 | 09 | 2026-11-02 | `testenv/smoke-halflife.sh`: 27/27 checks, 5/5 runs. Plugin loads (`active`), stops cleanly; hook order verified from the gateway's debug log; 6 request types return identical bodies and headers with Halflife on vs off. `make up` now runs Halflife by default |
+| 10 | 2026-11-02 | Final-answer capture (fork commit `749649c`): per-request slot bridges core and transport hooks; question + answer copied out of pooled objects, finalized once; failed/streaming/non-text counted. 13 new unit tests (95.7% coverage, `-race`); smoke test 31/31 ×3 with 3 captures from the real gateway |
 
 ## Decisions
 
@@ -41,6 +42,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D14 | Redis for the semantic cache = Docker `redis:8.2.2` on **127.0.0.1:6380**, ephemeral (no RDB/AOF) | Homebrew Redis 8.6.3 has no search module (`FT.*` → unknown command) and Bifrost's Redis vector store requires it (`framework/vectorstore/redis.go:82`). The official `redis:8` image bundles search, vectorset, JSON, bloom and timeseries. Port 6379 belongs to your `falkordb` container. The embedded `chromem` store stays as a zero-infrastructure fallback. |
 | D15 | Module path `github.com/maximhq/bifrost/plugins/halflife` | Same namespace as the fork's other plugins, so `make setup-workspace` and the `replace` in `transports/go.mod` work like the built-ins. Authorship is ours and is recorded in `UPSTREAM_DIFF.md`; the path is only the fork's module namespace. |
 | D16 | Halflife is placement `pre_builtin`, order `math.MinInt`, fixed in code (not configurable) | Post-hooks run in reverse (`core/bifrost.go` `RunPostLLMHooks`; `handlers/middlewares.go`), so Halflife's post-hooks run last and see the final response, and its pre-hook runs before the semantic cache can short-circuit. Cost: its own hook time falls outside the telemetry plugin's measurement, so overhead is measured directly instead (Task 15). |
+| D17 | Capture hands off through a per-request `*slot` pointer opened in `HTTPTransportPreHook`, not through context values | Observed: the gateway gives transport hooks and core hooks different root contexts. Values flow transport → core (copied) but not back, so anything `PostLLMHook` sets is invisible to `HTTPTransportPostHook`. A pointer copied forward is shared by both. |
+| D18 | Fallback status comes from `BifrostContextKeyFallbackIndex`, not `RoutingInfo.IsFallback` | Core sets `IsFallback` on the response only after post-hooks run (`core/bifrost.go` ~6413), so it is always false inside `PostLLMHook`. The fallback index is set before each attempt. |
 
 ## Blockers and inputs needed
 

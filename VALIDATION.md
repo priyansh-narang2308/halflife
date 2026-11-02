@@ -425,3 +425,72 @@ ALL PASS
 - `scripts/run-gateway.sh` takes `GATEWAY_LOG_LEVEL` (default `info`).
 - `make up` now runs the gateway with Halflife enabled (`testenv/configs/halflife`); confirmed with `plugin status: halflife - active` in `logs/stack-gateway.log`.
 - `make smoke` runs both smoke tests.
+
+## Task 10: Final-response capture (2 Nov 2026)
+
+**Status:** done. Fork commit `749649c` (`plugins/halflife/capture.go`, hook changes in `main.go`, `capture_test.go`).
+
+### Probe: how the gateway's contexts relate
+
+A temporary build logged each hook's root context pointer, the request ID, and a marker value (the probe code was removed afterwards; it was never committed). Request: `fail-500` with fallback to `ok`.
+
+```
+PROBE httppre   root=…67e0  reqid=<nil>
+PROBE prellm    root=…7500  reqid=b3b242f9-…  sees=set-in-httppre
+PROBE postllm   root=…7500  reqid=b3b242f9-…
+PROBE prellm    root=…7500  reqid=b3b242f9-…  sees=set-in-postllm
+PROBE postllm   root=…7500  reqid=b3b242f9-…
+PROBE httppost  root=…67e0  reqid=<nil>  sees=set-in-httppre  hdr=b3b242f9-…  bodylen=695
+```
+
+1. Transport hooks and core hooks run on **different root contexts**. Values flow transport → core, but nothing set in the core hooks reaches `HTTPTransportPostHook`. Hence the slot pointer (D17).
+2. All attempts of a request share one core context (the fallback's `PreLLMHook` saw the failed attempt's value), so per-attempt state must be overwritten, never accumulated.
+3. The transport side has no request ID in its context; it is in the response header `X-Bifrost-Request-Id` (used in Task 11).
+
+### Design
+
+- `HTTPTransportPreHook` puts a fresh `*slot` on the transport context. `PreLLMHook` stores the last user message. `PostLLMHook` records each attempt's outcome, so the last attempt wins. `HTTPTransportPostHook` finalizes exactly once: a capture only when an attempt succeeded **and** the HTTP status is 2xx.
+- Copied out of pooled objects: question (≤ 8 KiB), answer (≤ 64 KiB, cut on a rune boundary, `Truncated` flag), request type, serving provider/model, requested model, fallback flag. Supported: Chat Completions and the Responses API (only `output_text` blocks of assistant messages; reasoning and tool calls are excluded).
+- Outcomes counted in `Stats`: captured, skipped failed / streaming / unsupported. The sink is a no-op until the worker pool (Task 12).
+- Hooks still return their inputs unchanged.
+
+### Unit tests (`GOWORK=off go test -race -cover`)
+
+Tests model the gateway as observed: separate transport and core roots, one-way copy, plugin-scoped contexts released after each hook, and attempts numbered with `BifrostContextKeyFallbackIndex`.
+
+| Test | Shows |
+|---|---|
+| `TestCaptureSuccessfulRequest` | All fields copied; nothing captured before the HTTP post-hook |
+| `TestCaptureFallbackKeepsOnlySuccessfulAttempt` | Failed primary + successful fallback → 1 capture, `IsFallback` |
+| `TestNoCaptureWhenRequestFails` | All attempts fail / governance rejection / success but non-2xx / no LLM hooks → 0 captures |
+| `TestStreamingIsMarkedNotCaptured` | 5 chunk post-hooks → 0 captures, 1 streaming skip |
+| `TestUnsupportedResponseTypes` | Embedding, text completion, chat without text → counted unsupported |
+| `TestFinalizeOnce` | Two HTTP post-hooks → 1 capture |
+| `TestNoSlotIsNoOp` | Go SDK use (no HTTP hooks) → nothing happens |
+| `TestResponsesAPIAnswer`, `TestChatContentBlocks` | Text extraction for both APIs; last user message chosen |
+| `TestClip` | Caps applied on rune boundaries |
+| `TestCaptureDoesNotAliasSourceBuffers` | Overwriting the source bytes after capture leaves the capture intact |
+| `TestConcurrentRequestsAreIsolated` | 200 parallel requests, ⅓ with fallbacks: every capture matches its own question |
+
+`ok … coverage: 95.7% of statements`; `go vet` and `gofmt` clean.
+
+**Mutation check:** removing the copy in `clip` makes `TestCaptureDoesNotAliasSourceBuffers` fail (the capture becomes `XXXX…`).
+
+### Real gateway (`testenv/smoke-halflife.sh`, now 31 checks)
+
+```
+captures:
+  chat_completion answer from openai/ok (75 bytes, fallback=false)
+  chat_completion answer from openai/ok (28 bytes, fallback=false)
+  chat_completion answer from openai/ok (68 bytes, fallback=true)
+PASS  capture: one per successful request
+PASS  capture: scripted answer
+PASS  capture: fallback taken from the successful attempt
+PASS  capture: stream marked, not captured
+```
+
+31/31 on 3 consecutive runs; bodies and headers still identical with Halflife on vs off. 75 bytes is the scripted Acme Pro reply in `fixtures/llm.json`.
+
+### Bug found by the smoke test
+
+The first run reported `fallback=false` for the fallback request. Core sets `RoutingInfo.IsFallback` only after post-hooks run, although the client sees it (`"is_fallback":true`, `X-Bifrost-Routing-Info-Is-Fallback: true`). The fix reads `BifrostContextKeyFallbackIndex` (D18). The unit tests had set `IsFallback` on the response directly, which hid the bug; they now model what core actually provides.

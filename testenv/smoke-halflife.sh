@@ -89,6 +89,16 @@ check "post-hooks: halflife always immediately after telemetry (last overall)" \
 echo "pre-hook order (one attempt):  $(echo "$pre" | awk '$0=="halflife"&&n++{exit} {print}' | tr '\n' ' ')"
 echo "post-hook order (one attempt): $(echo "$post" | awk '{print} $0=="halflife"{exit}' | tr '\n' ' ')"
 
+# Capture (debug log): exactly the three successful non-streaming requests are
+# captured, once each; the fallback is captured from the attempt that succeeded.
+# Answer sizes are the byte lengths of the scripted replies in fixtures/llm.json.
+captures=$(grep -o '"halflife: captured [^"]*"' "$LOG" | sed 's/^"halflife: captured //; s/"$//' || true)
+echo "captures:"; echo "$captures" | sed 's/^/  /'
+check "capture: one per successful request" "$(echo "$captures" | grep -c .)" 3
+check "capture: scripted answer" "$(echo "$captures" | grep -c '^chat_completion answer from openai/ok (75 bytes, fallback=false)$')" 1
+check "capture: fallback taken from the successful attempt" "$(echo "$captures" | grep -c 'fallback=true')" 1
+check "capture: stream marked, not captured" "$(grep -c '"halflife: streaming response not audited"' "$LOG")" 1
+
 # 3. Responses identical with and without Halflife.
 for c in ok default stream fail503 fallback novk; do
   check "body non-empty: $c" "$([ -s "$TMP/on/$c.body" ] && echo yes || echo no)" yes
