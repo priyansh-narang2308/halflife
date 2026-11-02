@@ -24,12 +24,21 @@ git -C bifrost diff --stat upstream..halflife
 
 ## Ownership
 
-- **Ours:** everything under `bifrost/plugins/halflife/` (from Task 07), plus the files listed under "Modified upstream files".
+- **Ours:** everything under `bifrost/plugins/halflife/` (added in fork commit `ff8784d`), plus the files listed under "Modified upstream files". The module path `github.com/maximhq/bifrost/plugins/halflife` is the fork's namespace, not a claim of upstream authorship.
+
+## Added files
+
+| Path | Contents |
+|---|---|
+| `plugins/halflife/go.mod`, `go.sum` | Own module; requires only `core v1.14.1`, the version release builds pin |
+| `plugins/halflife/config.go` | `Config` (`queue_size`, `workers`, `max_claims_per_response`, `tavily_relay`), defaults, validation |
+| `plugins/halflife/main.go` | `Init`, `GetName`, `Cleanup`, pass-through LLM and HTTP transport hooks |
+| `plugins/halflife/*_test.go`, `version` | Unit tests; version `0.1.0` |
 - **Upstream:** everything else, unchanged.
 
 ## Modified upstream files
 
-None yet (Task 03). Planned for Task 08, kept minimal:
+None yet. Planned for Task 08, kept minimal:
 
 | File | Planned change | Why |
 |---|---|---|

@@ -345,3 +345,34 @@ After `make down`, `make test` (15/15 under `-race`) and `make smoke` (12/12, AL
 - The gateway's app dir is recreated on each `up`, so it always loads `config.json` and never a stale config DB. The config defaults to `testenv/configs/mock-llm`; `STACK_CONFIG=…` overrides it (Task 16 adds the cache config).
 - Redis runs with `--save '' --appendonly no`: the cache is disposable, so a restart gives a cold cache, which suits the cache tests.
 - PIDs live in `data/dev-stack/run/`, and logs go to `logs/stack-<service>.log`. `scripts/dev-stack.sh logs gateway` tails them.
+
+## Task 07: Halflife plugin skeleton (2 Nov 2026)
+
+**Status:** done. Fork commit `ff8784d` on branch `halflife` (`git -C bifrost diff --stat upstream..halflife`: 7 files, all new under `plugins/halflife/`; no upstream file modified).
+
+### What it is
+
+- `Plugin` implements `schemas.LLMPlugin` (`PreRequestHook`, `PreLLMHook`, `PostLLMHook`) and `schemas.HTTPTransportPlugin` (`PreAuth`, `Pre`, `Post`, `ResponseHeaders`, `StreamChunk`). Compile-time assertions guard both.
+- It deliberately does **not** implement `MCPPlugin` or `RelayPlugin`. The gateway picks hooks by type assertion (`InferPluginTypes` in `transports/bifrost-http/server/plugins.go`), so implementing them would add Halflife to those pipelines, including the Tavily relay it will itself call. A test pins this.
+- Every hook returns its input unchanged. Comments record the lifecycle facts later tasks rely on: LLM hooks run once **per attempt**, while `HTTPTransportPostHook` runs once per request after fallbacks.
+- `Init(ctx, *Config, logger)`: a nil config gives the defaults (`queue_size` 256, `workers` 2, `max_claims_per_response` 5, `tavily_relay` "tavily"); out-of-range values are rejected. `Cleanup` is idempotent.
+
+### Tests (`GOWORK=off`, published `core v1.14.1`)
+
+```
+--- PASS: TestConfigDefaults
+--- PASS: TestConfigValidate
+--- PASS: TestConfigJSON
+--- PASS: TestInit
+--- PASS: TestImplementsGatewayInterfaces
+--- PASS: TestLLMHooksPassThrough
+--- PASS: TestHTTPHooksPassThrough
+--- PASS: TestCleanupIdempotent
+ok  github.com/maximhq/bifrost/plugins/halflife  coverage: 100.0% of statements
+```
+
+`go vet` and `gofmt -l` are clean, and the run used `-race`.
+
+**Mutation check:** making `PostLLMHook` drop the response and `StreamChunkHook` drop the chunk fails `TestLLMHooksPassThrough` and `TestHTTPHooksPassThrough`. Restoring the code makes them pass again, so the pass-through tests catch a hook that alters traffic.
+
+Not yet tested: loading inside the gateway (Tasks 08–09).
