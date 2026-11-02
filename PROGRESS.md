@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 10 (final-response capture), 2 Nov 2026.
-- **Next:** Task 11 (report identity).
+- **Last completed:** Task 11 (report identity), 2 Nov 2026.
+- **Next:** Task 12 (bounded worker pool).
 
 ## Completed
 
@@ -21,6 +21,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 08 | 2026-11-02 | Halflife registered as a built-in (fork commit `c7c0589`): 3 upstream files, +24 lines; placement `pre_builtin`/`MinInt`; gateway builds with `GOWORK=off`, `go.sum` unchanged; upstream server/lib tests pass in a clean env |
 | 09 | 2026-11-02 | `testenv/smoke-halflife.sh`: 27/27 checks, 5/5 runs. Plugin loads (`active`), stops cleanly; hook order verified from the gateway's debug log; 6 request types return identical bodies and headers with Halflife on vs off. `make up` now runs Halflife by default |
 | 10 | 2026-11-02 | Final-answer capture (fork commit `749649c`): per-request slot bridges core and transport hooks; question + answer copied out of pooled objects, finalized once; failed/streaming/non-text counted. 13 new unit tests (95.7% coverage, `-race`); smoke test 31/31 ×3 with 3 captures from the real gateway |
+| 11 | 2026-11-02 | Report identity (fork commit `ee3c559`): UUIDv7 report ID in `X-Halflife-Report` (exposed to browsers); capture records gateway request ID and the tenant's virtual key ID/name, never its secret. 5 new unit tests; smoke test 45/45 ×3, header IDs matched to capture log and `X-Bifrost-Request-Id` |
 
 ## Decisions
 
@@ -44,6 +45,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D16 | Halflife is placement `pre_builtin`, order `math.MinInt`, fixed in code (not configurable) | Post-hooks run in reverse (`core/bifrost.go` `RunPostLLMHooks`; `handlers/middlewares.go`), so Halflife's post-hooks run last and see the final response, and its pre-hook runs before the semantic cache can short-circuit. Cost: its own hook time falls outside the telemetry plugin's measurement, so overhead is measured directly instead (Task 15). |
 | D17 | Capture hands off through a per-request `*slot` pointer opened in `HTTPTransportPreHook`, not through context values | Observed: the gateway gives transport hooks and core hooks different root contexts. Values flow transport → core (copied) but not back, so anything `PostLLMHook` sets is invisible to `HTTPTransportPostHook`. A pointer copied forward is shared by both. |
 | D18 | Fallback status comes from `BifrostContextKeyFallbackIndex`, not `RoutingInfo.IsFallback` | Core sets `IsFallback` on the response only after post-hooks run (`core/bifrost.go` ~6413), so it is always false inside `PostLLMHook`. The fallback index is set before each attempt. |
+| D19 | Report IDs are `hlr_` + UUIDv7; the header is set only on captured (buffered) responses | Time-ordered IDs list reports in creation order without an extra index, and `google/uuid` is already a gateway dependency (`go.sum` unchanged). Streaming responses get their headers before their post-hooks run, so they can't carry a report ID; they aren't captured in M1 anyway (Task 14). |
+| D20 | Tenant = governance virtual key, recorded as ID and name only | `x-bf-vk` is a credential. Governance resolves it to an ID/name in its `PreLLMHook`, which Halflife's `PostLLMHook` can read. A unit test asserts the secret never appears in a capture. |
 
 ## Blockers and inputs needed
 

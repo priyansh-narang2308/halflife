@@ -47,6 +47,12 @@ run_cases() {
     # it varies between identical requests with or without Halflife, so it is zeroed.
     sed -E 's/"(upstream_)?latency":[0-9.]+/"\1latency":0/g' "$out/$name.body" > "$out/$name.norm"
     tr -d '\r' < "$out/$name.raw" | grep -viE '^(date|x-bifrost-request-id|x-request-id|x-bifrost-trace-id|x-bifrost-upstream-latency-ms|x-bifrost-latency-ms):' > "$out/$name.headers"
+    # Halflife's only intended change: the report header, and its name added to
+    # Access-Control-Expose-Headers. Removed for the on/off comparison and checked separately.
+    # Rewriting a header moves it to the end in fasthttp, and header order carries no
+    # meaning in HTTP, so lines are compared sorted (status line kept first).
+    grep -viE '^x-halflife-report:' "$out/$name.headers" | sed 's/, x-halflife-report$//' \
+      | { IFS= read -r status; echo "$status"; sort; } > "$out/$name.cmp"
   }
   req ok        '{"model":"openai/ok","messages":[{"role":"user","content":"How much does the Acme Cloud Pro plan cost?"}]}' -H "x-bf-vk: $VK"
   req default   '{"model":"openai/ok","messages":[{"role":"user","content":"anything else"}]}' -H "x-bf-vk: $VK"
@@ -95,15 +101,31 @@ echo "post-hook order (one attempt): $(echo "$post" | awk '{print} $0=="halflife
 captures=$(grep -o '"halflife: captured [^"]*"' "$LOG" | sed 's/^"halflife: captured //; s/"$//' || true)
 echo "captures:"; echo "$captures" | sed 's/^/  /'
 check "capture: one per successful request" "$(echo "$captures" | grep -c .)" 3
-check "capture: scripted answer" "$(echo "$captures" | grep -c '^chat_completion answer from openai/ok (75 bytes, fallback=false)$')" 1
+check "capture: scripted answer" "$(echo "$captures" | grep -c '^chat_completion answer from openai/ok (75 bytes, fallback=false) report=hlr_')" 1
+check "capture: request id and tenant recorded" "$(echo "$captures" | grep -cE ' request=[0-9a-f-]{36} vk=vk-smoke$')" 3
 check "capture: fallback taken from the successful attempt" "$(echo "$captures" | grep -c 'fallback=true')" 1
 check "capture: stream marked, not captured" "$(grep -c '"halflife: streaming response not audited"' "$LOG")" 1
+
+# Report identity: captured responses carry X-Halflife-Report, matching the
+# capture log and the gateway's own request ID; other responses carry none.
+report() { tr -d '\r' < "$TMP/on/$1.raw" | awk -F': ' 'tolower($1)=="x-halflife-report"{print $2}'; }
+reqid()  { tr -d '\r' < "$TMP/on/$1.raw" | awk -F': ' 'tolower($1)=="x-bifrost-request-id"{print $2}'; }
+for c in ok default fallback; do
+  id=$(report "$c")
+  check "report header: $c" "$(echo "$id" | grep -cE '^hlr_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')" 1
+  check "report header matches capture and request id: $c" "$(echo "$captures" | grep -c "report=$id request=$(reqid "$c") ")" 1
+  check "report header exposed to browsers: $c" "$(grep -ciE '^access-control-expose-headers:.*, x-halflife-report$' "$TMP/on/$c.headers")" 1
+done
+for c in stream fail503 novk; do
+  check "no report header: $c" "$(report "$c" | grep -c . || true)" 0
+done
+check "report ids distinct" "$(for c in ok default fallback; do report "$c"; done | sort -u | grep -c .)" 3
 
 # 3. Responses identical with and without Halflife.
 for c in ok default stream fail503 fallback novk; do
   check "body non-empty: $c" "$([ -s "$TMP/on/$c.body" ] && echo yes || echo no)" yes
   check "body identical: $c" "$(cmp -s "$TMP/off/$c.norm" "$TMP/on/$c.norm" && echo same || echo different)" same
-  check "headers identical: $c" "$(diff -q "$TMP/off/$c.headers" "$TMP/on/$c.headers" >/dev/null && echo same || echo different)" same
+  check "headers identical apart from the report header: $c" "$(diff -q "$TMP/off/$c.cmp" "$TMP/on/$c.cmp" >/dev/null && echo same || echo different)" same
 done
 check "status codes: ok/503/fallback/novk" \
   "$(for c in ok fail503 fallback novk; do head -1 "$TMP/on/$c.headers" | awk '{printf "%s ", $2}'; done)" "200 503 200 401 "

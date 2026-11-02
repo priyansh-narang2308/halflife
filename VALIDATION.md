@@ -494,3 +494,51 @@ PASS  capture: stream marked, not captured
 ### Bug found by the smoke test
 
 The first run reported `fallback=false` for the fallback request. Core sets `RoutingInfo.IsFallback` only after post-hooks run, although the client sees it (`"is_fallback":true`, `X-Bifrost-Routing-Info-Is-Fallback: true`). The fix reads `BifrostContextKeyFallbackIndex` (D18). The unit tests had set `IsFallback` on the response directly, which hid the bug; they now model what core actually provides.
+
+## Task 11: Report identity (2 Nov 2026)
+
+**Status:** done. Fork commit `ee3c559`.
+
+### What a captured answer now carries
+
+- `ReportID`: `hlr_` + UUIDv7. Time-ordered, so IDs sort by creation. Sent to the client as `X-Halflife-Report`, and appended to `Access-Control-Expose-Headers` so browser clients such as the dashboard can read it.
+- `RequestID`: the gateway's own request ID (`BifrostContextKeyRequestID`, equal to `X-Bifrost-Request-Id`), falling back to the response header if the context lacks it. This links a report to Bifrost's logs.
+- `VirtualKeyID`, `VirtualKeyName`: the tenant, as resolved by governance. The raw `x-bf-vk` value is never read.
+- `CapturedAt` (UTC), plus the model fields from Task 10.
+
+### Hook timing this relies on (gateway source, `handlers/middlewares.go`)
+
+For buffered responses the middleware runs `HTTPTransportPostHook` (finalize, which assigns the ID) **before** `HTTPTransportResponseHeadersHook` (which writes the header). For streams the headers hook runs first, so no ID exists yet; `TestReportHeaderBeforeFinalize` pins that.
+
+### Unit tests
+
+| Test | Shows |
+|---|---|
+| `TestCaptureSuccessfulRequest` (extended) | Request ID, virtual key ID and name, `CapturedAt`, report ID recorded |
+| `TestReportHeader` | Header equals the capture's report ID; expose list extended once, even if the hook runs twice; no header for failed / streaming / unsupported / no slot |
+| `TestReportHeaderBeforeFinalize` | No header when headers are written before finalize (streaming order) |
+| `TestRequestIDFallsBackToResponseHeader` | Request ID from `x-bifrost-request-id`, matched case-insensitively |
+| `TestVirtualKeySecretNeverRecorded` | With `x-bf-vk` = a secret on the context, no capture field contains it |
+| `TestReportIDsUniqueAndTimeOrdered` | 10,000 IDs: unique, sorted in creation order, valid UUID version 7 |
+
+`ok … coverage: 95.5% of statements` under `-race`.
+
+### Real gateway (`testenv/smoke-halflife.sh`, now 45 checks)
+
+```
+captures:
+  chat_completion answer from openai/ok (75 bytes, fallback=false) report=hlr_01a19d3c-2b19-748f-… request=0a781c56-… vk=vk-smoke
+  chat_completion answer from openai/ok (28 bytes, fallback=false) report=hlr_01a19d3c-2b2c-78b2-… request=6a0114b0-… vk=vk-smoke
+  chat_completion answer from openai/ok (68 bytes, fallback=true)  report=hlr_01a19d3c-2b62-772b-… request=9363b0a8-… vk=vk-smoke
+PASS  report header: ok / default / fallback                         (UUIDv7 format)
+PASS  report header matches capture and request id: ok / default / fallback
+PASS  report header exposed to browsers: ok / default / fallback
+PASS  no report header: stream / fail503 / novk
+PASS  report ids distinct
+```
+
+45/45 on 3 consecutive runs; `make smoke` passes both smoke tests.
+
+### Header comparison, refined
+
+Halflife now changes response headers on purpose, so the on/off comparison removes `X-Halflife-Report` and the appended `, x-halflife-report`, then compares everything else. The first run failed: rewriting `Access-Control-Expose-Headers` moves it to the end of fasthttp's header list. The value was identical, only its position changed. HTTP header order carries no meaning, so header lines are now compared sorted, with the status line kept first. Every value is still compared exactly.
