@@ -23,7 +23,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GW=http://127.0.0.1:8090
 MOCK=http://127.0.0.1:9101
 VK=sk-bf-halflife-smoke
-OTHER_VK=sk-bf-halflife-verifier # a second tenant (id vk-verifier)
+OTHER_VK=sk-bf-halflife-other # a second tenant (id vk-other)
 REDIS=halflife-redis
 NS="HalflifeCacheBaseline_$(date +%s)"
 TMP="$(mktemp -d)"
@@ -140,7 +140,7 @@ rows=$(sqlite3 -separator ' ' "$APP/logs.db" \
   "select virtual_key_id, json_extract(cache_debug,'\$.cache_hit'), coalesce(json_extract(cache_debug,'\$.hit_type'),'-') from logs where object_type='chat_completion' order by timestamp")
 echo "request log:"; echo "$rows" | sed 's/^/  /'
 check "request log: one row per request, cache outcome recorded" "$(echo "$rows" | tr '\n' ';')" \
-  "vk-smoke 0 -;vk-smoke 1 direct;vk-smoke 1 semantic;vk-smoke 0 -;vk-verifier 0 -;"
+  "vk-smoke 0 -;vk-smoke 1 direct;vk-smoke 1 semantic;vk-smoke 0 -;vk-other 0 -;"
 check "request log: semantic similarity recorded" \
   "$(sqlite3 "$APP/logs.db" "select json_extract(cache_debug,'\$.similarity') >= 0.8 from logs where json_extract(cache_debug,'\$.hit_type')='semantic'")" 1
 

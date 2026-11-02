@@ -70,6 +70,30 @@
             "weight": 1.0
           }
         ]
+      },
+      {
+        "name": "Second tenant",
+        "id": "vk-other",
+        "value": "sk-bf-halflife-other",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "slow-250",
+              "slow-1000",
+              "fail-429",
+              "fail-500",
+              "fail-503",
+              "mock-embed"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
       }
     ]
   },

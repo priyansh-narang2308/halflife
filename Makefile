@@ -23,5 +23,6 @@ smoke:   ## Gateway smoke tests (need port 8090 free: run "make down" first)
 bench:   ## Halflife on/off latency and body integrity (needs ports 8090-8091 free)
 	testenv/bench-halflife.sh
 
-cache:   ## Semantic cache baseline on Redis: miss, write, direct and semantic hit (needs Docker, ports 8090 and 9101 free)
+cache:   ## Semantic cache on Redis, alone and with Halflife (needs Docker, ports 8090 and 9101 free)
 	testenv/cache-baseline.sh
+	testenv/cache-halflife.sh

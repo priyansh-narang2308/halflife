@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 16 (semantic cache baseline), 2 Nov 2026.
-- **Next:** Task 17 (cache ↔ report linkage).
+- **Last completed:** Task 17 (cache ↔ report linkage), 2 Nov 2026.
+- **Next:** Task 18 (TTL override).
 
 ## Completed
 
@@ -27,6 +27,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 14 | 2026-11-02 | Recursion guard and audit status (fork commit `d1c2f45`): requests with `verifier_virtual_key` are never captured, on any attempt; every response carries `X-Halflife-Status` (`queued` or `not-audited; reason=…`), streams marked from their content type. 4 new unit tests; smoke test 60/60 ×2 |
 | 15 | 2026-11-02 | `make bench` (`testenv/bench-halflife.sh` + `testenv/cmd/hlbench`): 2,000 paired requests per run, fresh gateways per comparison, A/A control. One request in flight: Halflife adds 7.8–9.6 µs paired median (control −0.4 to +0.5 µs); at 16 in flight the difference is below the control's noise. 2,000/2,000 bodies byte-identical every run; 2,200/2,200 audited, 0 dropped |
 | 16 | 2026-11-02 | `make cache` (`testenv/cache-baseline.sh`): Bifrost's unmodified `semantic_cache` on Redis 8.2.2 with deterministic mock embeddings (new `/v1/embeddings`, 64-dim). Miss → entry in Redis → direct hit → semantic hit (similarity 0.926 ≥ 0.8) → unrelated miss → other-tenant miss, each checked in headers, provider counts, Redis and Bifrost's request log. 34/34 ×6. Fixed a Task 15 script bug that leaked the mock provider |
+| 17 | 2026-11-02 | Cache ↔ report linkage (fork commit `e79513c`): a miss links its cache entry to its new report; direct and semantic hits get that report (`X-Halflife-Status: cached`) and no new audit; unlinked or cross-tenant hits are audited as new answers. Plugin now imports `semanticcache` v1.7.4 (the gateway's own version; gateway `go.mod`/`go.sum` unchanged). Tests run the real core + cache on an in-process store; `testenv/cache-halflife.sh` 29/29 ×3 |
 
 ## Decisions
 
@@ -59,6 +60,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D25 | Overhead is measured against an A/A control on fresh gateways, and the headline number is one request in flight | Two processes on one laptop differ by chance; without a control, noise reads as overhead (or as a speed-up). The first version reused one baseline gateway for both comparisons, and Halflife came out 400–700 µs "faster" at 16 in flight because the baseline had served twice the traffic. At 16 in flight the control itself moves ±200 µs at p50, so only the sequential run resolves Halflife's cost. |
 | D26 | Mock embeddings: a 64-dim hashed bag of content words (stop words removed), unit length | Semantic caching needs an embedding provider. A real one costs credits and is not deterministic across runs. Hashed words make paraphrase similarity predictable ("How much does the Acme Cloud Pro plan cost?" vs "What does Acme Cloud Pro cost?" = 0.926) and testable offline. It proves the cache's mechanics, not embedding quality. |
 | D27 | The cache baseline runs Bifrost's cache alone, without Halflife | Task 16 establishes what the built-in cache does before Halflife changes anything, so later freshness behaviour can be compared to it. Halflife and the cache together start in Task 17. |
+| D28 | A cache hit gets the report of the answer that filled the entry, not a new audit; links are an in-memory LRU (100k) until the report store (Task 25) | The cached answer is byte-for-byte the audited one, so re-auditing it would spend Tavily credits on known work. A hit is audited afresh only when no report is known (restart, dropped report) or the report is another tenant's (possible only with identity scoping off): one tenant is never pointed at another's report. |
+| D29 | Plugin tests drive Bifrost's real core and real `semantic_cache` plugin, on the in-process chromem store, wrapped so a test can hold cache writes | Hook order, short-circuits and the cache's async write are what Halflife depends on; a hand-written fake would test our assumptions about them, not them. Wrapping the store's `Add` makes the write timing controllable for Task 19's race. |
 
 ## Blockers and inputs needed
 

@@ -734,3 +734,25 @@ While probing, port 9101 was still held by a mock provider left over from a Task
 - **Fix:** `${a[@]+"${a[@]}"}` in `bench-halflife.sh` and `smoke-mock-llm.sh`.
 - **Guard:** all gateway test scripts now refuse to start if the gateway or mock port is already in use.
 - **Re-checked:** `make test`, `make smoke` (3× ALL PASS) and `bench-halflife.sh 1000` (ALL PASS) re-run, and port 9101 is free afterwards. That bench re-run wrote 1,000-pair results; the committed 2,000-pair Task 15 files were restored.
+
+## Task 17: Cache ↔ report linkage (2 Nov 2026)
+
+**Status:** done. Fork commit `e79513c`. Commands: `make test` (plugin) and `make cache` (`cache-baseline.sh`, then `cache-halflife.sh`).
+
+### Behaviour
+
+- On a cache miss, Halflife reads `cache_id` from the cache's `cache_debug` and links that entry to the new report (in-memory LRU of 100k links, D28). The link is added before the capture is queued, and removed again if the queue is full.
+- A direct or semantic hit on a linked entry from the same tenant gets the filling report: `X-Halflife-Report: <same id>`, `X-Halflife-Status: cached`, and no new audit.
+- A hit with no link (after a restart, or a dropped report) or from another tenant is audited as a new answer. One tenant is never pointed at another tenant's report.
+
+### Tests
+
+- **Plugin (real core + real `semantic_cache`, chromem store, D29):** `stack_test.go` and `links_test.go`: hits resolve to the filling report, cross-tenant hits get their own report, unlinked hits start a report, dropped reports are unlinked, no cache means no links, LRU order. All pass with `-race -count=3`; package coverage 96.4%.
+- **Harness limit:** the harness has no governance grant, so the cache's identity scoping is off there. Tenant isolation through the cache is proven on the gateway instead.
+- **Gateway (`testenv/cache-halflife.sh`, 29/29, 3 runs):** miss → queued report; direct and semantic hits → same entry, same report, `cached`, resolved in the log; the other tenant misses (identity scope) and gets its own report, which its own hit reuses. Provider calls `{"mock-embed":4,"ok":3}`; pool `enqueued=3 audited=3`: one audit per answer, not per response.
+- **Integrity:** the same sequence through the cache without Halflife gives the same provider calls, statuses, cache outcomes and bodies (timing fields zeroed).
+
+### Notes
+
+- The plugin now requires `semanticcache` v1.7.4, the version the gateway already uses; the gateway's `go.mod`/`go.sum` are unchanged.
+- `testenv/lib.sh` holds the shared start/stop/check helpers for the cache scripts. `vk-other` was added to the cache configs as a real second tenant (the verifier key had been standing in, and is correctly never audited).
