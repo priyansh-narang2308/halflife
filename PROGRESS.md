@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 11 (report identity), 2 Nov 2026.
-- **Next:** Task 12 (bounded worker pool).
+- **Last completed:** Task 12 (bounded worker pool), 2 Nov 2026.
+- **Next:** Task 13 (fallback correctness).
 
 ## Completed
 
@@ -22,6 +22,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 09 | 2026-11-02 | `testenv/smoke-halflife.sh`: 27/27 checks, 5/5 runs. Plugin loads (`active`), stops cleanly; hook order verified from the gateway's debug log; 6 request types return identical bodies and headers with Halflife on vs off. `make up` now runs Halflife by default |
 | 10 | 2026-11-02 | Final-answer capture (fork commit `749649c`): per-request slot bridges core and transport hooks; question + answer copied out of pooled objects, finalized once; failed/streaming/non-text counted. 13 new unit tests (95.7% coverage, `-race`); smoke test 31/31 ×3 with 3 captures from the real gateway |
 | 11 | 2026-11-02 | Report identity (fork commit `ee3c559`): UUIDv7 report ID in `X-Halflife-Report` (exposed to browsers); capture records gateway request ID and the tenant's virtual key ID/name, never its secret. 5 new unit tests; smoke test 45/45 ×3, header IDs matched to capture log and `X-Bifrost-Request-Id` |
+| 12 | 2026-11-02 | Bounded worker pool (fork commit `33dfa10`): non-blocking submit, drop + count when full (report header withdrawn), per-audit timeout on the pool's context, bounded drain on shutdown. 9 pool tests ×10 under `-race`; smoke test 47/47 ×3: 3 reports → 3 audits, clean drain |
 
 ## Decisions
 
@@ -47,6 +48,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D18 | Fallback status comes from `BifrostContextKeyFallbackIndex`, not `RoutingInfo.IsFallback` | Core sets `IsFallback` on the response only after post-hooks run (`core/bifrost.go` ~6413), so it is always false inside `PostLLMHook`. The fallback index is set before each attempt. |
 | D19 | Report IDs are `hlr_` + UUIDv7; the header is set only on captured (buffered) responses | Time-ordered IDs list reports in creation order without an extra index, and `google/uuid` is already a gateway dependency (`go.sum` unchanged). Streaming responses get their headers before their post-hooks run, so they can't carry a report ID; they aren't captured in M1 anyway (Task 14). |
 | D20 | Tenant = governance virtual key, recorded as ID and name only | `x-bf-vk` is a credential. Governance resolves it to an ID/name in its `PreLLMHook`, which Halflife's `PostLLMHook` can read. A unit test asserts the secret never appears in a capture. |
+| D21 | Audit queue: drop when full, never block; withdraw the report header for dropped captures | Halflife must never add latency to a request because the verifier is slow. A report header for a report that will never exist would be a broken promise to the client. |
+| D22 | Shutdown drains for `drain_timeout_seconds` (default 5), then cancels; queued leftovers counted as abandoned | Graceful by default but bounded, so a gateway restart can't hang on Tavily. An audit that ignores cancellation gets 1 more second, then `Cleanup` returns an error rather than blocking. |
 
 ## Blockers and inputs needed
 

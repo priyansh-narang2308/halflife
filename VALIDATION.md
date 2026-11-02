@@ -542,3 +542,43 @@ PASS  report ids distinct
 ### Header comparison, refined
 
 Halflife now changes response headers on purpose, so the on/off comparison removes `X-Halflife-Report` and the appended `, x-halflife-report`, then compares everything else. The first run failed: rewriting `Access-Control-Expose-Headers` moves it to the end of fasthttp's header list. The value was identical, only its position changed. HTTP header order carries no meaning, so header lines are now compared sorted, with the status line kept first. Every value is still compared exactly.
+
+## Task 12: Bounded worker pool (2 Nov 2026)
+
+**Status:** done (`plugins/halflife/pool.go`). Audits run a placeholder until the verifier exists (Task 24): it logs `halflife: audit report=<id> (no verifier yet)`, so arrival at a worker is observable.
+
+### Behaviour
+
+- `queue_size` buffered channel and `workers` goroutines started by `Init`.
+- `submit` never blocks. Full queue or closed pool → dropped and counted. The request's report ID is withdrawn, so no `X-Halflife-Report` header is sent for a report that will never exist (D21).
+- Each audit gets `context.WithTimeout(poolCtx, audit_timeout_seconds)`. A capture carries no request context, so audits outlive their requests by design.
+- A panic or error in an audit is counted as failed; the worker keeps going.
+- `Cleanup`: stop accepting, drain up to `drain_timeout_seconds`, then cancel running audits and count queued leftovers as abandoned (D22). An audit that ignores cancellation gets one more second; then `Cleanup` returns an error instead of hanging.
+- New config: `audit_timeout_seconds` (default 60, range 1–600) and `drain_timeout_seconds` (default 5, range 1–60).
+
+### Unit tests (`go test -race -count=10`: all pass; coverage 95.3%)
+
+| Test | Shows |
+|---|---|
+| `TestPoolAuditsEverySubmission` | 100 captures, 4 workers → each audited exactly once |
+| `TestPoolDropsWhenFullWithoutBlocking` | Worker busy + queue full: 1,000 submits rejected in well under 100 ms, counted as dropped |
+| `TestPoolDrainsQueueOnClose` | 10 queued at shutdown → all 10 audited, 0 abandoned |
+| `TestPoolDrainTimeoutCancelsAndAbandons` | Past the drain timeout: running audit sees cancellation (1 failed), 4 abandoned, close returns in < 500 ms |
+| `TestPoolCloseGivesUpOnStuckAudit` | An audit ignoring its context can't hang shutdown; close reports it |
+| `TestPoolAuditTimeoutAndErrors` | Timeout (`DeadlineExceeded`), error and panic → 3 failed; the next capture still audited |
+| `TestPoolAuditContextHasOwnDeadline` | Audit context is live with the audit timeout as deadline |
+| `TestPoolSubmitAfterCloseAndConcurrentClose` | 8 submitters racing 3 concurrent closes: no panic; enqueued = audited + abandoned; submit after close rejected |
+| `TestPluginQueuesCapturesForAudit` | Through the plugin: 1 running + 1 queued get report headers and are audited in order; the 3rd is dropped and gets **no** header |
+
+The first `-count=5` run failed once, from a bug in the test: its audit stub signalled on a channel with a buffer of 1 and blocked on the third audit, ignoring cancellation. That's the "stuck audit" case the pool is designed to give up on. The signal is now non-blocking.
+
+### Real gateway (`testenv/smoke-halflife.sh`, 47 checks, 3/3 runs)
+
+```
+PASS  audits: one per report header
+PASS  audits: exactly the reported ids
+PASS  shutdown log: queue drained
+"halflife: stopped (enqueued=3 dropped=0 audited=3 failed=0 abandoned=0 queued=0)"
+```
+
+Not tested through the gateway: saturation. With the placeholder audit, workers never fall behind; the unit tests cover it, and Task 15's load run reports drops.

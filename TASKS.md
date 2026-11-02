@@ -35,7 +35,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 |---|---|---|---|
 | [x] 10 | Final-response capture | Successful attempt stashed in `PostLLMHook`, finalised once in `HTTPTransportPostHook`; data copied out of pooled objects | — |
 | [x] 11 | Report identity | Report ID generated; `x-halflife-report` header set in `HTTPTransportResponseHeadersHook`; request ID, virtual key, model recorded | — |
-| [ ] 12 | Bounded worker pool | Fixed-size queue and workers, background contexts, saturation → drop and count, graceful drain on `Cleanup` | — |
+| [x] 12 | Bounded worker pool | Fixed-size queue and workers, background contexts, saturation → drop and count, graceful drain on `Cleanup` | — |
 | [ ] 13 | Fallback correctness | Primary fails then fallback succeeds → exactly 1 audit; all attempts fail → 0 audits (mock provider) | — |
 | [ ] 14 | Recursion guard and streaming | Verifier-key traffic is never audited; streaming requests detected and explicitly marked "not audited in M1" | — |
 | [ ] 15 | Overhead and integrity | Plugin on/off latency benchmark (p50/p95/p99, N≥1,000); response bodies byte-identical with and without the plugin | — |

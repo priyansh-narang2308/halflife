@@ -78,7 +78,8 @@ stop_gateway
 
 check "startup log: plugin initialized" "$(grep -c '"halflife: initialized (queue_size=256 workers=2 max_claims=5 tavily_relay=tavily)"' "$LOG")" 1
 check "startup log: plugin status active" "$(grep -c '"plugin status: halflife - active"' "$LOG")" 1
-check "shutdown log: plugin stopped" "$(grep -c '"halflife: stopped"' "$LOG")" 1
+# Shutdown drains the audit queue: everything queued was audited, nothing lost.
+check "shutdown log: queue drained" "$(grep -c '"halflife: stopped (enqueued=3 dropped=0 audited=3 failed=0 abandoned=0 queued=0)"' "$LOG")" 1
 check "baseline has no halflife" "$(grep -c 'halflife' "$ROOT/logs/smoke-halflife-gateway-off.log" || true)" 0
 
 # Hook order, from core's debug log (core/bifrost.go): Halflife's pre-hook runs
@@ -120,6 +121,11 @@ for c in stream fail503 novk; do
   check "no report header: $c" "$(report "$c" | grep -c . || true)" 0
 done
 check "report ids distinct" "$(for c in ok default fallback; do report "$c"; done | sort -u | grep -c .)" 3
+
+# Audit queue: each reported ID reached a worker exactly once.
+audits=$(grep -o '"halflife: audit report=[^ ]*' "$LOG" | sed 's/.*report=//' | sort || true)
+check "audits: one per report header" "$(echo "$audits" | grep -c .)" 3
+check "audits: exactly the reported ids" "$(echo "$audits" | tr '\n' ' ')" "$(for c in ok default fallback; do report "$c"; done | sort | tr '\n' ' ')"
 
 # 3. Responses identical with and without Halflife.
 for c in ok default stream fail503 fallback novk; do
