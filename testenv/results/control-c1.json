@@ -1,0 +1,39 @@
+{
+  "started": "2026-11-02T17:30:15.993925Z",
+  "requests_per_gateway": 2000,
+  "warmup_pairs": 200,
+  "concurrency": 1,
+  "off": {
+    "n": 2000,
+    "min_us": 180.5,
+    "mean_us": 230.5,
+    "p50_us": 215.3,
+    "p95_us": 276,
+    "p99_us": 634,
+    "max_us": 2171.7
+  },
+  "on": {
+    "n": 2000,
+    "min_us": 183.6,
+    "mean_us": 231.3,
+    "p50_us": 215.8,
+    "p95_us": 278.5,
+    "p99_us": 570.5,
+    "max_us": 3116.3
+  },
+  "overhead_us": {
+    "mean": 0.8,
+    "p50": 0.5,
+    "p95": 2.5,
+    "p99": -63.5
+  },
+  "paired_median_delta_us": 0.5,
+  "bodies_identical": 2000,
+  "bodies_different": 0,
+  "distinct_bodies": 3,
+  "non_200": 0,
+  "halflife_status_on": {
+    "": 2000
+  },
+  "halflife_status_off": 0
+}

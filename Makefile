@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke
+.PHONY: up down status build test smoke bench
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -12,10 +12,13 @@ status:  ## Health of each stack service
 build:   ## Build the Bifrost gateway from bifrost/
 	scripts/build-gateway.sh
 
-test:    ## Unit tests for the mocks
+test:    ## Unit tests for the mocks and the benchmark tool
 	cd testenv && go test -race ./...
 
 smoke:   ## Gateway smoke tests (need port 8090 free: run "make down" first)
 	testenv/smoke-mock-llm.sh
 	testenv/smoke-halflife.sh
 	testenv/fallback-halflife.sh
+
+bench:   ## Halflife on/off latency and body integrity (needs ports 8090-8091 free)
+	testenv/bench-halflife.sh

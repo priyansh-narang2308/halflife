@@ -640,3 +640,51 @@ Both test configs gain a second virtual key, `vk-verifier` (synthetic value `sk-
 | verifier | 200 | `not-audited; reason=verifier` | **no**: `halflife: verifier request not audited` logged once; no capture with `vk=vk-verifier` |
 
 The verifier request still reaches the provider and its body is byte-identical with Halflife off. Shutdown totals are unchanged: `enqueued=3 … audited=3`. The on/off header comparison now removes all `X-Halflife-*` headers and their expose-list entries.
+
+## Task 15: Overhead and integrity (2 Nov 2026)
+
+**Status:** done. Command: `make bench` (`testenv/bench-halflife.sh`). Tool: `testenv/cmd/hlbench` (3 unit tests: percentile, timing normalization, rounding). No plugin code changed. Mock provider, synthetic keys. Machine: Apple M4 (10 cores) laptop, everything on localhost.
+
+### Method
+
+- **Same binary, fresh gateways.** Each comparison starts two new gateways: A on 8090 without Halflife and B on 8091, both at info log level in front of the same mock provider. Both stop afterwards.
+- **A/A control.** The control runs the same comparison with B *also* without Halflife. Any gap it shows is noise between two processes.
+- **Paired, alternating requests.** Each pair sends the same prompt (rotating over the 3 fixture questions) to A and B back to back, alternating which goes first. Latency runs from send to the last body byte.
+- **Run size.** 200 warm-up pairs, then **2,000 measured pairs**, with 1 and then 16 pairs in flight.
+- **Body check.** Bodies are SHA-256 compared after zeroing `extra_fields.latency` and `upstream_latency`, the gateway's own timing fields.
+- **Paired median delta.** The headline is the median of (B − A) over pairs, so drift during a run cancels out.
+- **Scope.** This measures the request path only. Audits run on Halflife's workers, and in M1 the audit is still the placeholder (no network I/O).
+
+### Results (3 consecutive runs; JSON for the last in `testenv/results/`)
+
+Paired median delta, B − A:
+
+| In flight | Control (off vs off) | Halflife (off vs on) |
+|---|---|---|
+| 1 | +0.1, −0.4, +0.5 µs | **+9.6, +8.4, +7.8 µs** |
+| 16 | +200.9, −175.8, −100.0 µs | −20.3, +31.3, +30.6 µs |
+
+Last run, full distribution (µs):
+
+| | A p50 | A p95 | A p99 | B p50 | B p95 | B p99 |
+|---|---|---|---|---|---|---|
+| control, 1 in flight | 215.3 | 276.0 | 634.0 | 215.8 | 278.5 | 570.5 |
+| Halflife, 1 in flight | 217.1 | 261.3 | 602.3 | 225.3 | 281.8 | 575.0 |
+| control, 16 in flight | 878.7 | 3485.1 | 7865.9 | 778.5 | 2751.1 | 6674.4 |
+| Halflife, 16 in flight | 946.4 | 2521.4 | 4808.1 | 986.3 | 2733.5 | 5539.7 |
+
+What this supports:
+
+- **One request in flight: Halflife adds about 8–10 µs at the median, about 4% of a 215 µs mock round trip.** That cost includes capture, UUIDv7, queue submit and two headers. Against a real provider (hundreds of ms) it is under 0.01%.
+- **p95 and p99 differences are inside the control's own spread.** The control's p99 moves by up to ±64 µs at 1 in flight. No tail overhead is claimed or ruled out at that resolution.
+- **16 in flight: no measurable difference.** The control's p50 moves by ±200 µs and its p99 by several ms, which swamps anything Halflife does. We don't claim an overhead number at this concurrency.
+
+Integrity, every run, every configuration:
+
+- **2,000/2,000 pairs byte-identical**, 3 distinct bodies (one per prompt), 0 non-200 responses.
+- From the Halflife gateway: `X-Halflife-Status: queued` on 2,000/2,000. From the gateway without it: 0.
+- Shutdown totals: `halflife: stopped (enqueued=2200 dropped=0 audited=2200 failed=0 abandoned=0 queued=0)`. Every request, warm-up included, was captured and audited once, and none were dropped at 16 in flight with the default queue of 256.
+
+### Correction during the task
+
+The first version of the script ran all comparisons against one long-lived baseline gateway. At 16 in flight it reported Halflife 400–700 µs *faster*, which isn't credible. The baseline had served twice the traffic of the Halflife gateway and written twice as many rows to its log store. The fix: fresh gateways per comparison, plus the A/A control (D25). Those numbers were discarded and are not reported above.

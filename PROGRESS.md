@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 14 (recursion guard and streaming status), 2 Nov 2026.
-- **Next:** Task 15 (overhead and integrity benchmark).
+- **Last completed:** Task 15 (overhead and integrity), 2 Nov 2026.
+- **Next:** Task 16 (semantic cache baseline).
 
 ## Completed
 
@@ -25,6 +25,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 12 | 2026-11-02 | Bounded worker pool (fork commit `33dfa10`): non-blocking submit, drop + count when full (report header withdrawn), per-audit timeout on the pool's context, bounded drain on shutdown. 9 pool tests ×10 under `-race`; smoke test 47/47 ×3: 3 reports → 3 audits, clean drain |
 | 13 | 2026-11-02 | `testenv/fallback-halflife.sh`: 6 scenarios × {max_retries 0, 2}, 71/71 ×3. Any number of failed attempts or retries + 1 success → exactly 1 audit of the served answer; all attempts fail → 0 audits, no report header |
 | 14 | 2026-11-02 | Recursion guard and audit status (fork commit `d1c2f45`): requests with `verifier_virtual_key` are never captured, on any attempt; every response carries `X-Halflife-Status` (`queued` or `not-audited; reason=…`), streams marked from their content type. 4 new unit tests; smoke test 60/60 ×2 |
+| 15 | 2026-11-02 | `make bench` (`testenv/bench-halflife.sh` + `testenv/cmd/hlbench`): 2,000 paired requests per run, fresh gateways per comparison, A/A control. One request in flight: Halflife adds 7.8–9.6 µs paired median (control −0.4 to +0.5 µs); at 16 in flight the difference is below the control's noise. 2,000/2,000 bodies byte-identical every run; 2,200/2,200 audited, 0 dropped |
 
 ## Decisions
 
@@ -54,6 +55,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D22 | Shutdown drains for `drain_timeout_seconds` (default 5), then cancels; queued leftovers counted as abandoned | Graceful by default but bounded, so a gateway restart can't hang on Tavily. An audit that ignores cancellation gets 1 more second, then `Cleanup` returns an error rather than blocking. |
 | D23 | Recursion guard keys on the verifier's governance virtual key ID | The verifier's LLM calls go through the gateway like any tenant's, so they reach Halflife's hooks. The VK ID is already resolved by governance, is not a secret, and gives the verifier its own budget. A request header would let any client opt out of auditing. Tavily relay calls never reach the hooks (Halflife is not a `RelayPlugin`). |
 | D24 | `X-Halflife-Status` on every response, not just audited ones | Clients and judges can see that a stream was deliberately not audited in M1, instead of inferring it from a missing report header. |
+| D25 | Overhead is measured against an A/A control on fresh gateways, and the headline number is one request in flight | Two processes on one laptop differ by chance; without a control, noise reads as overhead (or as a speed-up). The first version reused one baseline gateway for both comparisons, and Halflife came out 400–700 µs "faster" at 16 in flight because the baseline had served twice the traffic. At 16 in flight the control itself moves ±200 µs at p50, so only the sequential run resolves Halflife's cost. |
 
 ## Blockers and inputs needed
 
