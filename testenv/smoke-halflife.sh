@@ -20,9 +20,9 @@ stop_gateway() { [ -n "$gw_pid" ] && { kill "$gw_pid" 2>/dev/null || true; wait 
 cleanup() { stop_gateway; [ -n "$mock_pid" ] && { kill "$mock_pid" 2>/dev/null || true; wait "$mock_pid" 2>/dev/null || true; }; rm -rf "$TMP"; }
 trap cleanup EXIT
 
-if curl -sf "$GW/health" >/dev/null; then
-  echo "port 8090 is in use (stop the dev stack with: make down)" >&2; exit 1
-fi
+for u in "$GW" "$MOCK"; do # a leftover mock would silently serve this run
+  if curl -s -o /dev/null "$u"; then echo "$u is in use (stop the dev stack with: make down)" >&2; exit 1; fi
+done
 mkdir -p "$ROOT/logs" "$ROOT/bin"
 (cd "$ROOT/testenv" && go build -o "$ROOT/bin/mockllm" ./cmd/mockllm)
 MOCK_LLM_API_KEY=sk-halflife-mock "$ROOT/bin/mockllm" -fixtures "$ROOT/testenv/fixtures/llm.json" > "$ROOT/logs/smoke-halflife-mockllm.log" 2>&1 &

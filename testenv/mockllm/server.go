@@ -1,6 +1,7 @@
-// Package mockllm is a deterministic OpenAI-compatible chat provider for
-// exercising Bifrost's real provider path: attempts, failures, fallbacks,
-// latency and streaming.
+// Package mockllm is a deterministic OpenAI-compatible chat and embeddings
+// provider for exercising Bifrost's real provider path: attempts, failures,
+// fallbacks, latency, streaming and (via /v1/embeddings, see Embed) semantic
+// caching.
 //
 // Behaviour is selected by the model name the gateway forwards:
 //
@@ -51,6 +52,7 @@ type Server struct {
 func New(cfg Config) *Server {
 	s := &Server{cfg: cfg, mux: http.NewServeMux(), byModel: map[string]int{}}
 	s.mux.HandleFunc("POST /v1/chat/completions", s.chatCompletions)
+	s.mux.HandleFunc("POST /v1/embeddings", s.embeddings)
 	s.mux.HandleFunc("GET /v1/models", s.models)
 	s.mux.HandleFunc("GET /_mock/requests", s.requests)
 	s.mux.HandleFunc("POST /_mock/reset", s.reset)
@@ -197,7 +199,7 @@ func streamReply(w http.ResponseWriter, id, model, reply string, usage map[strin
 }
 
 func (s *Server) models(w http.ResponseWriter, _ *http.Request) {
-	ids := []string{"ok", "slow-250", "fail-500", "fail-503", "fail-429"}
+	ids := []string{"ok", "slow-250", "fail-500", "fail-503", "fail-429", "mock-embed"}
 	data := make([]any, len(ids))
 	for i, id := range ids {
 		data[i] = map[string]any{"id": id, "object": "model", "created": Created, "owned_by": "halflife-mock"}

@@ -9,8 +9,12 @@ GW=http://127.0.0.1:8090
 MOCK=http://127.0.0.1:9101
 TMP="$(mktemp -d)"
 pids=()
-cleanup() { for p in "${pids[@]}"; do kill "$p" 2>/dev/null || true; done; wait 2>/dev/null || true; rm -rf "$TMP"; }
+cleanup() { for p in ${pids[@]+"${pids[@]}"}; do kill "$p" 2>/dev/null || true; done; wait 2>/dev/null || true; rm -rf "$TMP"; }
 trap cleanup EXIT
+
+for u in "$GW" "$MOCK"; do # a leftover mock would silently serve this run
+  if curl -s -o /dev/null "$u"; then echo "$u is in use (stop the dev stack with: make down)" >&2; exit 1; fi
+done
 
 rm -rf "$APP_DIR" && mkdir -p "$APP_DIR" "$ROOT/logs"
 cp "$ROOT/testenv/configs/mock-llm/config.json" "$APP_DIR/config.json"

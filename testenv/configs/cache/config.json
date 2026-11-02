@@ -1,0 +1,98 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "providers": {
+    "openai": {
+      "keys": [
+        {
+          "name": "mock",
+          "value": "sk-halflife-mock",
+          "models": [
+            "ok",
+            "slow-250",
+            "slow-1000",
+            "fail-429",
+            "fail-500",
+            "fail-503",
+            "mock-embed"
+          ],
+          "weight": 1.0
+        }
+      ],
+      "network_config": {
+        "base_url": "http://127.0.0.1:9101",
+        "default_request_timeout_in_seconds": 10,
+        "max_retries": 0
+      }
+    }
+  },
+  "governance": {
+    "virtual_keys": [
+      {
+        "name": "Smoke test app",
+        "id": "vk-smoke",
+        "value": "sk-bf-halflife-smoke",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "slow-250",
+              "slow-1000",
+              "fail-429",
+              "fail-500",
+              "fail-503",
+              "mock-embed"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
+      },
+      {
+        "name": "Halflife verifier",
+        "id": "vk-verifier",
+        "value": "sk-bf-halflife-verifier",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "fail-500",
+              "mock-embed"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
+      }
+    ]
+  },
+  "vector_store": {
+    "enabled": true,
+    "type": "redis",
+    "config": {
+      "addr": "127.0.0.1:6380"
+    }
+  },
+  "plugins": [
+    {
+      "enabled": true,
+      "name": "semantic_cache",
+      "config": {
+        "provider": "openai",
+        "embedding_model": "mock-embed",
+        "dimension": 64,
+        "ttl": "5m",
+        "threshold": 0.8,
+        "default_cache_key": "halflife-smoke",
+        "vector_store_namespace": "HalflifeCacheSmoke"
+      }
+    }
+  ]
+}

@@ -688,3 +688,49 @@ Integrity, every run, every configuration:
 ### Correction during the task
 
 The first version of the script ran all comparisons against one long-lived baseline gateway. At 16 in flight it reported Halflife 400–700 µs *faster*, which isn't credible. The baseline had served twice the traffic of the Halflife gateway and written twice as many rows to its log store. The fix: fresh gateways per comparison, plus the A/A control (D25). Those numbers were discarded and are not reported above.
+
+## Task 16: Semantic cache baseline (2 Nov 2026)
+
+**Status:** done. Command: `make cache` (`testenv/cache-baseline.sh`). This is Bifrost's own `semantic_cache` plugin, unmodified and without Halflife (D27). It runs on Docker `redis:8.2.2` (search module) with the mock provider and synthetic keys. No plugin code changed.
+
+### Setup
+
+- **Mock embeddings (D26).** `testenv/mockllm` gains `POST /v1/embeddings`, which takes a string or an array of strings, checks auth, counts calls per model, and fails on `fail-<status>` like chat does. `Embed` turns text into a deterministic 64-dim unit vector, a hashed bag of content words. 3 new unit tests pin the similarities the cache test relies on.
+- **Config `testenv/configs/cache`.** The mock-llm config plus `vector_store: redis @ 127.0.0.1:6380`, and `semantic_cache` with `provider: openai`, `embedding_model: mock-embed`, `dimension: 64`, `ttl: 5m`, `threshold: 0.8`, `default_cache_key: halflife-smoke`. `mock-embed` is added to the key's models and both virtual keys' allowed models.
+- **Fresh namespace per run.** `HalflifeCacheBaseline_<epoch>`, dropped afterwards. Redis is started if absent and stopped again; a Redis that was already running is left up.
+
+### Lifecycle (34 checks, 6/6 runs)
+
+| Step | Request | `x-bifrost-cache-*` | Provider `ok` calls | `mock-embed` calls | Store |
+|---|---|---|---|---|---|
+| 1 miss | "How much does the Acme Cloud Pro plan cost?" | `hit: false`, `id: <id>` | 1 | 1 | `<ns>:<id>` written (async, within 2 s): hash with `response`, `embedding`, `expires_at` (now + 300 s), `cache_key` |
+| 2 direct hit | same | `hit: true`, `type: direct`, same id | 1 | 1 | same answer and response id |
+| 3 semantic hit | "What does Acme Cloud Pro cost?" | `hit: true`, `type: semantic`, same id, `similarity: 0.926`, `threshold: 0.8` | 1 | 2 | the Pro-plan answer is served to the new wording |
+| 4 unrelated miss | "Who is the CEO of Acme Cloud?" | `hit: false`, new id | 2 | 3 | own answer, new entry |
+| 5 identity scope | step 1's question with the other virtual key | `hit: false` | 3 | 4 | 3 entries total |
+
+Bifrost's request log (`logs.db`, `cache_debug` column) records each request with its virtual key:
+
+```
+vk-smoke 0 -
+vk-smoke 1 direct
+vk-smoke 1 semantic
+vk-smoke 0 -
+vk-verifier 0 -
+```
+
+### Observed, relevant to Halflife
+
+1. **A semantic hit serves one question's answer to another question.** Step 3 returned the stored Pro-plan answer without asking the provider. If that answer is stale, the staleness reaches every paraphrase until the TTL runs out. This is the case freshness-aware caching (Tasks 17+) targets.
+2. **Expiry is a field, not a Redis TTL.** Entries have no Redis expiry (`TTL` = -1); the plugin filters on `expires_at` at lookup.
+3. **The cache key is stored hex-encoded** (`68616c666c6966652d736d6f6b65` = `halflife-smoke`). The Redis store encodes tag values (`framework/vectorstore/redis.go:1805`).
+4. **Entries are scoped to the virtual key by default** (step 5), so one tenant's cached answer is never served to another.
+5. **Embedding calls for the cache are not separate rows in the request log.** Their use shows up in the chat row's `cache_debug` (`provider_used`, `model_used`, `input_tokens`).
+
+### Script fix carried over from Task 15
+
+While probing, port 9101 was still held by a mock provider left over from a Task 15 benchmark run. The cause: on macOS bash 3.2 with `set -u`, expanding an empty array is an error. `stop_gateways` empties its array, so the exit trap failed before it killed the mock. Later bench runs failed to bind their own mock and used the leftover one instead. It was the same binary and fixtures, so the Task 15 numbers stand, but it was a real leak.
+
+- **Fix:** `${a[@]+"${a[@]}"}` in `bench-halflife.sh` and `smoke-mock-llm.sh`.
+- **Guard:** all gateway test scripts now refuse to start if the gateway or mock port is already in use.
+- **Re-checked:** `make test`, `make smoke` (3× ALL PASS) and `bench-halflife.sh 1000` (ALL PASS) re-run, and port 9101 is free afterwards. That bench re-run wrote 1,000-pair results; the committed 2,000-pair Task 15 files were restored.

@@ -26,13 +26,14 @@ N="${1:-2000}" WARMUP=200
 A=http://127.0.0.1:8090 B=http://127.0.0.1:8091 MOCK=http://127.0.0.1:9101
 TMP="$(mktemp -d)"
 mock_pid="" gw_pids=()
-stop_gateways() { for p in "${gw_pids[@]}"; do kill "$p" 2>/dev/null || true; wait "$p" 2>/dev/null || true; done; gw_pids=(); }
+# ${a[@]+"${a[@]}"}: bash 3.2 (macOS) treats an empty "${a[@]}" as unbound under set -u.
+stop_gateways() { for p in ${gw_pids[@]+"${gw_pids[@]}"}; do kill "$p" 2>/dev/null || true; wait "$p" 2>/dev/null || true; done; gw_pids=(); }
 cleanup() { stop_gateways; [ -n "$mock_pid" ] && { kill "$mock_pid" 2>/dev/null || true; wait "$mock_pid" 2>/dev/null || true; }; rm -rf "$TMP"; }
 trap cleanup EXIT
 
 [ "$N" -ge 1000 ] || { echo "pairs must be at least 1000" >&2; exit 1; }
-for u in "$A" "$B"; do
-  if curl -sf "$u/health" >/dev/null; then echo "$u is in use (stop the dev stack with: make down)" >&2; exit 1; fi
+for u in "$A" "$B" "$MOCK"; do
+  if curl -s -o /dev/null "$u"; then echo "$u is in use (stop the dev stack with: make down)" >&2; exit 1; fi
 done
 mkdir -p "$ROOT/logs" "$ROOT/bin" "$ROOT/testenv/results"
 (cd "$ROOT/testenv" && go build -o "$ROOT/bin/mockllm" ./cmd/mockllm && go build -o "$ROOT/bin/hlbench" ./cmd/hlbench)
