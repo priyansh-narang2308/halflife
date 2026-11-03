@@ -5,8 +5,9 @@
 #   ensure_redis                 start the Redis container unless it is running
 #   start_mock                   build and start the mock LLM provider
 #   start_mock_tavily            build and start the mock Tavily (key tvly-mock)
-#   start_gateway CONFIG LOG [NS] start a gateway on 8090 from testenv/configs/CONFIG,
-#                                with the semantic cache namespace set to NS if given
+#   start_gateway CONFIG LOG [NS] start a gateway on 8090 from testenv/configs/CONFIG
+#                                (or a config.json path), with the semantic cache
+#                                namespace set to NS if given
 #   stop_gateway                 stop it (Halflife drains its audit queue)
 #   check NAME GOT WANT          PASS/FAIL line; failures counted in $fails
 #   finish                       print the verdict and exit non-zero on failures
@@ -70,14 +71,15 @@ start_mock_tavily() {
 }
 
 start_gateway() {
-  local app="$LIB_TMP/app-$RANDOM" ns="${3:-}"
+  local app="$LIB_TMP/app-$RANDOM" ns="${3:-}" src="$ROOT/testenv/configs/$1/config.json"
+  [ -f "$1" ] && src="$1"
   mkdir -p "$app"
   if [ -n "$ns" ]; then
     _namespaces+=("$ns")
     jq --arg ns "$ns" '(.plugins[] | select(.name == "semantic_cache") | .config.vector_store_namespace) = $ns' \
-      "$ROOT/testenv/configs/$1/config.json" > "$app/config.json"
+      "$src" > "$app/config.json"
   else
-    cp "$ROOT/testenv/configs/$1/config.json" "$app/config.json"
+    cp "$src" "$app/config.json"
   fi
   GATEWAY_APP="$app"
   GATEWAY_LOG_LEVEL=debug "$ROOT/scripts/run-gateway.sh" "$app" 8090 > "$2" 2>&1 &

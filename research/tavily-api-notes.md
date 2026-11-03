@@ -102,3 +102,16 @@ There's also a docs MCP server (`https://docs.tavily.com/mcp`). Neither is insta
 - 434 message → the documented live-fetch text.
 - Extract credits → accrue per 5 successful URLs **across requests** (per key), so a request can report 0.
 - `include_domains_mode` without `include_domains` → 400; 422 shape for type errors.
+
+## Live observations, 3 Nov 2026 **[ours, live]**
+
+8 searches, 1 single-URL Extract and 3 `/usage` reads, all through Bifrost's relay (`testenv/live-tavily.sh`). Record: `testenv/results/tavily-live.json`.
+
+- **Credits match the docs.** basic 1, advanced 2, `max_age_hours: 24` 1, `topic: news` + `time_range: week` 1. A 1-URL Extract reports 0 (it accrues per 5 URLs).
+- **A repeated query is served from Tavily's cache and still billed.** The second identical basic search returned `response_time: 0.0` in 0.29 s and reported 1 credit. Halflife should not repeat a search it already has.
+- **`max_results` above 20 is accepted.** `max_results: 50` returned 50 results for 1 credit, not the 0–20 the spec documents. The mock assumed a 400 and was corrected.
+- **`max_age_hours` is accepted** and changes the results (endoflife.date and reddit appeared). It does not add `published_date`.
+- **`published_date` appeared only with `topic: news`** (3 of 3 results). General-topic results carried none, so freshness for those must come from the page (Extract) or the query.
+- **401 text** is "Unauthorized: missing or invalid API key.", the same as the mock's.
+- **`/usage` lags.** It read 0 used of `plan_limit: 1000` before the run, right after it, and on three reads up to 3 minutes later. The "9,000 credits" above is from the dashboard; the key's `/usage` shows a 1,000 plan limit. Totals are reconciled from a later read (see `usage.later` in the record) rather than assumed.
+- **Latency.** Tavily-reported `response_time`: basic searches 1.1–2.6 s (5 uncached calls), advanced 2.8 s, Extract 0.02 s. Seen end to end: about 0.3 s more. The gateway adds 0.6–2.1 ms on 9 of 11 calls (relay log `overhead_latency`), 6.1 ms on the first call and 23 ms once.

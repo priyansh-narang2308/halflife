@@ -130,7 +130,7 @@ func TestSearchErrors(t *testing.T) {
 	for name, body := range map[string]any{
 		"missing query": map[string]any{},
 		"bad depth":     map[string]any{"query": "q", "search_depth": "deep"},
-		"bad max":       map[string]any{"query": "q", "max_results": 21},
+		"negative max":  map[string]any{"query": "q", "max_results": -1},
 		"mode only":     map[string]any{"query": "q", "include_domains_mode": "prefer"},
 	} {
 		if resp, _ := call(t, ts, "/search", key, body); resp.StatusCode != 400 {

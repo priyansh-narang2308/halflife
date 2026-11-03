@@ -1,0 +1,162 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "providers": {
+    "openai": {
+      "keys": [
+        {
+          "name": "mock",
+          "value": "sk-halflife-mock",
+          "models": [
+            "ok",
+            "slow-250",
+            "slow-1000",
+            "fail-429",
+            "fail-500",
+            "fail-503"
+          ],
+          "weight": 1.0
+        }
+      ],
+      "network_config": {
+        "base_url": "http://127.0.0.1:9101",
+        "default_request_timeout_in_seconds": 10,
+        "max_retries": 0
+      }
+    }
+  },
+  "governance": {
+    "virtual_keys": [
+      {
+        "name": "Smoke test app",
+        "id": "vk-smoke",
+        "value": "sk-bf-halflife-smoke",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "slow-250",
+              "slow-1000",
+              "fail-429",
+              "fail-500",
+              "fail-503"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
+      },
+      {
+        "name": "Halflife verifier",
+        "id": "vk-verifier",
+        "value": "sk-bf-halflife-verifier",
+        "is_active": true,
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "fail-500"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ],
+        "relay_grants": [
+          {
+            "relay_name": "tavily"
+          },
+          {
+            "relay_name": "tavily-badkey"
+          }
+        ]
+      }
+    ]
+  },
+  "plugins": [
+    {
+      "enabled": true,
+      "name": "halflife",
+      "config": {
+        "queue_size": 256,
+        "workers": 2,
+        "max_claims_per_response": 5,
+        "tavily_relay": "tavily",
+        "verifier_virtual_key": "vk-verifier"
+      }
+    }
+  ],
+  "relays": [
+    {
+      "name": "tavily",
+      "description": "Tavily Search and Extract for Halflife evidence (live)",
+      "base_url": "https://api.tavily.com",
+      "auth": {
+        "type": "bearer"
+      },
+      "credential": {
+        "value": "env.TAVILY_API_KEY"
+      },
+      "network": {
+        "timeout_seconds": 30
+      },
+      "usage": {
+        "units_path": "usage.credits",
+        "cost_per_unit": 0.008
+      },
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/search"
+        },
+        {
+          "method": "POST",
+          "path": "/extract"
+        },
+        {
+          "method": "GET",
+          "path": "/usage",
+          "billable": false
+        }
+      ]
+    },
+    {
+      "name": "tavily-badkey",
+      "description": "Live Tavily with a deliberately invalid key, for the 401 shape",
+      "base_url": "https://api.tavily.com",
+      "auth": {
+        "type": "bearer"
+      },
+      "credential": {
+        "value": "tvly-invalid-key-for-the-401-check"
+      },
+      "network": {
+        "timeout_seconds": 30
+      },
+      "usage": {
+        "units_path": "usage.credits",
+        "cost_per_unit": 0.008
+      },
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/search"
+        },
+        {
+          "method": "POST",
+          "path": "/extract"
+        },
+        {
+          "method": "GET",
+          "path": "/usage",
+          "billable": false
+        }
+      ]
+    }
+  ]
+}

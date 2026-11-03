@@ -857,3 +857,42 @@ Halflife set `X-Halflife-Status` on every route that runs the transport hooks. R
 ### Mock Tavily additions
 
 `GET /usage` (free) and `last` in `/_mock/requests`: path, attribution headers, `include_usage`, and whether `x-bf-vk` or `X-Api-Key` reached it. Values of credentials are never recorded.
+
+## Task 21: Live Tavily validation (3 Nov 2026)
+
+**Status:** done. **Live:** real Tavily (`api.tavily.com`) through Bifrost's relay, with the real key from `.env`. Command: `testenv/live-tavily.sh`, run once. Config `testenv/configs/relay-live` is the Task 20 relay with `base_url: https://api.tavily.com` and `credential: env.TAVILY_API_KEY`, plus a relay `tavily-badkey` with a deliberately invalid key. Record: `testenv/results/tavily-live.json`.
+
+### Spend controls
+
+- At most 10 searches (the script refuses an eleventh); 8 were made, plus 1 single-URL Extract and free `/usage` reads.
+- Reported: 7 credits. Bifrost charged $0.056 (7 × $0.008).
+- `DRY_RUN=1` runs the same calls against mock Tavily; it was run first, to check the script without spending.
+
+### Results
+
+| Call | Status | `usage.credits` | Tavily `response_time` | Gateway latency (upstream) | Results |
+|---|---|---|---|---|---|
+| basic, `max_results: 3` | 200 | 1 | 1.49 s | 1743 ms (1742) | 3 (go.dev ×2, flaviocopes.com) |
+| same query again | 200 | 1 | 0.0 s | 294 ms (293) | 3, identical: served from Tavily's cache, still billed |
+| advanced | 200 | 2 | 2.82 s | 3075 ms (3074) | 3 |
+| `max_age_hours: 24` | 200 | 1 | 2.55 s | 2802 ms (2802) | 3, different sources |
+| `topic: news`, `time_range: week` | 200 | 1 | 1.22 s | 1511 ms (1488) | 3, all with `published_date` |
+| without `include_usage` | 200 | (none) | 1.12 s | 1374 ms (1373) | 3; Bifrost charged $0 |
+| `max_results: 50` | **200** | 1 | 2.22 s | 2948 ms (2947) | **50**; the spec's 0–20 limit is not enforced |
+| invalid key (`tavily-badkey`) | 401 | (none) | n/a | 779 ms (778) | "Unauthorized: missing or invalid API key." |
+| Extract, 1 URL | 200 | 0 | 0.02 s | 531 ms (528) | 1 page; Extract accrues per 5 URLs |
+
+- **Gateway overhead** (relay log `overhead_latency`): 0.6–2.1 ms on 9 of 11 calls, 6.1 ms on the first call, 23 ms once.
+- **`/usage`:** `plan_limit` 1000, and 0 used before the run, straight after it, and on three later reads up to 3 minutes after. Tavily's counter lags the calls (D35). Whether it ever counts the search sent without `include_usage` can only be read from a later `/usage`; until then it is unverified, and Bifrost's $0 for that call is the confirmed half of the gap.
+
+### Redaction
+
+- The script never reads the key: it only checks that `.env` has a non-empty `TAVILY_API_KEY`, and the gateway resolves `env.TAVILY_API_KEY` itself.
+- The record keeps statuses, credits, timings, counts, top domains and error messages; it keeps no result text.
+- Automated checks: no `tvly-` key-shaped string other than the two synthetic ones appears in the record or the gateway log, and the virtual key's value does not appear in the record.
+
+### What changed because of it
+
+- Mock Tavily accepts `max_results` above 20.
+- Decisions D34 (no repeated searches within an audit) and D35 (late `/usage` reconciliation).
+- Notes in `research/tavily-api-notes.md` → "Live observations".

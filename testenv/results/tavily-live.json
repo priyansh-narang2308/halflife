@@ -1,0 +1,427 @@
+{
+  "recorded_at": "2026-11-03T06:06:37Z",
+  "search_cap": 10,
+  "note": "Live Tavily through the Bifrost relay. Credentials redacted (never recorded).",
+  "calls": [
+    {
+      "label": "usage-before",
+      "path": "/usage",
+      "status": 200,
+      "client_seconds": 3.185267,
+      "gateway_request_id": "f11d2bfe-b545-4477-857a-c41d8ffee4dc",
+      "credits": null,
+      "tavily_response_time": null,
+      "tavily_request_id": null,
+      "results": null,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [],
+      "error": null,
+      "gateway": {
+        "path": "/usage",
+        "status_code": 200,
+        "units": null,
+        "cost": null,
+        "latency": 3184.016791000000011,
+        "upstream_latency": 3177.895207999999912,
+        "overhead_latency": 6.121583000000100582
+      }
+    },
+    {
+      "label": "basic",
+      "path": "/search",
+      "status": 200,
+      "client_seconds": 1.744711,
+      "gateway_request_id": "c062bc36-9b27-4740-bf40-fdebc6f67757",
+      "credits": 1,
+      "tavily_response_time": 1.49,
+      "tavily_request_id": "b6295079-2cc6-4ada-8a50-93291f6f4e9c",
+      "results": 3,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [
+        "go.dev",
+        "go.dev",
+        "flaviocopes.com"
+      ],
+      "error": null,
+      "gateway": {
+        "path": "/search",
+        "status_code": 200,
+        "units": 1.0,
+        "cost": 0.008000000000000000166,
+        "latency": 1742.988790999999992,
+        "upstream_latency": 1741.776292000000012,
+        "overhead_latency": 1.212498999999979787
+      }
+    },
+    {
+      "label": "repeat",
+      "path": "/search",
+      "status": 200,
+      "client_seconds": 0.295392,
+      "gateway_request_id": "1eb59728-7764-4f4b-98ba-e82db8fb2d09",
+      "credits": 1,
+      "tavily_response_time": 0.0,
+      "tavily_request_id": "6a3e417e-9c81-4a43-a936-efffdb763485",
+      "results": 3,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [
+        "go.dev",
+        "go.dev",
+        "flaviocopes.com"
+      ],
+      "error": null,
+      "gateway": {
+        "path": "/search",
+        "status_code": 200,
+        "units": 1.0,
+        "cost": 0.008000000000000000166,
+        "latency": 294.0079170000000203,
+        "upstream_latency": 293.45070800000002,
+        "overhead_latency": 0.5572090000000002875
+      }
+    },
+    {
+      "label": "advanced",
+      "path": "/search",
+      "status": 200,
+      "client_seconds": 3.076042,
+      "gateway_request_id": "21f6ba29-a928-4c67-a8df-da9210035fbc",
+      "credits": 2,
+      "tavily_response_time": 2.82,
+      "tavily_request_id": "51294e93-e522-4b76-876a-dcd23ecd7645",
+      "results": 3,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [
+        "go.dev",
+        "go.dev",
+        "en.wikipedia.org"
+      ],
+      "error": null,
+      "gateway": {
+        "path": "/search",
+        "status_code": 200,
+        "units": 2.0,
+        "cost": 0.01600000000000000033,
+        "latency": 3074.64687499999991,
+        "upstream_latency": 3073.886582000000089,
+        "overhead_latency": 0.7602929999998195853
+      }
+    },
+    {
+      "label": "max-age-24h",
+      "path": "/search",
+      "status": 200,
+      "client_seconds": 2.803350,
+      "gateway_request_id": "f862e869-714d-4a6a-b97b-677ff69296dd",
+      "credits": 1,
+      "tavily_response_time": 2.55,
+      "tavily_request_id": "9058b0a6-9013-4cf9-8594-41765f1b551a",
+      "results": 3,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [
+        "go.dev",
+        "endoflife.date",
+        "www.reddit.com"
+      ],
+      "error": null,
+      "gateway": {
+        "path": "/search",
+        "status_code": 200,
+        "units": 1.0,
+        "cost": 0.008000000000000000166,
+        "latency": 2802.237125000000105,
+        "upstream_latency": 2801.512373999999909,
+        "overhead_latency": 0.7247510000001966545
+      }
+    },
+    {
+      "label": "news-week",
+      "path": "/search",
+      "status": 200,
+      "client_seconds": 1.514654,
+      "gateway_request_id": "e960aefa-c1e7-4239-8819-f1b9c246f5b1",
+      "credits": 1,
+      "tavily_response_time": 1.22,
+      "tavily_request_id": "d917c52f-dfb9-448b-a4cc-90bf259b1d4a",
+      "results": 3,
+      "failed_results": null,
+      "published_dates": 3,
+      "top_domains": [
+        "www.scworld.com",
+        "www.wired-gov.net",
+        "builtin.com"
+      ],
+      "error": null,
+      "gateway": {
+        "path": "/search",
+        "status_code": 200,
+        "units": 1.0,
+        "cost": 0.008000000000000000166,
+        "latency": 1511.310249999999997,
+        "upstream_latency": 1487.84053999999992,
+        "overhead_latency": 23.46971000000007734
+      }
+    },
+    {
+      "label": "no-usage",
+      "path": "/search",
+      "status": 200,
+      "client_seconds": 1.375427,
+      "gateway_request_id": "fc2649b9-5d63-47af-95a5-bca38022f8d0",
+      "credits": null,
+      "tavily_response_time": 1.12,
+      "tavily_request_id": "999494f8-9a43-4564-bde4-057043ea4375",
+      "results": 3,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [
+        "go.dev",
+        "go.dev",
+        "flaviocopes.com"
+      ],
+      "error": null,
+      "gateway": {
+        "path": "/search",
+        "status_code": 200,
+        "units": null,
+        "cost": 0.0,
+        "latency": 1374.132458000000042,
+        "upstream_latency": 1373.452872999999955,
+        "overhead_latency": 0.6795850000000882574
+      }
+    },
+    {
+      "label": "invalid",
+      "path": "/search",
+      "status": 200,
+      "client_seconds": 2.949330,
+      "gateway_request_id": "321bc2d9-22e1-4434-809a-c3a4cdccde4c",
+      "credits": 1,
+      "tavily_response_time": 2.22,
+      "tavily_request_id": "58471b5d-c3a7-4d03-b694-fac87650ea76",
+      "results": 50,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [
+        "go.dev",
+        "www.youtube.com",
+        "www.opensourceforu.com"
+      ],
+      "error": null,
+      "gateway": {
+        "path": "/search",
+        "status_code": 200,
+        "units": 1.0,
+        "cost": 0.008000000000000000166,
+        "latency": 2947.7824999999998,
+        "upstream_latency": 2946.71933399999989,
+        "overhead_latency": 1.063165999999910128
+      }
+    },
+    {
+      "label": "bad-key",
+      "path": "/search",
+      "status": 401,
+      "client_seconds": 0.780489,
+      "gateway_request_id": "f8e9fd3f-bd92-4cb1-9a19-a40c685ba2a7",
+      "credits": null,
+      "tavily_response_time": null,
+      "tavily_request_id": null,
+      "results": null,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [],
+      "error": "Unauthorized: missing or invalid API key.",
+      "gateway": {
+        "path": "/search",
+        "status_code": 401,
+        "units": null,
+        "cost": null,
+        "latency": 779.1167080000000169,
+        "upstream_latency": 778.2460829999999988,
+        "overhead_latency": 0.8706250000000181899
+      }
+    },
+    {
+      "label": "extract-1url",
+      "path": "/extract",
+      "status": 200,
+      "client_seconds": 0.532523,
+      "gateway_request_id": "878e8f39-2a8f-4715-9d67-0f5e5c472e91",
+      "credits": 0,
+      "tavily_response_time": 0.02,
+      "tavily_request_id": "83aac4ee-082d-48e8-8fa4-451ae75a4d9d",
+      "results": 1,
+      "failed_results": 0,
+      "published_dates": 0,
+      "top_domains": [
+        "go.dev"
+      ],
+      "error": null,
+      "gateway": {
+        "path": "/extract",
+        "status_code": 200,
+        "units": 0.0,
+        "cost": 0.0,
+        "latency": 530.6285000000000309,
+        "upstream_latency": 528.4850400000000263,
+        "overhead_latency": 2.143460000000004584
+      }
+    },
+    {
+      "label": "usage-after",
+      "path": "/usage",
+      "status": 200,
+      "client_seconds": 0.840471,
+      "gateway_request_id": "25f23882-3c1f-44f5-ad2e-7aeaeda4ad42",
+      "credits": null,
+      "tavily_response_time": null,
+      "tavily_request_id": null,
+      "results": null,
+      "failed_results": null,
+      "published_dates": 0,
+      "top_domains": [],
+      "error": null,
+      "gateway": {
+        "path": "/usage",
+        "status_code": 200,
+        "units": null,
+        "cost": null,
+        "latency": 838.4022919999999886,
+        "upstream_latency": 837.0108330000000478,
+        "overhead_latency": 1.391458999999940715
+      }
+    }
+  ],
+  "requests": [
+    {
+      "label": "usage-before",
+      "request": null
+    },
+    {
+      "label": "basic",
+      "request": {
+        "query": "What is the latest stable version of the Go programming language?",
+        "search_depth": "basic",
+        "max_results": 3,
+        "include_usage": true
+      }
+    },
+    {
+      "label": "repeat",
+      "request": {
+        "query": "What is the latest stable version of the Go programming language?",
+        "search_depth": "basic",
+        "max_results": 3,
+        "include_usage": true
+      }
+    },
+    {
+      "label": "advanced",
+      "request": {
+        "query": "What is the latest stable version of the Go programming language?",
+        "search_depth": "advanced",
+        "max_results": 3,
+        "include_usage": true
+      }
+    },
+    {
+      "label": "max-age-24h",
+      "request": {
+        "query": "What is the latest stable version of the Go programming language?",
+        "search_depth": "basic",
+        "max_results": 3,
+        "include_usage": true,
+        "max_age_hours": 24
+      }
+    },
+    {
+      "label": "news-week",
+      "request": {
+        "query": "Go programming language release",
+        "search_depth": "basic",
+        "max_results": 3,
+        "include_usage": true,
+        "topic": "news",
+        "time_range": "week"
+      }
+    },
+    {
+      "label": "no-usage",
+      "request": {
+        "query": "What is the latest stable version of the Go programming language?",
+        "search_depth": "basic",
+        "max_results": 3
+      }
+    },
+    {
+      "label": "invalid",
+      "request": {
+        "query": "What is the latest stable version of the Go programming language?",
+        "search_depth": "basic",
+        "max_results": 50,
+        "include_usage": true
+      }
+    },
+    {
+      "label": "bad-key",
+      "request": {
+        "query": "What is the latest stable version of the Go programming language?",
+        "search_depth": "basic",
+        "max_results": 3,
+        "include_usage": true
+      }
+    },
+    {
+      "label": "extract-1url",
+      "request": {
+        "urls": [
+          "https://go.dev/doc/devel/release"
+        ],
+        "extract_depth": "basic",
+        "include_usage": true
+      }
+    },
+    {
+      "label": "usage-after",
+      "request": null
+    }
+  ],
+  "totals": {
+    "searches": 8,
+    "credits_reported": 7,
+    "bifrost_cost_usd": 0.056
+  },
+  "usage": {
+    "before": {
+      "key_usage": 0,
+      "search_usage": 0,
+      "extract_usage": 0,
+      "plan_usage": 0,
+      "plan_limit": 1000,
+      "paygo_usage": 0
+    },
+    "after": {
+      "key_usage": 0,
+      "search_usage": 0,
+      "extract_usage": 0,
+      "plan_usage": 0,
+      "plan_limit": 1000,
+      "paygo_usage": 0
+    },
+    "later": {
+      "read_at": "2026-11-03T06:09:20Z",
+      "key_usage": 0,
+      "search_usage": 0,
+      "extract_usage": 0,
+      "plan_usage": 0,
+      "plan_limit": 1000,
+      "paygo_usage": 0
+    }
+  }
+}

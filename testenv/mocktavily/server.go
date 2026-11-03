@@ -2,8 +2,11 @@
 // Extract APIs, used until live behaviour is recorded (Task 21).
 //
 // Shapes, defaults, costs and error texts follow Tavily's OpenAPI spec and
-// docs as read on 2026-11-02 (see research/tavily-api-notes.md). Behaviour not
-// yet observed live is marked as an assumption and is reconciled in Task 21.
+// docs as read on 2026-11-02 (see research/tavily-api-notes.md). Live calls on
+// 2026-11-03 (testenv/results/tavily-live.json) confirmed: credits per depth,
+// a repeated query billed again, a single-URL Extract at 0 credits, and the
+// 401 message. They corrected max_results (values over 20 are accepted).
+// Behaviour not yet observed live is marked as an assumption.
 //
 // Errors are injected by putting a marker in the search query:
 //
@@ -173,8 +176,11 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	}
 	maxResults := 10 // OpenAPI default; the best-practices page says 5
 	if req.MaxResults != nil {
-		if *req.MaxResults < 0 || *req.MaxResults > 20 {
-			writeError(w, http.StatusBadRequest, "max_results must be between 0 and 20.")
+		// The spec says 0-20, but live Tavily accepted 50 and returned 50
+		// results for 1 credit (testenv/results/tavily-live.json, 3 Nov 2026),
+		// so only a negative value is refused here (message assumed).
+		if *req.MaxResults < 0 {
+			writeError(w, http.StatusBadRequest, "max_results must not be negative.")
 			return
 		}
 		maxResults = *req.MaxResults
