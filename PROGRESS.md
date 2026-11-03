@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 25 (report store and endpoint), 3 Nov 2026.
-- **Next:** Task 26 (M1 end-to-end proof and decision).
+- **Last completed:** Task 26 (M1 end-to-end proof and decision: **GO**, [M1_REPORT.md](M1_REPORT.md)), 3 Nov 2026.
+- **Next:** Task 27 (verifier LLM client).
 
 ## Completed
 
@@ -36,6 +36,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 23 | 2026-11-03 | Risk A (`make tenants`, 16/16 ×3): 3 tenants, shared vs per-tenant verifier keys. A shared key charges only itself, lets one tenant starve the others and leaves Bifrost no per-tenant record; per-tenant keys inside the tenant's customer charge the key and the customer, isolate tenants, and log the customer. A customer budget spent on verification also blocks that tenant's app. Decision D37: per-tenant verifier keys. Record `testenv/results/tenant-attribution.json` |
 | 24 | 2026-11-03 | Minimal verifier (fork commit `8c24ed1`): one claim per answer by a keyword heuristic, one basic search through the relay with the tenant's verifier key (`verifiers`, D37), sources stored on the report. Repeated searches reused for 10 min, a 402 recorded as `budget_exhausted`, retryable errors retried once. Judges nothing yet (`not_judged`). `make verify` 21/21 ×3; every other gateway suite passes |
 | 25 | 2026-11-03 | Report store and endpoint (fork commit `1775dc7`): bounded in-memory store (10k), report created at queue time and completed by the verifier; `GET /api/halflife/reports/{id}` in-tree, behind the same dashboard auth as `/api`, 401 without it, 404 for unknown IDs; report linked to the gateway request and the relay-log row of its search |
+| 26 | 2026-11-03 | M1 proof (`make m1`, `testenv/m1-proof.sh`): request → Bifrost → capture → Tavily relay → report, checking M1-A, B, D, E and tenant attribution in one run; M1-C from `make cache`. Mock 22/22 ×4; live (free OpenRouter models + real Tavily) 22/22 on the second attempt after a 429 on the first, 3 credits / $0.024. Decision D40: **GO** ([M1_REPORT.md](M1_REPORT.md)). Found: the keyword picker chose a hedged sentence from a model's reasoning trace, and a verifier key's budget also refuses its LLM calls |
 
 ## Decisions
 
@@ -80,13 +81,14 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D37 | Risk A: each tenant gets its own verifier virtual key, inside the tenant's customer, with a budget below the customer budget; a shared verifier key is only for single-tenant setups | Measured (Task 23): per-tenant keys charge the tenant (key + customer budget), keep one tenant's heavy verification from refusing another's, and put the customer on every relay-log row. A shared key charged none of the tenants, let Acme exhaust it so Globex and Initech were refused, and left `X-Project-ID` at Tavily as the only per-tenant record. Inside the customer, verification and app spend share one cap: when Initech's verification spent its customer budget, Initech's app was refused too, so the verifier key's budget must be the smaller. Consequence for Task 24: config maps tenant key ID → verifier key, the recursion guard covers every verifier key, and a tenant with no verifier key is not verified (reported as such). |
 | D38 | The M1 verifier picks one claim with a keyword heuristic and records evidence without judging it; no answer is marked stale until the judge exists | The task is to prove the path (capture → relay → Tavily → report) with real attribution and spend. A heuristic is deterministic and free; a judgement from keyword overlap would produce verdicts that look authoritative and aren't. Reports say `not_judged`, and cache eviction stays off until a model-based judge with typed comparators (Tasks 27-34) can justify it. |
 | D39 | Reports live in a bounded in-memory store and are served only behind the gateway's dashboard auth | They hold the tenant's question and answer, so the endpoint is an operator view, like the rest of `/api`; a tenant-facing view that checks the caller's key is later work. In memory keeps M1 free of a schema; restarts lose reports, which the persistent store (Task 35) fixes. `gateway_url` is configured, not detected, because the plugin loader can't see the listen address; it defaults to Bifrost's `127.0.0.1:8080`. |
+| D40 | M1 decision: **GO** (was CONDITIONAL GO); the M1 proof sends Bifrost request fallbacks across free models in live mode | Every gateway capability the audit had proven only from source has now run on the real gateway, mock and live (M1_REPORT.md A–G). The remaining risk is verification quality (Milestone 2), measured on held-out data before any accuracy claim. Free models are rate-limited upstream (429 on the first live run), so live answers fall back to two more free models; the same applies to the judge (Task 27). |
 
 ## Blockers and inputs needed
 
 | Item | Needed by | Status |
 |---|---|---|
 | `TAVILY_API_KEY` in `.env` | Task 21 (live validation) | Resolved: in `.env`, used once in Task 21. `/usage` reports a 1,000-credit plan limit, not the 9,000 noted in D12; to reconcile from a later read |
-| `OPENROUTER_API_KEY` in `.env` (optional 2nd provider for the fallback demo) | Tasks 26, 27, 42 | Missing. Mock provider is used until then. |
+| `OPENROUTER_API_KEY` in `.env` (optional 2nd provider for the fallback demo) | Tasks 26, 27, 42 | Resolved: in `.env`; used in Task 26's live run (free models only) |
 | Docker daemon running | Task 06 | Resolved: Docker Desktop started; `make up` checks for it |
 | Go 1.27.3 | Task 02 | Resolved |
 

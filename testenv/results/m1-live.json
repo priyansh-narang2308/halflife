@@ -1,0 +1,340 @@
+{
+  "recorded_at": "2026-11-03T10:53:31Z",
+  "mode": "live",
+  "answer_model": "google/gemma-4-31b-it:free",
+  "tavily": "api.tavily.com",
+  "note": "Synthetic keys; no credential and no page text recorded. Source URLs, titles and dates only.",
+  "reports": [
+    {
+      "name": "acme",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-b72c-7991-80b9-b660916ee09d",
+      "request_id": "ddce1b45-8294-428c-96ab-053456cfe592",
+      "tenant": "vk-acme",
+      "model": "xingchen-agi/xing4.0-29b-a4b:free",
+      "is_fallback": true,
+      "question": "What is the latest stable version of the Go programming language? Answer in one sentence.",
+      "answer": "1.  **Identify the core question:** The user is asking for the latest stable version of the Go programming language.\n2.  **Retrieve knowledge:** What is the current latest stable version of Go? Go 1.23 was released in August 2024. (Wait, let me double check if Go 1.24 has been released. As of November 2024, Go 1.24 might be out, but let's stick to my latest known knowledge which is usually up to early 2025). Actually, let me search my internal database for \"Go latest stable version\".\n    *   Go 1.22: Feb 2024\n    *   Go 1.23: Aug 2024\n    *   Go 1.24: Nov/Dec 2024\n    *   Let me verify: Go 1.24 was released on December 2, 2024? No, wait. \"The Go 1.24 release is now available\" - maybe Dec 2024? Let's just say Go 1.24. Wait, did Go 1.24 release on Nov 5, 2024? Yes, November 5, 2024? No, Go 1.24 was released around late 20",
+      "outcome": "evidence_found",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "As of November 2024, Go 1.24 might be out, but let's stick to my latest known knowledge which is usually up to early 2025).",
+        "query": "As of November 2024, Go 1.24 might be out, but let's stick to my latest known knowledge which is usually up to early 2025)."
+      },
+      "error": null,
+      "evidence": {
+        "verifier_virtual_key_id": "vk-verifier-acme",
+        "credits": 1,
+        "reused": false,
+        "gateway_request_id": "a2f91b0d-11fd-4e5d-b266-56739d1af7c4",
+        "tavily_request_id": "21d71551-4cf6-427b-b5d6-4b54330a4cd9",
+        "sources": [
+          {
+            "title": "Release History - The Go Programming Language",
+            "url": "https://go.dev/doc/devel/release",
+            "published_date": null,
+            "score": 0.69820654
+          },
+          {
+            "title": "Go 1.24 (2025-02-11) | GoFrame - A powerful framework for faster, easier, and more efficient project development",
+            "url": "https://goframe.org/en/release/golang/go1.24",
+            "published_date": null,
+            "score": 0.6803909
+          },
+          {
+            "title": "Go 1.24 Release Guide: New Features and Performance Improvements",
+            "url": "https://madappgang.com/blog/go-12-4-drops-a-quntum-bomb-your-code-will-never-be-the-same",
+            "published_date": null,
+            "score": 0.64639384
+          },
+          {
+            "title": "When I can expect to have go1.24 - Releases - Go Forum",
+            "url": "https://forum.golangbridge.org/t/when-i-can-expect-to-have-go1-24/37781",
+            "published_date": null,
+            "score": 0.63750535
+          },
+          {
+            "title": "Golang 1.24 What is new?",
+            "url": "https://www.youtube.com/watch?v=qjiIA0220ms",
+            "published_date": null,
+            "score": 0.6369636
+          }
+        ]
+      },
+      "seconds_to_report": 3
+    },
+    {
+      "name": "fallback",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-c360-75d8-88b6-086f779c5182",
+      "request_id": "791b15e8-f105-4a70-8a51-652f0ef64c96",
+      "tenant": "vk-acme",
+      "model": "ok",
+      "is_fallback": true,
+      "question": "What is the latest version of the Acme SDK?",
+      "answer": "The latest version of the Acme SDK is 3.2.0, released in March 2025.",
+      "outcome": "evidence_found",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "The latest version of the Acme SDK is 3.2.0, released in March 2025.",
+        "query": "The latest version of the Acme SDK is 3.2.0, released in March 2025."
+      },
+      "error": null,
+      "evidence": {
+        "verifier_virtual_key_id": "vk-verifier-acme",
+        "credits": 1,
+        "reused": false,
+        "gateway_request_id": "97bde4ad-9270-4a73-b195-ccae36ce4b43",
+        "tavily_request_id": "87fea231-0ed3-48f7-bc40-3dd219954b9a",
+        "sources": [
+          {
+            "title": "terraform-provider-acme/CHANGELOG.md at main · vancluever/terraform-provider-acme · GitHub",
+            "url": "https://github.com/vancluever/terraform-provider-acme/blob/main/CHANGELOG.md",
+            "published_date": null,
+            "score": 0.5342973
+          },
+          {
+            "title": "ACME Protocol: What It Is and How iI Works - Hashed Out",
+            "url": "https://www.thesslstore.com/blog/acme-protocol-what-it-is-and-how-it-works",
+            "published_date": null,
+            "score": 0.48762518
+          },
+          {
+            "title": "ACME Clients",
+            "url": "https://acmeclients.com",
+            "published_date": null,
+            "score": 0.4549328
+          },
+          {
+            "title": "ACME Client Implementations - Let's Encrypt",
+            "url": "https://letsencrypt.org/docs/client-options",
+            "published_date": null,
+            "score": 0.4169159
+          },
+          {
+            "title": "Lego :: ACME client and library written in Go.",
+            "url": "https://go-acme.github.io/lego",
+            "published_date": null,
+            "score": 0.340398
+          }
+        ]
+      },
+      "seconds_to_report": 0
+    },
+    {
+      "name": "budget",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-c4d5-795a-bdc1-3761709fd739",
+      "request_id": "bad5476b-2f1d-4de0-92d1-2a6ec39d3c6e",
+      "tenant": "vk-acme",
+      "model": "ok",
+      "is_fallback": false,
+      "question": "Who is the CEO of Acme Cloud?",
+      "answer": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015.",
+      "outcome": "budget_exhausted",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015.",
+        "query": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015."
+      },
+      "error": "tavily relay: 402 Budget exceeded: vk_model_config * budget exceeded: 0.0160 >= 0.0160 dollars",
+      "evidence": {
+        "verifier_virtual_key_id": "vk-verifier-acme",
+        "credits": 0,
+        "reused": false,
+        "gateway_request_id": null,
+        "tavily_request_id": null,
+        "sources": []
+      },
+      "seconds_to_report": 0
+    },
+    {
+      "name": "globex",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-e9e1-7add-bbc6-5e020ce923d9",
+      "request_id": "58811d22-2397-461c-8d52-ce05b1de69e0",
+      "tenant": "vk-globex",
+      "model": "openrouter/free",
+      "is_fallback": true,
+      "question": "Who is the current CEO of OpenAI? Answer in one sentence.",
+      "answer": "Sam Altman is the current CEO of OpenAI.",
+      "outcome": "evidence_found",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "Sam Altman is the current CEO of OpenAI.",
+        "query": "Sam Altman is the current CEO of OpenAI."
+      },
+      "error": null,
+      "evidence": {
+        "verifier_virtual_key_id": "vk-verifier-globex",
+        "credits": 1,
+        "reused": false,
+        "gateway_request_id": "1c6731ea-93b8-461f-b012-cdea58e1e450",
+        "tavily_request_id": "15c2bd50-bf22-410c-b118-c29f0e29ad02",
+        "sources": [
+          {
+            "title": "Sam Altman - Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Sam_Altman",
+            "published_date": null,
+            "score": 0.91936076
+          },
+          {
+            "title": "Who is the CEO of OpenAI in 2026? Sam Altman | Unify",
+            "url": "https://www.unifygtm.com/insights/executives/openai-ceo",
+            "published_date": null,
+            "score": 0.90692574
+          },
+          {
+            "title": "Sam Altman | Biography, OpenAI, ChatGPT, & Microsoft | Britannica Money",
+            "url": "https://www.britannica.com/money/Sam-Altman",
+            "published_date": null,
+            "score": 0.8765607
+          },
+          {
+            "title": "Co-Founder and CEO, OpenAI | Aspen Ideas",
+            "url": "https://www.aspenideas.org/speakers/sam-altman",
+            "published_date": null,
+            "score": 0.8703443
+          },
+          {
+            "title": "Sam Altman returns as CEO, OpenAI has a new initial board",
+            "url": "https://openai.com/index/sam-altman-returns-as-ceo-openai-has-a-new-initial-board",
+            "published_date": null,
+            "score": 0.86954874
+          }
+        ]
+      },
+      "seconds_to_report": 1
+    },
+    {
+      "name": "initech",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-ef83-7163-abca-99b7bf86a392",
+      "request_id": "2af4ca92-9f2c-4a8a-920f-4cfb150dd552",
+      "tenant": "vk-initech",
+      "model": "ok",
+      "is_fallback": false,
+      "question": "How much does the Acme Cloud Pro plan cost?",
+      "answer": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+      "outcome": "no_verifier_key",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+        "query": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage."
+      },
+      "error": null,
+      "evidence": null,
+      "seconds_to_report": 0
+    }
+  ],
+  "recursion_guard": {
+    "calls": 20,
+    "marked_verifier": 20,
+    "captured": 0
+  },
+  "relay_searches": [
+    {
+      "virtual_key_id": "vk-verifier-acme",
+      "customer_id": "cust-acme",
+      "status_code": 200,
+      "units": 1.0,
+      "cost": 0.008000000000000000166,
+      "latency": 2903.62720900000022,
+      "upstream_latency": 2903.020998999999848,
+      "overhead_latency": 0.6062100000003738388,
+      "gateway_request_id": "a2f91b0d-11fd-4e5d-b266-56739d1af7c4"
+    },
+    {
+      "virtual_key_id": "vk-verifier-acme",
+      "customer_id": "cust-acme",
+      "status_code": 200,
+      "units": 1.0,
+      "cost": 0.008000000000000000166,
+      "latency": 285.7432079999999815,
+      "upstream_latency": 285.3131660000000238,
+      "overhead_latency": 0.4300419999999576248,
+      "gateway_request_id": "97bde4ad-9270-4a73-b195-ccae36ce4b43"
+    },
+    {
+      "virtual_key_id": "vk-verifier-acme",
+      "customer_id": "cust-acme",
+      "status_code": 402,
+      "units": null,
+      "cost": null,
+      "latency": 0.3827920000000000211,
+      "upstream_latency": 0.0,
+      "overhead_latency": 0.3827920000000000211,
+      "gateway_request_id": "56be86d9-fa26-4241-879b-d518e7ed7e30"
+    },
+    {
+      "virtual_key_id": "vk-acme",
+      "customer_id": "cust-acme",
+      "status_code": 403,
+      "units": null,
+      "cost": null,
+      "latency": 0.3777920000000000166,
+      "upstream_latency": 0.0,
+      "overhead_latency": 0.3777920000000000166,
+      "gateway_request_id": "cf34cc74-983c-4238-b586-99555c960588"
+    },
+    {
+      "virtual_key_id": null,
+      "customer_id": null,
+      "status_code": 401,
+      "units": null,
+      "cost": null,
+      "latency": 0.3716249999999999832,
+      "upstream_latency": 0.0,
+      "overhead_latency": 0.3716249999999999832,
+      "gateway_request_id": "f222d743-694f-46ea-bb1a-14aa4c221433"
+    },
+    {
+      "virtual_key_id": "vk-verifier-globex",
+      "customer_id": "cust-globex",
+      "status_code": 200,
+      "units": 1.0,
+      "cost": 0.008000000000000000166,
+      "latency": 1379.3118750000001,
+      "upstream_latency": 1378.761625999999979,
+      "overhead_latency": 0.5502490000001216685,
+      "gateway_request_id": "1c6731ea-93b8-461f-b012-cdea58e1e450"
+    }
+  ],
+  "budgets": [
+    {
+      "id": "budget-cust-acme",
+      "max_limit": 1,
+      "current_usage": 0.016
+    },
+    {
+      "id": "budget-cust-globex",
+      "max_limit": 1,
+      "current_usage": 0.008
+    },
+    {
+      "id": "budget-cust-initech",
+      "max_limit": 1,
+      "current_usage": 0
+    },
+    {
+      "id": "budget-verifier-acme",
+      "max_limit": 0.016,
+      "current_usage": 0.016
+    },
+    {
+      "id": "budget-verifier-globex",
+      "max_limit": 0.016,
+      "current_usage": 0.008
+    },
+    {
+      "id": "budget-verifier-initech",
+      "max_limit": 0.024,
+      "current_usage": 0
+    }
+  ],
+  "totals": {
+    "searches_charged": 3,
+    "credits": 3,
+    "bifrost_cost_usd": 0.024
+  }
+}

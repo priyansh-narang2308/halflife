@@ -40,6 +40,9 @@ type Config struct {
 	APIKey string
 	// Fixtures supplies canned results; nil means defaults only.
 	Fixtures *Fixtures
+	// SearchDelay holds every search reply this long, as a slow upstream
+	// would; a [mock:slow-N] marker adds to it.
+	SearchDelay time.Duration
 }
 
 // Fixtures holds canned results.
@@ -169,7 +172,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.noteUsage(req.IncludeUsage)
-	if d := slowMarker(req.Query); d > 0 {
+	if d := s.cfg.SearchDelay + slowMarker(req.Query); d > 0 {
 		select {
 		case <-time.After(d):
 		case <-r.Context().Done():

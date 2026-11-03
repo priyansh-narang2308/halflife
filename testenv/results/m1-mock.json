@@ -1,0 +1,280 @@
+{
+  "recorded_at": "2026-11-03T10:53:00Z",
+  "mode": "mock",
+  "answer_model": "mock",
+  "tavily": "mock",
+  "note": "Synthetic keys; no credential and no page text recorded. Source URLs, titles and dates only.",
+  "reports": [
+    {
+      "name": "acme",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-6b45-7de2-8ec1-c5f1f7bb27e3",
+      "request_id": "acc77349-d57e-4d3a-8a29-427c8d2f4f7d",
+      "tenant": "vk-acme",
+      "model": "ok",
+      "is_fallback": false,
+      "question": "How much does the Acme Cloud Pro plan cost?",
+      "answer": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+      "outcome": "evidence_found",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+        "query": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage."
+      },
+      "error": null,
+      "evidence": {
+        "verifier_virtual_key_id": "vk-verifier-acme",
+        "credits": 1,
+        "reused": false,
+        "gateway_request_id": "b2e05edf-019d-4a03-a741-3a499d24323b",
+        "tavily_request_id": "mock-495eb47d4796c675",
+        "sources": [
+          {
+            "title": "Pricing | Acme Cloud",
+            "url": "https://acme.example/pricing",
+            "published_date": "2026-10-01",
+            "score": 0.93
+          },
+          {
+            "title": "Acme Cloud raises Pro plan price",
+            "url": "https://news.example/acme-pro-price",
+            "published_date": "2026-09-15",
+            "score": 0.88
+          }
+        ]
+      },
+      "seconds_to_report": 1
+    },
+    {
+      "name": "fallback",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-6ff6-7cd9-8d96-be073b428276",
+      "request_id": "eb983cec-c890-4f35-aac9-f9b167667a34",
+      "tenant": "vk-acme",
+      "model": "ok",
+      "is_fallback": true,
+      "question": "What is the latest version of the Acme SDK?",
+      "answer": "The latest version of the Acme SDK is 3.2.0, released in March 2025.",
+      "outcome": "evidence_found",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "The latest version of the Acme SDK is 3.2.0, released in March 2025.",
+        "query": "The latest version of the Acme SDK is 3.2.0, released in March 2025."
+      },
+      "error": null,
+      "evidence": {
+        "verifier_virtual_key_id": "vk-verifier-acme",
+        "credits": 1,
+        "reused": false,
+        "gateway_request_id": "127fc323-09d2-4453-9764-ffbf078c7c7e",
+        "tavily_request_id": "mock-df9de307bcb43d26",
+        "sources": [
+          {
+            "title": "Releases · acme/acme-sdk",
+            "url": "https://code.example/acme/acme-sdk/releases",
+            "published_date": "2026-10-20",
+            "score": 0.95
+          }
+        ]
+      },
+      "seconds_to_report": 1
+    },
+    {
+      "name": "budget",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-7449-7b2f-aec8-e993fbeb732b",
+      "request_id": "7b7509d7-e814-4119-b1f9-a723b348f25a",
+      "tenant": "vk-acme",
+      "model": "ok",
+      "is_fallback": false,
+      "question": "Who is the CEO of Acme Cloud?",
+      "answer": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015.",
+      "outcome": "budget_exhausted",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015.",
+        "query": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015."
+      },
+      "error": "tavily relay: 402 Budget exceeded: vk_model_config * budget exceeded: 0.0160 >= 0.0160 dollars",
+      "evidence": {
+        "verifier_virtual_key_id": "vk-verifier-acme",
+        "credits": 0,
+        "reused": false,
+        "gateway_request_id": null,
+        "tavily_request_id": null,
+        "sources": []
+      },
+      "seconds_to_report": 0
+    },
+    {
+      "name": "globex",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-7508-7255-8ddf-966911fbf1a8",
+      "request_id": "886f8fab-5493-4240-8f0f-f3f0ff063a03",
+      "tenant": "vk-globex",
+      "model": "ok",
+      "is_fallback": false,
+      "question": "How much does the Acme Cloud Pro plan cost?",
+      "answer": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+      "outcome": "evidence_found",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+        "query": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage."
+      },
+      "error": null,
+      "evidence": {
+        "verifier_virtual_key_id": "vk-verifier-globex",
+        "credits": 1,
+        "reused": false,
+        "gateway_request_id": "7bbf0304-fdf6-449f-8834-96d5ffc30519",
+        "tavily_request_id": "mock-495eb47d4796c675",
+        "sources": [
+          {
+            "title": "Pricing | Acme Cloud",
+            "url": "https://acme.example/pricing",
+            "published_date": "2026-10-01",
+            "score": 0.93
+          },
+          {
+            "title": "Acme Cloud raises Pro plan price",
+            "url": "https://news.example/acme-pro-price",
+            "published_date": "2026-09-15",
+            "score": 0.88
+          }
+        ]
+      },
+      "seconds_to_report": 1
+    },
+    {
+      "name": "initech",
+      "http_status": 200,
+      "report_id": "hlr_01a1a10a-7954-7c63-89fb-ed6cf65c2df1",
+      "request_id": "7cb93e4e-89a6-415f-8b38-68e6b1cf9c31",
+      "tenant": "vk-initech",
+      "model": "ok",
+      "is_fallback": false,
+      "question": "How much does the Acme Cloud Pro plan cost?",
+      "answer": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+      "outcome": "no_verifier_key",
+      "verdict": "not_judged",
+      "claim": {
+        "text": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
+        "query": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage."
+      },
+      "error": null,
+      "evidence": null,
+      "seconds_to_report": 0
+    }
+  ],
+  "recursion_guard": {
+    "calls": 20,
+    "marked_verifier": 20,
+    "captured": 0
+  },
+  "relay_searches": [
+    {
+      "virtual_key_id": "vk-verifier-acme",
+      "customer_id": "cust-acme",
+      "status_code": 200,
+      "units": 1.0,
+      "cost": 0.008000000000000000166,
+      "latency": 1004.9375,
+      "upstream_latency": 1001.834833000000003,
+      "overhead_latency": 3.102666999999996734,
+      "gateway_request_id": "b2e05edf-019d-4a03-a741-3a499d24323b"
+    },
+    {
+      "virtual_key_id": "vk-verifier-acme",
+      "customer_id": "cust-acme",
+      "status_code": 200,
+      "units": 1.0,
+      "cost": 0.008000000000000000166,
+      "latency": 1001.865832999999953,
+      "upstream_latency": 1001.439958000000046,
+      "overhead_latency": 0.4258749999999054126,
+      "gateway_request_id": "127fc323-09d2-4453-9764-ffbf078c7c7e"
+    },
+    {
+      "virtual_key_id": "vk-verifier-acme",
+      "customer_id": "cust-acme",
+      "status_code": 402,
+      "units": null,
+      "cost": null,
+      "latency": 0.2250000000000000055,
+      "upstream_latency": 0.0,
+      "overhead_latency": 0.2250000000000000055,
+      "gateway_request_id": "bc48cb23-9a15-469e-a6d5-9012eff321cd"
+    },
+    {
+      "virtual_key_id": "vk-acme",
+      "customer_id": "cust-acme",
+      "status_code": 403,
+      "units": null,
+      "cost": null,
+      "latency": 0.365792000000000006,
+      "upstream_latency": 0.0,
+      "overhead_latency": 0.365792000000000006,
+      "gateway_request_id": "03bd4771-7f31-4092-8481-40e3aa5d8a0b"
+    },
+    {
+      "virtual_key_id": null,
+      "customer_id": null,
+      "status_code": 401,
+      "units": null,
+      "cost": null,
+      "latency": 0.3126249999999999863,
+      "upstream_latency": 0.0,
+      "overhead_latency": 0.3126249999999999863,
+      "gateway_request_id": "e01a8138-6513-45b3-b7fa-e714aba472a1"
+    },
+    {
+      "virtual_key_id": "vk-verifier-globex",
+      "customer_id": "cust-globex",
+      "status_code": 200,
+      "units": 1.0,
+      "cost": 0.008000000000000000166,
+      "latency": 1001.979124999999954,
+      "upstream_latency": 1001.597292000000038,
+      "overhead_latency": 0.381832999999915046,
+      "gateway_request_id": "7bbf0304-fdf6-449f-8834-96d5ffc30519"
+    }
+  ],
+  "budgets": [
+    {
+      "id": "budget-cust-acme",
+      "max_limit": 1,
+      "current_usage": 0.016
+    },
+    {
+      "id": "budget-cust-globex",
+      "max_limit": 1,
+      "current_usage": 0.008
+    },
+    {
+      "id": "budget-cust-initech",
+      "max_limit": 1,
+      "current_usage": 0
+    },
+    {
+      "id": "budget-verifier-acme",
+      "max_limit": 0.016,
+      "current_usage": 0.016
+    },
+    {
+      "id": "budget-verifier-globex",
+      "max_limit": 0.04,
+      "current_usage": 0.008
+    },
+    {
+      "id": "budget-verifier-initech",
+      "max_limit": 0.024,
+      "current_usage": 0
+    }
+  ],
+  "totals": {
+    "searches_charged": 3,
+    "credits": 3,
+    "bifrost_cost_usd": 0.024
+  }
+}

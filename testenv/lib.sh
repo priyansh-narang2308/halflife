@@ -4,7 +4,8 @@
 #   require_free_ports           refuse to run if the gateway or a mock port answers
 #   ensure_redis                 start the Redis container unless it is running
 #   start_mock                   build and start the mock LLM provider
-#   start_mock_tavily            build and start the mock Tavily (key tvly-mock)
+#   start_mock_tavily [FLAG...]  build and start the mock Tavily (key tvly-mock),
+#                                passing flags such as -search-delay 1s
 #   start_gateway CONFIG LOG [NS] start a gateway on 8090 from testenv/configs/CONFIG
 #                                (or a config.json path), with the semantic cache
 #                                namespace set to NS if given
@@ -64,7 +65,7 @@ start_mock() {
 start_mock_tavily() {
   mkdir -p "$ROOT/logs" "$ROOT/bin"
   (cd "$ROOT/testenv" && go build -o "$ROOT/bin/mocktavily" ./cmd/mocktavily)
-  MOCK_TAVILY_API_KEY=tvly-mock "$ROOT/bin/mocktavily" -fixtures "$ROOT/testenv/fixtures/tavily.json" > "$ROOT/logs/$(basename "$0" .sh)-mocktavily.log" 2>&1 &
+  MOCK_TAVILY_API_KEY=tvly-mock "$ROOT/bin/mocktavily" -fixtures "$ROOT/testenv/fixtures/tavily.json" "$@" > "$ROOT/logs/$(basename "$0" .sh)-mocktavily.log" 2>&1 &
   _tavily_pid=$!
   for _ in $(seq 1 40); do curl -s -o /dev/null "$TAVILY/_mock/requests" && return; sleep 0.25; done
   echo "mock Tavily did not start" >&2; exit 1

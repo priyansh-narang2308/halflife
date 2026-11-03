@@ -1023,3 +1023,28 @@ The recursion guard now covers every verifier key in `verifiers` as well as `ver
 - **Store.** In memory, the newest 10,000 (`report_store_size`), oldest evicted first; readers get deep copies. Reports do not survive a restart.
 - **Endpoint.** `GET /api/halflife/reports/{id}` returns the report as JSON, 404 for an unknown or evicted ID, 400 if Halflife isn't loaded. It takes the same middlewares as every `/api` route, so it needs the same dashboard auth: without the setup token, 401.
 - **Handler tests:** found, missing, plugin not loaded. The handlers package passes.
+
+
+## Task 26: M1 end-to-end proof and decision (3 Nov 2026)
+
+**Status:** done; decision D40, **GO**. Report: [M1_REPORT.md](M1_REPORT.md). Script `testenv/m1-proof.sh` (`make m1`), config `testenv/configs/m1`, records `testenv/results/m1-{mock,live}.json`. No fork change.
+
+- **One run, in order:**
+  - **A.** Startup log.
+  - **E.** 20 calls on Acme's verifier key, 0 captures.
+  - **B.** Acme's answer is queued, its report is served, completes after the response, is linked to the request and holds the served answer. A fallback request gives one report.
+  - **D.** Acme's third claim is refused with 402 as `budget_exhausted`, and the spent key is refused for LLM calls too. Ungranted 403, keyless 401.
+  - **F.** Globex uses its own key; Initech gets `no_verifier_key`.
+  - **G.** Endpoint 401 / 404.
+  - **Charges.** Each report has a relay-log row on the tenant's key and customer at credits × $0.008. Refused calls are uncharged. Budgets are read after shutdown. No key value appears in the record or the log.
+- **Mock:** 22/22, 4 runs.
+  - Mock Tavily gained `-search-delay` (held 1 s here) so the audit visibly completes after the response. With an instant mock the audit finished first and the check failed.
+  - The guard runs before any search. The first run found that a spent verifier key's requests are refused with 402 (`reason=failed`) and don't reach the guard: 0 of 20.
+- **Live, attempt 1:** OpenRouter returned 429 for `google/gemma-4-31b-it:free`.
+  - The client got the 429 with `not-audited; reason=failed` and no report, which is correct. The rest of Acme's checks had nothing to check.
+  - Fixed by sending Bifrost request fallbacks to `xingchen-agi/xing4.0-29b-a4b:free` and `openrouter/free`.
+- **Live, attempt 2:** 22/22.
+  - Acme was answered by the first fallback in 5.4 s; its report completed 3 s later. Globex was answered by `openrouter/free`.
+  - 3 Tavily credits, $0.024 by Bifrost.
+  - Budgets: Acme verifier $0.016/$0.016, Globex $0.008/$0.016, Initech $0.
+- **Found:** the fallback model answered with its reasoning trace, and the keyword picker chose a hedged sentence from it ("…Go 1.24 might be out…"). Recorded as a Task 28 requirement, not fixed in M1.

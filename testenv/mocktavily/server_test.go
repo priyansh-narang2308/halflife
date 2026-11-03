@@ -250,6 +250,12 @@ func TestSlowMarker(t *testing.T) {
 	if got, _ := credits(t, out); got != 1 {
 		t.Errorf("credits = %v", got)
 	}
+	slowAll := httptest.NewServer(New(Config{APIKey: key, SearchDelay: 100 * time.Millisecond}))
+	defer slowAll.Close()
+	start = time.Now()
+	if resp, _ := call(t, slowAll, "/search", key, map[string]any{"query": "q"}); resp.StatusCode != 200 || time.Since(start) < 100*time.Millisecond {
+		t.Errorf("SearchDelay not applied: %d after %v", resp.StatusCode, time.Since(start))
+	}
 	for q, want := range map[string]time.Duration{"q": 0, "[mock:slow-9999]": 5 * time.Second, "[mock:slow-x]": 0} {
 		if got := slowMarker(q); got != want {
 			t.Errorf("slowMarker(%q) = %v, want %v", q, got, want)

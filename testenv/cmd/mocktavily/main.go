@@ -16,9 +16,10 @@ import (
 func main() {
 	addr := flag.String("addr", "127.0.0.1:9102", "listen address")
 	fixtures := flag.String("fixtures", "", "JSON fixtures file (see mocktavily.Fixtures)")
+	delay := flag.Duration("search-delay", 0, "hold every search reply this long (live searches took 1.1-2.8 s)")
 	flag.Parse()
 
-	cfg := mocktavily.Config{APIKey: os.Getenv("MOCK_TAVILY_API_KEY")}
+	cfg := mocktavily.Config{APIKey: os.Getenv("MOCK_TAVILY_API_KEY"), SearchDelay: *delay}
 	if cfg.APIKey == "" {
 		log.Fatal("MOCK_TAVILY_API_KEY must be set")
 	}

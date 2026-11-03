@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke bench cache relay budget tenants verify
+.PHONY: up down status build test smoke bench cache relay budget tenants verify m1
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -38,3 +38,6 @@ tenants: ## Which budget each tenant's verification charges, two key layouts (po
 
 verify:  ## Minimal verifier and report endpoint through the gateway (ports 8090, 9101 and 9102 free)
 	testenv/verify-report.sh
+
+m1:      ## M1 end-to-end proof: request -> capture -> Tavily relay -> report (LIVE=1: OpenRouter + real Tavily, at most 4 credits)
+	testenv/m1-proof.sh
