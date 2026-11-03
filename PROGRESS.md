@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 23 (Risk A: tenant attribution), 3 Nov 2026.
-- **Next:** Task 24 (minimal verifier), on D37's layout: a tenant → verifier key map, the recursion guard over every verifier key, and 402 as "budget spent" rather than an error.
+- **Last completed:** Task 25 (report store and endpoint), 3 Nov 2026.
+- **Next:** Task 26 (M1 end-to-end proof and decision).
 
 ## Completed
 
@@ -34,6 +34,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 21 | 2026-11-03 | Live Tavily validation (`testenv/live-tavily.sh`, run once): 8 searches + 1 Extract through the relay with the real key, 7 credits reported and $0.056 charged by Bifrost. Credits per depth, cache-billed repeats, accepted `max_results: 50`, news-only `published_date`, a lagging `/usage` and the gateway's overhead (~1 ms) are recorded in `testenv/results/tavily-live.json`. Mock corrected; no key in the record or logs |
 | 22 | 2026-11-03 | Relay grants and budgets (`make budget`, 18/18 ×3, no fork change): granted key 200, ungranted 403 even with money left, no key 401; a $0.02 budget allows calls while spend < limit, then 402 before Tavily, including the free `/usage`. Budget usage = credits × $0.008 = relay-log cost. 10 concurrent slow calls all pass: budgets overshoot by up to concurrency × one call (D36). Mock Tavily gained `[mock:slow-N]` |
 | 23 | 2026-11-03 | Risk A (`make tenants`, 16/16 ×3): 3 tenants, shared vs per-tenant verifier keys. A shared key charges only itself, lets one tenant starve the others and leaves Bifrost no per-tenant record; per-tenant keys inside the tenant's customer charge the key and the customer, isolate tenants, and log the customer. A customer budget spent on verification also blocks that tenant's app. Decision D37: per-tenant verifier keys. Record `testenv/results/tenant-attribution.json` |
+| 24 | 2026-11-03 | Minimal verifier (fork commit `8c24ed1`): one claim per answer by a keyword heuristic, one basic search through the relay with the tenant's verifier key (`verifiers`, D37), sources stored on the report. Repeated searches reused for 10 min, a 402 recorded as `budget_exhausted`, retryable errors retried once. Judges nothing yet (`not_judged`). `make verify` 21/21 ×3; every other gateway suite passes |
+| 25 | 2026-11-03 | Report store and endpoint (fork commit `1775dc7`): bounded in-memory store (10k), report created at queue time and completed by the verifier; `GET /api/halflife/reports/{id}` in-tree, behind the same dashboard auth as `/api`, 401 without it, 404 for unknown IDs; report linked to the gateway request and the relay-log row of its search |
 
 ## Decisions
 
@@ -76,6 +78,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D35 | Spend is reconciled against Tavily's `/usage` from a delayed read, never from a read taken right after the calls | `/usage` still showed 0 used immediately after 7 credits were spent, and a minute later. Bifrost's relay log is the per-call record; `/usage` is the account total, read late (Task 38). |
 | D36 | Budgets are soft under concurrency; Halflife bounds the overshoot with its own concurrency and treats a 402 as "budget spent, not verified", never retried within the window | Measured: governance checks spend before a call and charges after it, with nothing reserved for calls in flight, so 10 concurrent searches all passed a $0.02 budget ($0.088 charged). The overshoot per budget is at most `workers` (default 2) × the costliest call (advanced search, $0.016) per gateway: $0.032 at the defaults. Retrying a 402 would only add refused calls. |
 | D37 | Risk A: each tenant gets its own verifier virtual key, inside the tenant's customer, with a budget below the customer budget; a shared verifier key is only for single-tenant setups | Measured (Task 23): per-tenant keys charge the tenant (key + customer budget), keep one tenant's heavy verification from refusing another's, and put the customer on every relay-log row. A shared key charged none of the tenants, let Acme exhaust it so Globex and Initech were refused, and left `X-Project-ID` at Tavily as the only per-tenant record. Inside the customer, verification and app spend share one cap: when Initech's verification spent its customer budget, Initech's app was refused too, so the verifier key's budget must be the smaller. Consequence for Task 24: config maps tenant key ID → verifier key, the recursion guard covers every verifier key, and a tenant with no verifier key is not verified (reported as such). |
+| D38 | The M1 verifier picks one claim with a keyword heuristic and records evidence without judging it; no answer is marked stale until the judge exists | The task is to prove the path (capture → relay → Tavily → report) with real attribution and spend. A heuristic is deterministic and free; a judgement from keyword overlap would produce verdicts that look authoritative and aren't. Reports say `not_judged`, and cache eviction stays off until a model-based judge with typed comparators (Tasks 27-34) can justify it. |
+| D39 | Reports live in a bounded in-memory store and are served only behind the gateway's dashboard auth | They hold the tenant's question and answer, so the endpoint is an operator view, like the rest of `/api`; a tenant-facing view that checks the caller's key is later work. In memory keeps M1 free of a schema; restarts lose reports, which the persistent store (Task 35) fixes. `gateway_url` is configured, not detected, because the plugin loader can't see the listen address; it defaults to Bifrost's `127.0.0.1:8080`. |
 
 ## Blockers and inputs needed
 

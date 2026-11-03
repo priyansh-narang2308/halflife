@@ -62,8 +62,8 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 
 | # | Task | Done when | Needs |
 |---|---|---|---|
-| [ ] 24 | Minimal verifier | Worker picks one factual claim (simple heuristic), builds a query, calls Tavily via the relay, stores sources | — |
-| [ ] 25 | Report store and endpoint | In-memory/SQLite store; in-tree handler `GET /api/halflife/reports/{id}`; report linked to the gateway request | — |
+| [x] 24 | Minimal verifier | Worker picks one factual claim (simple heuristic), builds a query, calls Tavily via the relay, stores sources | — |
+| [x] 25 | Report store and endpoint | In-memory/SQLite store; in-tree handler `GET /api/halflife/reports/{id}`; report linked to the gateway request | — |
 | [ ] 26 | M1 end-to-end proof and decision | One script: request → Bifrost → capture → Tavily → report; M1 report (sections A–H) with GO / CONDITIONAL GO / PIVOT | `OPENROUTER_API_KEY` optional |
 
 ## Milestone 2: Verification engine

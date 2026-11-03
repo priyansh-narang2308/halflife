@@ -968,3 +968,58 @@ Credits Tavily (mock) attributed per `X-Project-ID` over both layouts: Acme 7, G
 Mock LLM answers cost $0 (their models are not in Bifrost's price catalog), so the customer budgets above hold verification spend only. With real models, app spend lands on the same customer budgets.
 
 Mock Tavily now sums credits per `X-Project-ID` (`credits_by_project` in `/_mock/requests`), which is how Tavily-side attribution is measured above.
+
+## Task 24: Minimal verifier (3 Nov 2026)
+
+**Status:** done; decision D38. Fork commit `8c24ed1`. Plugin code: `claim.go`, `verifier.go`, config `verifiers`, `gateway_url`, `search_max_results`. Command: `make verify` (`testenv/verify-report.sh`, shared with Task 25): real gateway, mock LLM, mock Tavily, config `testenv/configs/verify`. No real Tavily or LLM call. 21 checks, 3 runs, all pass.
+
+### What it does, per audited answer
+
+1. **Picks one claim** (`pickClaim`): splits the answer into sentences (markdown list markers and emphasis removed), skips questions and fragments under 4 words, and scores each one: +2 per number, price, percent or year (up to 3), +2 for a temporal word ("latest", "current", "as of", …), +1 for a factual verb ("costs", "is", "released", …), −3 for hedging ("might", "I think", …), −1 for first- or second-person openings. It takes the best sentence scoring at least 2, or none.
+2. **Builds a query** (`buildQuery`): the claim itself; if it opens with a pronoun ("It costs $49"), the question goes in front. Capped at 380 bytes.
+3. **Chooses the key** (D37): the tenant's verifier key, else the `"*"` entry, else none: the report says `no_verifier_key` and nothing is spent.
+4. **Searches once** through the relay: basic depth, 5 results, `include_usage`, `X-Project-ID` = tenant, `X-Session-Id` = report. The same tenant's same query within 10 minutes reuses the earlier result and spends nothing (D34). A retryable error (429, 434, 5xx) is retried once after `Retry-After` (at most 5 s); a 402 is recorded as `budget_exhausted` and not retried (D36).
+5. **Stores the sources** on the report: title, URL, score, `published_date`, and a 500-byte snippet, with the credits charged and the relay call's gateway request ID.
+
+It judges nothing: every report says `verdict: not_judged`, and no answer is found stale, so nothing is evicted from the cache yet.
+
+The recursion guard now covers every verifier key in `verifiers` as well as `verifier_virtual_key`. A key value can be `env.VAR` (Bifrost's own `envutils.ProcessEnvValue`); if the variable is missing, `Init` fails and names the variable, not a value.
+
+### Gateway results (with Task 25's endpoint)
+
+| Case | Report |
+|---|---|
+| Acme: "How much does the Acme Cloud Pro plan cost?" → "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage." | `evidence_found`; claim = that sentence; Acme's verifier key, 1 credit; sources `acme.example/pricing` (2026-10-01) and `news.example/acme-pro-price` (2026-09-15) |
+| Same question again | New report; search reused, 0 credits, no new Tavily call |
+| Acme, SDK version | `evidence_found` (`code.example/acme/acme-sdk/releases`) |
+| Acme, third claim (CEO) | `budget_exhausted`: Acme's verifier key has a 2-search budget; the 402 is in the report's `error` |
+| Globex, the price question | Its own key (`vk-verifier-globex`) and its own search: no reuse across tenants |
+| Initech (no verifier key) | `no_verifier_key`, claim recorded, no search |
+| "Tell me something nice" | `no_claim`, no search |
+
+- Tavily (mock) received `X-Project-ID: vk-acme` and `X-Session-Id` = the report ID.
+- The report's `gateway_request_id` matches a relay-log row on `vk-verifier-acme`, customer `cust-acme`, cost $0.008.
+- Budgets after the run: Acme verifier key and Acme customer $0.016 each (2 searches), Globex verifier $0.008, Initech customer $0.
+- 7 answers captured, 7 audited, 0 failed.
+
+### Unit tests
+
+`claim_test.go` (claim picking on 8 shapes, ties, length cap, queries), `verifier_test.go` (evidence, key choice and fallback, no claim, no evidence, 402, retry once and give up, reuse per tenant and expiry, a bounded memo, the real client over a fake relay, and the full plugin lifecycle through its hooks and pool), plus new config and `Init` cases. The plugin's suite passes under `-race`, 95.2% coverage.
+
+### Fixtures
+
+`fixtures/tavily.json` gained the three queries the verifier builds from the mock LLM's replies, mapped to the existing Acme evidence. The mock matches queries exactly, so without them every search got the generic default results.
+
+### Scripts updated
+
+`make smoke` (smoke and fallback) counted audits from the placeholder's log line, which is gone; they now count `halflife: report <id> complete`. The startup line gained `verifiers=` and `gateway=`. `make smoke` passes all three scripts (142 checks), and `make cache` (70), `make relay` (23), `make budget` (18) and `make tenants` (16) pass with the new gateway.
+
+## Task 25: Report store and endpoint (3 Nov 2026)
+
+**Status:** done; decision D39. Fork commits `8c24ed1` (store) and `1775dc7` (endpoint). Plugin: `report.go`; gateway: `handlers/halflife.go` and 9 lines in `server/server.go` (`UPSTREAM_DIFF.md`). Checked by `make verify` (above) and unit tests.
+
+- **Lifecycle.** A report is stored as `queued` just before its answer is queued (so a fast worker always finds it), becomes `running`, then `complete` with an outcome and `completed_at`. If the queue is full, the report is removed together with the response's report header.
+- **Content.** Request ID (linking to Bifrost's request and logs), tenant key ID and name, the answer (provider, model, fallback, question, text, cache entry), the claim and query, and the evidence. Key values never appear; the script and a unit test check for `sk-bf-` in every report.
+- **Store.** In memory, the newest 10,000 (`report_store_size`), oldest evicted first; readers get deep copies. Reports do not survive a restart.
+- **Endpoint.** `GET /api/halflife/reports/{id}` returns the report as JSON, 404 for an unknown or evicted ID, 400 if Halflife isn't loaded. It takes the same middlewares as every `/api` route, so it needs the same dashboard auth: without the setup token, 401.
+- **Handler tests:** found, missing, plugin not loaded. The handlers package passes.
