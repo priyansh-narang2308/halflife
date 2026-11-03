@@ -1,0 +1,128 @@
+{
+  "recorded_at": "2026-11-03T07:38:43Z",
+  "note": "Mock Tavily (1 credit per basic search, $0.008 per credit). Synthetic keys; values never recorded.",
+  "verifications": {
+    "per-tenant": {
+      "acme": {
+        "allowed": 3,
+        "refused": 1
+      },
+      "globex": {
+        "allowed": 2,
+        "refused": 0
+      },
+      "initech": {
+        "allowed": 2,
+        "refused": 1
+      }
+    },
+    "shared": {
+      "acme": {
+        "allowed": 4,
+        "refused": 1
+      },
+      "globex": {
+        "allowed": 1,
+        "refused": 1
+      },
+      "initech": {
+        "allowed": 0,
+        "refused": 1
+      }
+    }
+  },
+  "budgets": [
+    {
+      "id": "budget-app-acme",
+      "max_limit": 1,
+      "current_usage": 0
+    },
+    {
+      "id": "budget-app-globex",
+      "max_limit": 1,
+      "current_usage": 0
+    },
+    {
+      "id": "budget-app-initech",
+      "max_limit": 1,
+      "current_usage": 0
+    },
+    {
+      "id": "budget-cust-acme",
+      "max_limit": 1,
+      "current_usage": 0.024
+    },
+    {
+      "id": "budget-cust-globex",
+      "max_limit": 1,
+      "current_usage": 0.016
+    },
+    {
+      "id": "budget-cust-initech",
+      "max_limit": 0.016,
+      "current_usage": 0.016
+    },
+    {
+      "id": "budget-verifier",
+      "max_limit": 0.04,
+      "current_usage": 0.04
+    },
+    {
+      "id": "budget-verifier-acme",
+      "max_limit": 0.024,
+      "current_usage": 0.024
+    },
+    {
+      "id": "budget-verifier-globex",
+      "max_limit": 0.024,
+      "current_usage": 0.016
+    },
+    {
+      "id": "budget-verifier-initech",
+      "max_limit": 0.024,
+      "current_usage": 0.016
+    }
+  ],
+  "tavily_credits_by_project": {
+    "vk-acme": 7,
+    "vk-globex": 3,
+    "vk-initech": 2
+  },
+  "relay_log_by_key": {
+    "vk-verifier": {
+      "customer": "",
+      "budgets": [
+        "budget-verifier"
+      ],
+      "calls": 8,
+      "cost": 0.04
+    },
+    "vk-verifier-acme": {
+      "customer": "cust-acme",
+      "budgets": [
+        "budget-cust-acme",
+        "budget-verifier-acme"
+      ],
+      "calls": 4,
+      "cost": 0.024
+    },
+    "vk-verifier-globex": {
+      "customer": "cust-globex",
+      "budgets": [
+        "budget-cust-globex",
+        "budget-verifier-globex"
+      ],
+      "calls": 2,
+      "cost": 0.016
+    },
+    "vk-verifier-initech": {
+      "customer": "cust-initech",
+      "budgets": [
+        "budget-cust-initech",
+        "budget-verifier-initech"
+      ],
+      "calls": 3,
+      "cost": 0.016
+    }
+  }
+}

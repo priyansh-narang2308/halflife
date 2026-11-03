@@ -896,3 +896,75 @@ Halflife set `X-Halflife-Status` on every route that runs the transport hooks. R
 - Mock Tavily accepts `max_results` above 20.
 - Decisions D34 (no repeated searches within an audit) and D35 (late `/usage` reconciliation).
 - Notes in `research/tavily-api-notes.md` → "Live observations".
+
+## Task 22: Relay authorisation and budgets (3 Nov 2026)
+
+**Status:** done. No fork change: governance already evaluates relay calls (`plugins/governance/relays.go`). Command: `make budget` (`testenv/relay-budget.sh`): real gateway, mock Tavily, config `testenv/configs/relay-budget` (the Task 20 relay config plus budgets). No real Tavily call. 18 checks, 3 runs, all pass.
+
+### Configuration
+
+| Key | Relay grant | Budget (1 h window) |
+|---|---|---|
+| `vk-verifier` | `tavily` | $0.02 |
+| `vk-verifier-burst` | `tavily` | $0.02 |
+| `vk-smoke` | none | $1 |
+
+Budget usage is read from the gateway's `config.db` (`governance_budgets.current_usage`) after shutdown, which flushes it; the governance API needs dashboard auth.
+
+### Results
+
+| Check | Observed |
+|---|---|
+| Granted key | 200 |
+| Key without the grant, with $1 left | 403 `relay_blocked`: the grant is checked, not just the money |
+| No key | 401 |
+| $0.02 budget, one call at a time | basic (spend 0 → 0.008) 200, basic (→ 0.016) 200, advanced (→ 0.032) 200, next basic **402 `budget_exceeded`** |
+| Refused calls | Never reached Tavily (mock request count unchanged); no cost in the relay log |
+| Free `GET /usage` after exhaustion | 402: every relay call is evaluated, billable or not |
+| Another key's budget | Untouched; its call is 200 |
+| Charges | `vk-verifier` budget = $0.032 = 4 credits Tavily reported × $0.008 = the key's relay-log cost |
+
+Governance checks *spend so far* < limit before a call and charges after the reply (`CheckBudget`: `current_usage >= max_limit` refuses). So a budget is never refused early, and the call that crosses the limit is allowed: the overshoot is at most that one call's cost.
+
+### Concurrency: budgets overshoot
+
+10 concurrent searches on `vk-verifier-burst` ($0.02, $0.008 already spent), each held 500 ms by mock Tavily (new `[mock:slow-N]` marker; live searches took 1.1–2.8 s). One at a time, 2 would pass.
+
+- All 10 passed, in 0.545–0.548 s of wall time (3 runs), so they really overlapped.
+- The budget was charged all 11 calls: $0.088 on a $0.02 limit. The overshoot is charged, not lost, and the next call is refused.
+- Nothing reserves spend for calls in flight. The overshoot is bounded by *concurrent calls × cost of one call*. Halflife bounds its own concurrency with `workers` (D36).
+
+An earlier version of this check passed only 2 of 10. That was against a mock that answered in under 1 ms, so the "concurrent" calls ran one after another; the delay marker fixed the test, not the gateway.
+
+## Task 23: Risk A, tenant attribution (3 Nov 2026)
+
+**Status:** done; decision D37. Command: `make tenants` (`testenv/tenant-attribution.sh`): real gateway, mock Tavily, config `testenv/configs/tenants`. No real Tavily call. 16 checks, 3 runs, all pass. Record: `testenv/results/tenant-attribution.json`.
+
+### Setup
+
+Three tenants, each a governance customer with an app key: Acme (`cust-acme`, `vk-acme`), Globex, Initech. Two verifier layouts in the same gateway:
+
+| Layout | Keys | Budgets |
+|---|---|---|
+| Shared | `vk-verifier`, no customer | $0.04 (5 searches) for everyone |
+| Per-tenant | `vk-verifier-<tenant>`, inside the tenant's customer | $0.024 (3 searches) per key; customer budgets $1, except Initech $0.016 |
+
+App keys have $1 each. Each verification is one basic search (1 credit, $0.008) tagged `X-Project-ID: vk-<tenant>`, as Halflife's client sends it.
+
+### Results
+
+| Measurement | Shared key | Per-tenant keys |
+|---|---|---|
+| Whose budget is charged | The shared key's only: $0.040 for 4 Acme + 1 Globex searches | The tenant's verifier key **and** its customer: Acme $0.024 / $0.024, Globex $0.016 / $0.016, Initech $0.016 / $0.016 |
+| Tenant app keys | $0 | $0 |
+| One tenant spends heavily (Acme) | Acme used the whole budget; then Globex and Initech were refused (402) for Acme's spend | Acme was refused after 3; Globex was unaffected (2 of 2 allowed) |
+| Relay log | Every row `vk-verifier`, no customer, budget `budget-verifier`: Bifrost cannot tell the tenants apart | Every row names the tenant's customer and both budgets; cost by customer 0.024 / 0.016 / 0.016 |
+| Tavily's own attribution (`X-Project-ID`) | Correct per tenant | Correct per tenant |
+
+Credits Tavily (mock) attributed per `X-Project-ID` over both layouts: Acme 7, Globex 3, Initech 2, matching the allowed calls exactly; refused calls never reached it.
+
+**Roll-up cost, measured.** Initech's customer budget ($0.016) was smaller than its verifier key's ($0.024). Its third verification was refused by the customer budget, and then **Initech's own chat request was refused too** (402, "customer Initech budget exceeded"), while Acme's and Globex's apps answered. A customer budget caps verification and app traffic together, so a verifier key's budget must leave the app its share of the customer's (D37).
+
+Mock LLM answers cost $0 (their models are not in Bifrost's price catalog), so the customer budgets above hold verification spend only. With real models, app spend lands on the same customer budgets.
+
+Mock Tavily now sums credits per `X-Project-ID` (`credits_by_project` in `/_mock/requests`), which is how Tavily-side attribution is measured above.

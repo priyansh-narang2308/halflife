@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 21 (live Tavily validation), 3 Nov 2026.
-- **Next:** Task 22 (relay authorisation and budgets).
+- **Last completed:** Task 23 (Risk A: tenant attribution), 3 Nov 2026.
+- **Next:** Task 24 (minimal verifier), on D37's layout: a tenant → verifier key map, the recursion guard over every verifier key, and 402 as "budget spent" rather than an error.
 
 ## Completed
 
@@ -32,6 +32,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 19 | 2026-11-03 | Invalidation and race (fork commit `3118d0c`): a stale verdict evicts the answer's entry through the cache's own `ClearCacheForCacheID`, wired in `plugins.go`. Within the cache's write window its partition bypasses the cache until a final delete succeeds. Real-core tests cover verification before the write lands, repeated, paraphrased and concurrent requests, and failed deletes; no gateway-level stale trigger until the verifier exists |
 | 20 | 2026-11-03 | Tavily relay contract (fork commit `b223df2`): relay `tavily` with routes `POST /search`, `POST /extract` and free `GET /usage`, priced `usage.credits` × $0.008. Halflife's Tavily client (always `include_usage`, explicit depth, never `auto_parameters`) is tested against a fake and against the real relay. `relay-tavily.sh` 23/23 ×3. Also fixed: relay, MCP and GET responses were getting `X-Halflife-Status` |
 | 21 | 2026-11-03 | Live Tavily validation (`testenv/live-tavily.sh`, run once): 8 searches + 1 Extract through the relay with the real key, 7 credits reported and $0.056 charged by Bifrost. Credits per depth, cache-billed repeats, accepted `max_results: 50`, news-only `published_date`, a lagging `/usage` and the gateway's overhead (~1 ms) are recorded in `testenv/results/tavily-live.json`. Mock corrected; no key in the record or logs |
+| 22 | 2026-11-03 | Relay grants and budgets (`make budget`, 18/18 ×3, no fork change): granted key 200, ungranted 403 even with money left, no key 401; a $0.02 budget allows calls while spend < limit, then 402 before Tavily, including the free `/usage`. Budget usage = credits × $0.008 = relay-log cost. 10 concurrent slow calls all pass: budgets overshoot by up to concurrency × one call (D36). Mock Tavily gained `[mock:slow-N]` |
+| 23 | 2026-11-03 | Risk A (`make tenants`, 16/16 ×3): 3 tenants, shared vs per-tenant verifier keys. A shared key charges only itself, lets one tenant starve the others and leaves Bifrost no per-tenant record; per-tenant keys inside the tenant's customer charge the key and the customer, isolate tenants, and log the customer. A customer budget spent on verification also blocks that tenant's app. Decision D37: per-tenant verifier keys. Record `testenv/results/tenant-attribution.json` |
 
 ## Decisions
 
@@ -72,12 +74,14 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D33 | `X-Halflife-Status` is set only on POSTs outside `/relay/`, `/mcp` and `/api/` | Those routes run the transport hooks but never produce an answer, so they were labelled `failed`, `verifier` or `streaming`, which was misleading. A rejected chat request (no key, provider error) still gets `not-audited; reason=failed`. |
 | D34 | The verifier keeps its own short-lived record of searches and never sends the same query twice within an audit window | Live: an identical query came back from Tavily's cache in 0.29 s and still cost a credit. Halflife pays per search, so the duplicate is pure waste. To build with the verifier (Tasks 24, 31). |
 | D35 | Spend is reconciled against Tavily's `/usage` from a delayed read, never from a read taken right after the calls | `/usage` still showed 0 used immediately after 7 credits were spent, and a minute later. Bifrost's relay log is the per-call record; `/usage` is the account total, read late (Task 38). |
+| D36 | Budgets are soft under concurrency; Halflife bounds the overshoot with its own concurrency and treats a 402 as "budget spent, not verified", never retried within the window | Measured: governance checks spend before a call and charges after it, with nothing reserved for calls in flight, so 10 concurrent searches all passed a $0.02 budget ($0.088 charged). The overshoot per budget is at most `workers` (default 2) × the costliest call (advanced search, $0.016) per gateway: $0.032 at the defaults. Retrying a 402 would only add refused calls. |
+| D37 | Risk A: each tenant gets its own verifier virtual key, inside the tenant's customer, with a budget below the customer budget; a shared verifier key is only for single-tenant setups | Measured (Task 23): per-tenant keys charge the tenant (key + customer budget), keep one tenant's heavy verification from refusing another's, and put the customer on every relay-log row. A shared key charged none of the tenants, let Acme exhaust it so Globex and Initech were refused, and left `X-Project-ID` at Tavily as the only per-tenant record. Inside the customer, verification and app spend share one cap: when Initech's verification spent its customer budget, Initech's app was refused too, so the verifier key's budget must be the smaller. Consequence for Task 24: config maps tenant key ID → verifier key, the recursion guard covers every verifier key, and a tenant with no verifier key is not verified (reported as such). |
 
 ## Blockers and inputs needed
 
 | Item | Needed by | Status |
 |---|---|---|
-| `TAVILY_API_KEY` in `.env` | Task 21 (live validation) | Account ready (9,000 credits); key not yet in `.env`. Mock Tavily is used until then. |
+| `TAVILY_API_KEY` in `.env` | Task 21 (live validation) | Resolved: in `.env`, used once in Task 21. `/usage` reports a 1,000-credit plan limit, not the 9,000 noted in D12; to reconcile from a later read |
 | `OPENROUTER_API_KEY` in `.env` (optional 2nd provider for the fallback demo) | Tasks 26, 27, 42 | Missing. Mock provider is used until then. |
 | Docker daemon running | Task 06 | Resolved: Docker Desktop started; `make up` checks for it |
 | Go 1.27.3 | Task 02 | Resolved |
