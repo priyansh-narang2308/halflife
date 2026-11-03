@@ -1,0 +1,82 @@
+{
+  "recorded_at": "2026-11-03T11:34:30Z",
+  "mode": "mock",
+  "models": [
+    "openai/fail-500",
+    "openai/ok"
+  ],
+  "reasoning_effort": "",
+  "note": "Synthetic keys; no credential recorded.",
+  "cases": [
+    {
+      "name": "valid",
+      "budget_spent": false,
+      "check": {
+        "verdict": "CONTRADICTED",
+        "quote": "Go 1.27 was released on 11 August 2026."
+      },
+      "error": null,
+      "malformed": false,
+      "result": {
+        "model": "ok",
+        "provider": "openai",
+        "fallback": true,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false,
+        "prompt_tokens": 72,
+        "completion_tokens": 8,
+        "gateway_request_ids": [
+          "cc7f61d5-dfc4-4284-b531-d750977c8aac"
+        ]
+      },
+      "seconds": 0.025042875,
+      "truncated": false
+    },
+    {
+      "name": "malformed",
+      "budget_spent": false,
+      "check": null,
+      "error": "verifier llm: reply did not match the schema: not JSON: invalid character 'M' looking for beginning of value",
+      "malformed": true,
+      "result": {
+        "model": "ok",
+        "provider": "openai",
+        "fallback": false,
+        "calls": 2,
+        "malformed": 2,
+        "truncated": false,
+        "prompt_tokens": 150,
+        "completion_tokens": 45,
+        "gateway_request_ids": [
+          "e5dac3ad-acba-46c5-92db-7322c10266ec",
+          "d9ee5bdb-1ca8-40a0-bdf8-93479b2e6a04"
+        ]
+      },
+      "seconds": 0.008442291,
+      "truncated": false
+    },
+    {
+      "name": "spent",
+      "budget_spent": true,
+      "check": null,
+      "error": "verifier llm: 402 Budget exceeded: vk_model_config * budget exceeded: 0.0160 >= 0.0160 dollars",
+      "malformed": false,
+      "result": {
+        "model": "",
+        "provider": "",
+        "fallback": false,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "gateway_request_ids": [
+          "4a19ffec-81b5-496d-99bd-abdc00892c4b"
+        ]
+      },
+      "seconds": 0.011870459,
+      "truncated": false
+    }
+  ]
+}

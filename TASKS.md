@@ -70,7 +70,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 
 | # | Task | Done when | Needs |
 |---|---|---|---|
-| [ ] 27 | Verifier LLM client | Calls go through Bifrost with the verifier key; structured JSON output with schema validation and retries | `OPENROUTER_API_KEY` (free models OK) |
+| [x] 27 | Verifier LLM client | Calls go through Bifrost with the verifier key; structured JSON output with schema validation and retries | `OPENROUTER_API_KEY` (free models OK) |
 | [ ] 28 | Atomic claim extraction | Claims with verbatim source spans; span check rejects paraphrase drift; unit tests on fixtures | — |
 | [ ] 29 | Temporal scope classifier | CURRENT / HISTORICAL / TIMELESS / FUTURE / UNCLEAR; historical claims skipped | — |
 | [ ] 30 | Volatility and priority | 5 volatility bands (from RecencyQA's scale); knowledge-cutoff table; HIGH / MEDIUM / LOW / SKIP priority | — |

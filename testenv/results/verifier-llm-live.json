@@ -1,0 +1,88 @@
+{
+  "recorded_at": "2026-11-03T11:25:35Z",
+  "mode": "live",
+  "models": [
+    "openrouter/nvidia/nemotron-3.5-super-vl:free",
+    "openrouter/xingchen-agi/xing4.0-29b-a4b:free",
+    "openrouter/openrouter/free"
+  ],
+  "reasoning_effort": "low",
+  "note": "Synthetic keys; no credential recorded.",
+  "cases": [
+    {
+      "name": "go",
+      "budget_spent": false,
+      "check": {
+        "verdict": "CONTRADICTED",
+        "quote": "It is the latest stable release."
+      },
+      "error": null,
+      "malformed": false,
+      "result": {
+        "model": "nvidia/nemotron-3.5-super-vl:free",
+        "provider": "openrouter",
+        "fallback": false,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false,
+        "prompt_tokens": 133,
+        "completion_tokens": 791,
+        "gateway_request_ids": [
+          "9c8f1665-56b3-4b47-886c-9f585dc4bbb3"
+        ]
+      },
+      "seconds": 30.222543583,
+      "truncated": false
+    },
+    {
+      "name": "ceo",
+      "budget_spent": false,
+      "check": {
+        "verdict": "SUPPORTED",
+        "quote": "Sam Altman is the chief executive officer of OpenAI, a role he returned to in November 2023 after a brief removal by the board."
+      },
+      "error": null,
+      "malformed": false,
+      "result": {
+        "model": "nvidia/nemotron-3.5-super-vl:free",
+        "provider": "openrouter",
+        "fallback": false,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false,
+        "prompt_tokens": 136,
+        "completion_tokens": 524,
+        "gateway_request_ids": [
+          "86c16381-6f26-4bc7-8622-53f48331ef45"
+        ]
+      },
+      "seconds": 8.43440075,
+      "truncated": false
+    },
+    {
+      "name": "price",
+      "budget_spent": false,
+      "check": {
+        "verdict": "UNVERIFIABLE",
+        "quote": ""
+      },
+      "error": null,
+      "malformed": false,
+      "result": {
+        "model": "nvidia/nemotron-3.5-super-vl:free",
+        "provider": "openrouter",
+        "fallback": false,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false,
+        "prompt_tokens": 118,
+        "completion_tokens": 152,
+        "gateway_request_ids": [
+          "564a692e-1a1b-4081-943c-d6fbb6932bb6"
+        ]
+      },
+      "seconds": 3.0295855,
+      "truncated": false
+    }
+  ]
+}

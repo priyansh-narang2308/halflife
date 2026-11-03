@@ -240,3 +240,24 @@ func TestModelsList(t *testing.T) {
 		t.Errorf("models = %+v", list)
 	}
 }
+
+func TestRecordsResponseFormat(t *testing.T) {
+	s, ts := newTestServer(t, Config{})
+	for body, want := range map[string]string{
+		chat("ok", "a"): "",
+		`{"model":"ok","messages":[{"role":"user","content":"a"}],"response_format":{"type":"json_object"}}`:                                              "json_object",
+		`{"model":"ok","messages":[{"role":"user","content":"a"}],"response_format":{"type":"json_schema","json_schema":{"name":"check"}}}`:               "json_schema:check",
+		`{"model":"ok","messages":[{"role":"user","content":"a"}],"response_format":{"type":"json_schema","json_schema":{"name":"check","strict":true}}}`: "json_schema:check:strict",
+	} {
+		if resp, _ := post(t, ts, body, nil); resp.StatusCode != 200 {
+			t.Fatalf("status %d", resp.StatusCode)
+		}
+		if got := s.LastResponseFormat(); got != want {
+			t.Errorf("LastResponseFormat() = %q, want %q", got, want)
+		}
+	}
+	http.Post(ts.URL+"/_mock/reset", "", nil)
+	if got := s.LastResponseFormat(); got != "" {
+		t.Errorf("after reset %q", got)
+	}
+}

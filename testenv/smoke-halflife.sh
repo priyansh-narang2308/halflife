@@ -78,7 +78,7 @@ start_gateway halflife "$LOG"
 run_cases "$TMP/on"
 stop_gateway
 
-check "startup log: plugin initialized" "$(grep -c '"halflife: initialized (queue_size=256 workers=2 max_claims=5 tavily_relay=tavily verifier_vk=vk-verifier verifiers=0 gateway=http://127.0.0.1:8080 cache_ttl=cache-default)"' "$LOG")" 1
+check "startup log: plugin initialized" "$(grep -c '"halflife: initialized (queue_size=256 workers=2 max_claims=5 tavily_relay=tavily verifier_vk=vk-verifier verifiers=0 gateway=http://127.0.0.1:8080 verifier_models=0 cache_ttl=cache-default)"' "$LOG")" 1
 check "startup log: plugin status active" "$(grep -c '"plugin status: halflife - active"' "$LOG")" 1
 # Shutdown drains the audit queue: everything queued was audited, nothing lost.
 check "shutdown log: queue drained" "$(grep -c '"halflife: stopped (enqueued=3 dropped=0 audited=3 failed=0 abandoned=0 queued=0)"' "$LOG")" 1

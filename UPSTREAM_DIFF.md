@@ -30,7 +30,7 @@ git -C bifrost diff --stat upstream..halflife
 
 | Path | Contents |
 |---|---|
-| `plugins/halflife/go.mod`, `go.sum` | Own module; requires `core v1.14.1`, `framework v1.11.1` and `semanticcache v1.7.4`, the versions release builds pin |
+| `plugins/halflife/go.mod`, `go.sum` | Own module; requires `core v1.14.1`, `framework v1.11.1` and `semanticcache v1.7.4`, the versions release builds pin, and `santhosh-tekuri/jsonschema/v6 v6.0.2` (Apache-2.0, imported, not copied), the version the gateway already requires |
 | `plugins/halflife/config.go` | `Config`, defaults, validation; `verifiers` maps tenants to verifier keys (D37) |
 | `plugins/halflife/main.go` | `Init`, `Cleanup`, the LLM and HTTP transport hooks, recursion guard, `Report` lookup |
 | `plugins/halflife/capture.go`, `pool.go`, `links.go` | Answer capture, bounded audit queue, cache entry → report links |
@@ -38,6 +38,7 @@ git -C bifrost diff --stat upstream..halflife
 | `plugins/halflife/tavily.go` | Tavily client that only calls the gateway's relay |
 | `plugins/halflife/claim.go`, `verifier.go` | Minimal verifier: one claim per answer, one search per claim, reused within 10 minutes |
 | `plugins/halflife/report.go` | Report type and bounded in-memory store |
+| `plugins/halflife/llm.go` | Verifier LLM client: structured JSON through the gateway's chat endpoint, schema-validated, one corrective retry |
 | `plugins/halflife/*_test.go`, `version` | Unit tests; version `0.1.0` |
 | `transports/bifrost-http/handlers/halflife.go`, `halflife_test.go` | `GET /api/halflife/reports/{id}`, resolving the plugin per request like the cache handler |
 - **Upstream:** everything else, unchanged.
@@ -51,7 +52,7 @@ Four upstream files, nothing removed or rewritten: three in fork commit `c7c0589
 | `transports/bifrost-http/server/plugins.go` | +1 import; +19 lines: a `halflife` case in `loadBuiltinPlugin` (same pattern as `semanticcache`), which also gives Halflife a cache evictor that looks up the `semantic_cache` plugin at eviction time (`lib.FindPluginAs`) and calls its existing `ClearCacheForCacheID` (Task 19); +11 lines: block 11 in `loadBuiltinPlugins`, which registers Halflife only when enabled in `plugins` and sets placement `pre_builtin`, order `math.MinInt` | The evictor is the only way to delete a cache entry by ID from outside the cache plugin; the lookup is lazy because the cache can be loaded, reloaded or removed after Halflife. Release binaries are static, so plugins can't be loaded as `.so` files; built-ins are compiled in here. The placement puts Halflife first in pre-hooks and **last** in post-hooks, so it sees the final response (verified from the gateway's debug log, Task 09). |
 | `transports/bifrost-http/lib/config.go` | +1 import; `halflife.PluginName` appended to `builtinPluginNames` | That list is the single source of truth for built-ins. Being in it stops the custom-plugin loader from loading Halflife a second time, and keeps its fixed placement from being overridden by config. |
 | `transports/bifrost-http/server/server.go` | +1 import; +8 lines building the Halflife handler (plugin looked up per request with `lib.FindPluginAs`, as for the cache handler); +1 line registering its routes with the same middlewares as every `/api` route | Plugins can't add HTTP routes. Sharing the middlewares means the reports endpoint gets the same dashboard auth as the rest of `/api`. |
-| `transports/go.mod` | `require …/plugins/halflife v0.1.0` + `replace … => ../plugins/halflife` | Release builds run with `GOWORK=off` and resolve published versions; the local module needs an explicit `replace`. `go.sum` unchanged: the plugin adds no dependency the gateway didn't already have. |
+| `transports/go.mod` | `require …/plugins/halflife v0.1.0` + `replace … => ../plugins/halflife` | Release builds run with `GOWORK=off` and resolve published versions; the local module needs an explicit `replace`. `go.sum` unchanged: the plugin adds no dependency the gateway didn't already have (its JSON Schema validator is the gateway's own `jsonschema/v6 v6.0.2`). |
 
 ## Checks after the change
 

@@ -43,9 +43,10 @@ type Server struct {
 	cfg Config
 	mux *http.ServeMux
 
-	mu      sync.Mutex
-	total   int
-	byModel map[string]int
+	mu         sync.Mutex
+	total      int
+	byModel    map[string]int
+	lastFormat string // response_format of the last request: "", "json_object" or "json_schema:<name>[:strict]"
 }
 
 // New returns a Server for cfg.
@@ -73,6 +74,13 @@ type chatRequest struct {
 	StreamOptions *struct {
 		IncludeUsage bool `json:"include_usage"`
 	} `json:"stream_options"`
+	ResponseFormat *struct {
+		Type       string `json:"type"`
+		JSONSchema *struct {
+			Name   string `json:"name"`
+			Strict bool   `json:"strict"`
+		} `json:"json_schema"`
+	} `json:"response_format"`
 }
 
 // behaviour is what a model name asks the mock to do.
@@ -111,6 +119,7 @@ func (s *Server) chatCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.count(req.Model)
+	s.setFormat(formatLabel(req))
 
 	b := parseModel(req.Model)
 	if b.latency > 0 {
@@ -225,15 +234,46 @@ func (s *Server) count(model string) {
 	s.mu.Unlock()
 }
 
+func (s *Server) setFormat(format string) {
+	s.mu.Lock()
+	s.lastFormat = format
+	s.mu.Unlock()
+}
+
+// formatLabel summarises a request's response_format; the provider is what
+// enforces it, so the mock only records what the gateway forwarded.
+func formatLabel(req chatRequest) string {
+	f := req.ResponseFormat
+	if f == nil {
+		return ""
+	}
+	if f.Type != "json_schema" || f.JSONSchema == nil {
+		return f.Type
+	}
+	label := "json_schema:" + f.JSONSchema.Name
+	if f.JSONSchema.Strict {
+		label += ":strict"
+	}
+	return label
+}
+
+// LastResponseFormat reports the response_format label of the last request.
+func (s *Server) LastResponseFormat() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.lastFormat
+}
+
 func (s *Server) requests(w http.ResponseWriter, _ *http.Request) {
 	total, byModel := s.Counts()
-	writeJSON(w, http.StatusOK, map[string]any{"total": total, "by_model": byModel})
+	writeJSON(w, http.StatusOK, map[string]any{"total": total, "by_model": byModel, "last_response_format": s.LastResponseFormat()})
 }
 
 func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
 	s.mu.Lock()
 	s.total = 0
 	s.byModel = map[string]int{}
+	s.lastFormat = ""
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
 }

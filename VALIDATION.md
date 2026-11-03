@@ -1048,3 +1048,44 @@ The recursion guard now covers every verifier key in `verifiers` as well as `ver
   - 3 Tavily credits, $0.024 by Bifrost.
   - Budgets: Acme verifier $0.016/$0.016, Globex $0.008/$0.016, Initech $0.
 - **Found:** the fallback model answered with its reasoning trace, and the keyword picker chose a hedged sentence from it ("…Go 1.24 might be out…"). Recorded as a Task 28 requirement, not fixed in M1.
+
+## Task 27: Verifier LLM client (3 Nov 2026)
+
+**Status:** done; decision D41. Fork commit `f1b6df3`: `plugins/halflife/llm.go`, config fields `verifier_models`, `verifier_max_tokens` (default 1024), `verifier_reasoning_effort` (default unset), wired as `verifier.llmFor(tenant)`; nothing calls it yet (Task 28 does). Script `testenv/verifier-llm.sh` (`make llm`), records `testenv/results/verifier-llm-{mock,live}.json`.
+
+- **Request.**
+  - `POST <gateway_url>/v1/chat/completions` with the tenant's verifier key in `x-bf-vk`.
+  - Body: the first model, the rest as Bifrost `fallbacks`, `temperature` 0, `max_tokens`, and `response_format` `{type: json_schema, json_schema: {name, strict: true, schema}}`. Optional `reasoning.effort`.
+- **Reply.**
+  - Content as a string or text parts; one Markdown fence is stripped and nothing else is repaired.
+  - The reply is checked against the compiled schema (`santhosh-tekuri/jsonschema/v6 v6.0.2`, already the gateway's dependency; gateway `go.mod`/`go.sum` unchanged), then decoded.
+  - The result records the model and provider that answered, whether a fallback answered, calls, malformed replies, truncation, tokens, and each call's `X-Bifrost-Request-Id`.
+- **Failures.**
+
+  | Case | Behaviour |
+  |---|---|
+  | Malformed (prose, wrong enum, missing or extra field, two objects, an array, empty, a refusal) | The reply and the schema error go back with one correction; a second failure is `ErrLLMMalformed` |
+  | `finish_reason: length` and still invalid | `ErrLLMTruncated`, no retry |
+  | 402 | Budget spent, never retried |
+  | 400 / 401 / 403 / 404 | Not retried |
+  | 429 / 5xx | Retried once after `Retry-After` (capped at 5 s) or 1 s |
+  | Context cancelled during the wait | Stops |
+
+- **Unit tests:** 16 new (`llm_test.go`) plus config cases; plugin coverage 95.2%, `-race` clean.
+- **Through the gateway, mock** (`make llm`, all checks pass, 4 runs):
+  - Models `openai/fail-500,openai/ok`: the first failed, and Bifrost's fallback answered with a schema-valid object in 1 call (`fallback: true`).
+  - The mock provider received `response_format` as `json_schema:claim_check:strict`.
+  - An unscripted prompt was malformed twice: 2 calls, no object.
+  - After 2 relay searches spent Acme's verifier budget, the next LLM call got 402 (`vk_model_config * budget exceeded: 0.0160 >= 0.0160`): budget spent, 1 call.
+  - None of the verifier's calls was captured for audit.
+  - Every call is in Bifrost's request log on `vk-verifier-acme` / `cust-acme`.
+- **Through the gateway, live** (free OpenRouter: `nvidia/nemotron-3.5-super-vl:free`, falling back to `xingchen-agi/xing4.0-29b-a4b:free` and `openrouter/free`; no Tavily call, $0). Three claim checks with given evidence: Go version (expect CONTRADICTED), OpenAI CEO (SUPPORTED), Acme price vs unrelated news (UNVERIFIABLE).
+
+  | Run | Valid replies | Detail |
+  |---|---|---|
+  | 1, no effort, 512-token limit | 2 of 3 | Go case: empty content after 512 tokens of reasoning, twice (1024 tokens) |
+  | 2, no effort, 1024-token limit, truncation detected | 2 of 3 | Go case: truncated at 1024 tokens, now in 1 call instead of 2 |
+  | 3, `reasoning.effort: low` | 3 of 3 | Expected verdicts; Go case 791 tokens, 30 s. Quotes: verbatim for Go and CEO, empty for UNVERIFIABLE as asked. Go's quote, "It is the latest stable release.", is verbatim but doesn't name the version: a quote must decide the claim on its own (Task 33) |
+
+  All runs: nemotron answered (no fallback needed), nothing was captured for audit, and every call was logged on Acme's verifier key and customer.
+- **Not shown yet:** judgement quality on real Tavily evidence (Tasks 28–33), and verbatim-quote checking in code (Task 33). Three hand-written checks are a smoke test, not an evaluation.

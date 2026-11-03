@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 26 (M1 end-to-end proof and decision: **GO**, [M1_REPORT.md](M1_REPORT.md)), 3 Nov 2026.
-- **Next:** Task 27 (verifier LLM client).
+- **Last completed:** Task 27 (verifier LLM client), 3 Nov 2026. M1 decision: **GO** ([M1_REPORT.md](M1_REPORT.md)).
+- **Next:** Task 28 (atomic claim extraction).
 
 ## Completed
 
@@ -37,6 +37,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 24 | 2026-11-03 | Minimal verifier (fork commit `8c24ed1`): one claim per answer by a keyword heuristic, one basic search through the relay with the tenant's verifier key (`verifiers`, D37), sources stored on the report. Repeated searches reused for 10 min, a 402 recorded as `budget_exhausted`, retryable errors retried once. Judges nothing yet (`not_judged`). `make verify` 21/21 ×3; every other gateway suite passes |
 | 25 | 2026-11-03 | Report store and endpoint (fork commit `1775dc7`): bounded in-memory store (10k), report created at queue time and completed by the verifier; `GET /api/halflife/reports/{id}` in-tree, behind the same dashboard auth as `/api`, 401 without it, 404 for unknown IDs; report linked to the gateway request and the relay-log row of its search |
 | 26 | 2026-11-03 | M1 proof (`make m1`, `testenv/m1-proof.sh`): request → Bifrost → capture → Tavily relay → report, checking M1-A, B, D, E and tenant attribution in one run; M1-C from `make cache`. Mock 22/22 ×4; live (free OpenRouter models + real Tavily) 22/22 on the second attempt after a 429 on the first, 3 credits / $0.024. Decision D40: **GO** ([M1_REPORT.md](M1_REPORT.md)). Found: the keyword picker chose a hedged sentence from a model's reasoning trace, and a verifier key's budget also refuses its LLM calls |
+| 27 | 2026-11-03 | Verifier LLM client (fork commit `f1b6df3`, `llm.go`): structured JSON through the gateway's chat endpoint with the tenant's verifier key, `response_format` strict `json_schema`, validated with the gateway's own `jsonschema/v6`; one corrective retry, then malformed; truncation, 402 and 4xx never retried, 429/5xx once after Bifrost's fallbacks. Config `verifier_models` (Bifrost request fallbacks), `verifier_max_tokens`, `verifier_reasoning_effort`. `make llm` mock: fallback answered, schema reached the provider as strict, malformed after 2 calls, spent key → 402 in 1 call. Live (free nemotron): 2/3 valid with no effort set (a reasoning model spent 1024 tokens thinking), 3/3 valid and correct with `low` |
 
 ## Decisions
 
@@ -82,6 +83,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D38 | The M1 verifier picks one claim with a keyword heuristic and records evidence without judging it; no answer is marked stale until the judge exists | The task is to prove the path (capture → relay → Tavily → report) with real attribution and spend. A heuristic is deterministic and free; a judgement from keyword overlap would produce verdicts that look authoritative and aren't. Reports say `not_judged`, and cache eviction stays off until a model-based judge with typed comparators (Tasks 27-34) can justify it. |
 | D39 | Reports live in a bounded in-memory store and are served only behind the gateway's dashboard auth | They hold the tenant's question and answer, so the endpoint is an operator view, like the rest of `/api`; a tenant-facing view that checks the caller's key is later work. In memory keeps M1 free of a schema; restarts lose reports, which the persistent store (Task 35) fixes. `gateway_url` is configured, not detected, because the plugin loader can't see the listen address; it defaults to Bifrost's `127.0.0.1:8080`. |
 | D40 | M1 decision: **GO** (was CONDITIONAL GO); the M1 proof sends Bifrost request fallbacks across free models in live mode | Every gateway capability the audit had proven only from source has now run on the real gateway, mock and live (M1_REPORT.md A–G). The remaining risk is verification quality (Milestone 2), measured on held-out data before any accuracy claim. Free models are rate-limited upstream (429 on the first live run), so live answers fall back to two more free models; the same applies to the judge (Task 27). |
+| D41 | The verifier's LLM calls use Bifrost request fallbacks (not a client-side model loop), strict `json_schema` output checked locally, one corrective retry, and no retry for truncation or a 402; reasoning effort is configurable and unset by default | Fallbacks inside the gateway are logged, priced and governed per attempt like any tenant's. The provider's schema enforcement is not trusted on its own (free models vary), so every reply is validated against the same schema before use; a reply that fails twice is UNVERIFIABLE (audit §3.4), never a verdict. Measured live: a reasoning model spent its whole 512- and then 1024-token limit thinking and returned empty content, so a correction at the same limit only spends it again; with `reasoning.effort: low` the same check finished in 791 tokens. OpenAI's non-reasoning models reject the parameter, hence no default. A 402 means the verifier key's one budget (searches and LLM calls, M1 report D) is spent. |
 
 ## Blockers and inputs needed
 
