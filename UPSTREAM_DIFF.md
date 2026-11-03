@@ -52,19 +52,23 @@ git -C bifrost diff --stat upstream halflife -- . ':!docs'
 
 | Path | Contents |
 |---|---|
-| `plugins/halflife/go.mod`, `go.sum` | Own module; requires `core v1.14.1`, `framework v1.11.1` and `semanticcache v1.7.4`, the versions release builds pin, and `santhosh-tekuri/jsonschema/v6 v6.0.2` (Apache-2.0, imported, not copied), the version the gateway already requires |
+| `plugins/halflife/go.mod`, `go.sum` | Own module; requires `core v1.14.1`, `framework v1.11.1` and `semanticcache v1.7.4`, the versions release builds pin, `santhosh-tekuri/jsonschema/v6 v6.0.2` (Apache-2.0), `mattn/go-sqlite3 v1.14.32` (MIT), `golang.org/x/text v0.43.0` and `golang.org/x/net v0.61.0` (BSD-3-Clause): all imported, none copied, each at the version `transports/go.mod` already requires, so the gateway's `go.sum` is unchanged |
 | `plugins/halflife/config.go` | `Config`, defaults, validation; `verifiers` maps tenants to verifier keys (D37) |
 | `plugins/halflife/main.go` | `Init`, `Cleanup`, the LLM and HTTP transport hooks, recursion guard, `Report` lookup |
 | `plugins/halflife/capture.go`, `pool.go`, `links.go` | Answer capture, bounded audit queue, cache entry → report links |
 | `plugins/halflife/invalidate.go` | Stale-answer eviction and the write-window bypass |
 | `plugins/halflife/tavily.go` | Tavily client that only calls the gateway's relay |
-| `plugins/halflife/claim.go`, `verifier.go` | Verifier: the M1 keyword path when no verifier model is configured, else extract → classify → rank → search; searches reused within 10 minutes |
-| `plugins/halflife/report.go` | Report type and bounded in-memory store |
+| `plugins/halflife/claim.go`, `verifier.go` | Verifier: the M1 keyword path when no verifier model is configured, else extract → classify → rank → search → judge → strength; searches reused within 10 minutes |
+| `plugins/halflife/report.go` | Report type (verdicts, quotes, strength, score) and bounded in-memory store |
+| `plugins/halflife/store.go` | Persistent report store: SQLite (`mattn/go-sqlite3`, MIT, the driver the gateway already requires), claim and source provenance rows, retention, versioned migrations |
 | `plugins/halflife/llm.go` | Verifier LLM client: structured JSON through the gateway's chat endpoint, schema-validated, one corrective retry |
 | `plugins/halflife/extract.go` | Atomic claim extraction: pre-filter, one strict-schema LLM call, span check |
 | `plugins/halflife/scope.go` | Temporal scope: the extractor's label confirmed or overruled by cues in the span |
 | `plugins/halflife/priority.go` | Verification priority from volatility band and elapsed time; operator-supplied knowledge-cutoff table |
 | `plugins/halflife/retrieval.go` | Per-category Tavily Search parameters; when to Extract |
+| `plugins/halflife/compare.go` | Typed comparators: versions, prices, names, dates, quantities (`golang.org/x/text` for accent folding, already in the gateway's build) |
+| `plugins/halflife/judge.go` | Judge call, verbatim quote verification, deterministic verdict rules |
+| `plugins/halflife/strength.go` | Evidence strength and freshness score (`golang.org/x/net/publicsuffix`, already in the gateway's build) |
 | `plugins/halflife/testdata/claims/*.json` | Synthetic extraction fixtures (fictional companies) |
 | `plugins/halflife/*_test.go`, `version` | Unit tests; version `0.1.0` |
 | `transports/bifrost-http/handlers/halflife.go`, `halflife_test.go` | `GET /api/halflife/reports/{id}`, resolving the plugin per request like the cache handler |

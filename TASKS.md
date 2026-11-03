@@ -75,15 +75,15 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | [x] 29 | Temporal scope classifier | CURRENT / HISTORICAL / TIMELESS / FUTURE / UNCLEAR; historical claims skipped | — |
 | [x] 30 | Volatility and priority | 5 volatility bands (from RecencyQA's scale); knowledge-cutoff table; HIGH / MEDIUM / LOW / SKIP priority | — |
 | [x] 31 | Retrieval policies | Per-category Tavily parameters (topic, time range, `max_age_hours`, preferred domains, Extract when snippets are thin) | — |
-| [ ] 32 | Typed comparators | Deterministic semver, price, name and date comparison with tests | — |
-| [ ] 33 | Evidence-backed verdicts | CURRENT / OUTDATED / CONTRADICTED / CONFLICTING / UNVERIFIABLE; OUTDATED requires proof it was once true; quotes verified verbatim | — |
-| [ ] 34 | Evidence strength and freshness score | STRONG / MODERATE / WEAK; 0–100 freshness score labelled heuristic | — |
+| [x] 32 | Typed comparators | Deterministic semver, price, name and date comparison with tests | — |
+| [x] 33 | Evidence-backed verdicts | CURRENT / OUTDATED / CONTRADICTED / CONFLICTING / UNVERIFIABLE; OUTDATED requires proof it was once true; quotes verified verbatim | — |
+| [x] 34 | Evidence strength and freshness score | STRONG / MODERATE / WEAK; 0–100 freshness score labelled heuristic | — |
 
 ## Milestone 3: Reliability and reporting
 
 | # | Task | Done when | Needs |
 |---|---|---|---|
-| [ ] 35 | Persistent reports | SQLite store with claim-level provenance, retention limit, migrations | — |
+| [x] 35 | Persistent reports | SQLite store with claim-level provenance, retention limit, migrations | — |
 | [ ] 36 | Untrusted web content | Injection defences, size caps, sanitisation; adversarial fixtures pass | — |
 | [ ] 37 | Failure handling | Tavily 429 (Retry-After), 432/433/434, timeouts, circuit breaker; budget-aware degradation; failure-injection tests | — |
 | [ ] 38 | Operator attribution and metrics | Per-key audits, verdicts, credits and USD; metrics endpoint | — |

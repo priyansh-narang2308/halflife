@@ -102,7 +102,7 @@ check "client x-bf-cache-ttl 1h: capped to 60" "$(near "$(cat "$D/longttl.expiry
 check "client x-bf-cache-ttl 20s: shorter, kept" "$(near "$(cat "$D/shortttl.expiry")" 20)" "~20"
 check "Redis key TTL is -1 (expiry is the expires_at field)" \
   "$(cut -d' ' -f2 "$LIB_TMP/off/miss.expiry" "$D/miss.expiry" "$D/longttl.expiry" | sort -u)" -1
-check "cap logged at start" "$(grep -c 'cache_ttl=1m0s)"' "$LOG")" 1
+check "cap logged at start" "$(grep -c 'cache_ttl=1m0s report_store=memory)"' "$LOG")" 1
 
 echo "--- integrity (same sequence through the cache without Halflife)"
 check "same provider calls" "$(cat "$LIB_TMP/off/provider")" "$(cat "$D/provider")"

@@ -1155,3 +1155,74 @@ No Extract was needed: both snippet sets named the subject with a value of the r
 - Extraction quality at scale: one live answer and four fixtures are a smoke test, not an evaluation (Milestone 4).
 - No built-in model cutoffs (D43); the live run used the 18-month default.
 
+
+## Tasks 32–35: Comparators, verdicts, strength and score, persistent reports (3 Nov 2026)
+
+**Status:** done; decisions D47–D50. Fork commit `89ed3c7`: files `compare.go`, `judge.go`, `strength.go`, `store.go`; `verifier.go`, `report.go`, `config.go`, `main.go` changed. The keyword path (no `verifier_models`) is unchanged and its reports still say `not_judged`.
+
+### What runs after each search
+
+1. **Judge** (`judge.go`): one call per checked claim on the tenant's verifier key, strict `json_schema` `claim_judgement`. The claim goes in a `<claim>` block, each source (snippet plus extracted text, clipped to 2,500 bytes, with any `<claim>`, `<evidence>` or `<source>` tag in it removed) in a numbered `<source>` block, and the prompt has today's date. The judge answers SUPPORTS / CONTRADICTS / CONFLICTING / INSUFFICIENT, the current value, a quote with its source, and, optionally, a history quote and a second-source quote. No evidence → UNVERIFIABLE without a call. A 402 → NOT_CHECKED, and the claims after it are not judged. A malformed reply or an error → UNVERIFIABLE with the reason.
+2. **Verdict** (`decideVerdict`, D47–D48), in order:
+   - INSUFFICIENT → UNVERIFIABLE.
+   - The quote is not found verbatim in the source it cites → UNVERIFIABLE.
+   - CONFLICTING needs a verified quote from a different source, else UNVERIFIABLE.
+   - When a typed comparator can compare the claimed and observed values, it decides: the quote must state the observed value; the same value → CURRENT; a different value → OUTDATED if a verified history quote states the claimed value, else CONTRADICTED. When this overrules the judge, the reason says so.
+   - Otherwise the judge's label: SUPPORTS → CURRENT; CONTRADICTS → OUTDATED or CONTRADICTED, by the same history rule.
+   - The report verdict is the claims' worst: OUTDATED > CONTRADICTED > CONFLICTING > UNVERIFIABLE > CURRENT > NOT_CHECKED.
+3. **Comparators** (`compare.go`):
+
+   | Category | Kind | Rule |
+   |---|---|---|
+   | version | version | compared over the parts the claim states ("1.25" equals "1.25.3"); a pre-release sorts before its release |
+   | price | price | exact rationals; currency from symbol or code; a billing period is never converted (different periods are incomparable); per-user and per-token units, per-token normalised to per 1M; "free" is 0 |
+   | leadership | name | accent and case folding, honorifics and suffixes dropped, "Lee, Jordan" swapped; same surname, plus first names equal, an initial, or a prefix of at least 3 letters |
+   | event | date | day, month or year precision; compared at the coarser one |
+   | statistic | number | scale words (thousand, k, million, bn, …); a percentage is never compared with a count |
+4. **Strength and score** (`strength.go`, D49): a source agrees when it holds the verified quote, states the observed value, or contains the quote. Agreeing sources are counted by registrable domain (public suffix list). A domain is primary when it is a preferred domain for the category or is named after the subject. STRONG: at least 2 agreeing domains, at least 1 of them primary, and a verified quote. MODERATE: a primary domain agrees, or at least 2 domains do. WEAK otherwise. The score is the audit's table (CURRENT 90 / 75 / 60, OUTDATED and CONTRADICTED 5 / 15 / 30, CONFLICTING 45). UNVERIFIABLE and NOT_CHECKED get neither. The score is a heuristic, not a probability.
+5. **Store** (`store.go`, D50): with `report_store_path` set, a completed report is written to SQLite in one transaction and then served from there. The database holds the report document, a row per claim (verdict, strength, score, verifier key, credits, relay and Tavily request ids, judge model and request ids, quote, quote URL, verified) and a row per source (URL, registrable domain, title, published date, extracted). Retention: `report_retention_hours` (default 30 days) and `report_store_size`, applied on open and after every write; claim and source rows cascade. Migrations are versioned in `schema_migrations`, each version in its own transaction; a database newer than the build is refused untouched. The question and answer text are left out unless `persist_answer_text` is set; the report says `text_redacted`. A failed write is logged and the report stays served from memory.
+
+### Unit tests
+
+- `compare_test.go` (6), `judge_test.go` (11; `decideVerdict` alone has 16 cases), `strength_test.go` (3) and `store_test.go` (8). Store tests cover migrations from empty and reopening, a newer schema refused, persistence across close and reopen, in-flight reports staying in memory, redaction on by default and off when asked, claim and source rows, retention by age and count with no orphan rows, rewrite and remove, a failed write, and plugin `Init` / `Cleanup` with a store path, including a restart.
+- Pipeline tests through the verifier with a fake gateway: each checked claim judged with the claimed value in the prompt, a judge 402 stopping later work, a malformed judge reply, no evidence, unchecked claims' reasons, and the keyword path not judged.
+- Plugin: all pass, `gofmt` and `go vet` clean, `-race` clean, coverage 95.1%.
+
+### Through the gateway, mock (`make claims`, all pass)
+
+35 of 35 checks. The mock judge replies are keyed by the claimed value in the judge's prompt (`fixtures/llm.json`, `schema_replies.claim_judgement`).
+
+| Claim | Judge said | Verdict | Why | Strength / score |
+|---|---|---|---|---|
+| Acme Cloud Pro costs $20 per month | CONTRADICTS, history quote "from $20 to $29" | OUTDATED | price comparator: different; quote and history quote verified | STRONG / 5 (acme.example primary + news.example) |
+| includes 100 GB of storage | INSUFFICIENT | UNVERIFIABLE | the evidence does not say | — |
+| founded in 2015 | — | NOT_CHECKED | priority SKIP: historical | — |
+| Acme SDK release is 3.2.0 | CONTRADICTS, no history | CONTRADICTED | version comparator: 3.2.0 vs 4.1.0 | MODERATE / 15 (preferred code.example only) |
+| drifted $25 claim | — | NOT_CHECKED | rejected by the span check | — |
+| Acme stock at $120 | CONTRADICTS | CONTRADICTED | price comparator: $120 vs $131.40 | WEAK / 30 (one non-primary domain) |
+| Dana Cruz is CEO | **SUPPORTS** (wrong on purpose) | CONTRADICTED | the name comparator overrode the judge's SUPPORTS: Dana Cruz vs Priya Raman | MODERATE / 15 |
+
+Report verdicts: overview OUTDATED, today CONTRADICTED, history `nothing_to_check`. All 8 verifier calls (3 extractions, 5 judgements) are in Bifrost's request log on `vk-verifier-acme` / `cust-acme`. The gateway was then restarted on the same store: the overview report was served from SQLite with the same verdicts, strengths and scores, `text_redacted: true` and no answer text. The claims table holds CONTRADICTED 3, OUTDATED 1, UNVERIFIABLE 1, each with the verifier key, judge request ids and relay request id. Source rows have 6 registrable domains, and no stored row contains the answer text.
+
+### Through the gateway, live (`LIVE=1 make claims`, all pass)
+
+18 of 18 checks, first run. Same fixed answer as Tasks 28–31. Extraction and judge on free `nvidia/nemotron-3.5-super-vl:free` (no fallback, nothing malformed or truncated), searches on real Tavily through the relay: 2 credits ($0.016), models $0.
+
+| Claim | Verdict | Observed |
+|---|---|---|
+| The latest stable version of Go is 1.25 | UNVERIFIABLE | the judge answered that the evidence does not say; no quote |
+| GitHub Copilot Pro costs $10 per month | CURRENT, WEAK, 60 | quote verified on a third-party pricing page; price comparator: USD 10 per month vs USD 10 per user per month, same |
+| Go was first released publicly in 2009 | NOT_CHECKED | priority SKIP |
+
+Report verdict UNVERIFIABLE (UNVERIFIABLE ranks above CURRENT). The live checks are invariants, not expected verdicts: every claim has a verdict and a reason; no CURRENT, OUTDATED or CONTRADICTED verdict lacks a verified quote; no OUTDATED verdict lacks a verified history quote; scores appear only where the table defines one.
+
+### Regression
+
+`make build`, then every suite: test, smoke (142), verify (21), m1 (22), relay (23), budget (18), tenants (16), llm (10), cache (70), bench, claims (35); all pass. The first pass failed 1 smoke check and 1 cache check: both grepped the startup log line ending at `cache_ttl=…)`, which now ends with `report_store=memory`. The checks now assert the new field, and both suites were rerun green. Bench and other regenerated result files were restored (they differed only in timings, timestamps and ids).
+
+### Not shown yet
+
+- Verdict accuracy: one live answer is a smoke test. Accuracy and score calibration are measured in Milestone 5.
+- A per-user price is treated as comparable with a claim that names no unit (the Copilot case). This is a choice, not a proven rule; it is revisited with the evaluation set.
+- OUTDATED does not evict the cached answer yet (Task 41).
+- Web text in the judge prompt is delimited and stripped of the block tags, but the injection defences and adversarial fixtures are Task 36.

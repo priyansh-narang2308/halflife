@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-03T12:15:13Z",
+  "recorded_at": "2026-11-03T16:14:03Z",
   "mode": "live",
   "verifier_models": [
     "openrouter/nvidia/nemotron-3.5-super-vl:free",
@@ -11,6 +11,7 @@
     {
       "name": "live",
       "outcome": "evidence_found",
+      "verdict": "UNVERIFIABLE",
       "error": null,
       "extraction": {
         "model": "nvidia/nemotron-3.5-super-vl:free",
@@ -49,18 +50,32 @@
             "include_published_date": true,
             "max_age_hours": 24
           },
+          "verdict": "UNVERIFIABLE",
+          "verdict_reason": "the evidence does not say",
+          "observed_value": null,
+          "comparison": null,
+          "quote": {
+            "source": -1,
+            "url": null,
+            "verified": false
+          },
+          "history_verified": null,
+          "judge": {
+            "model": "nvidia/nemotron-3.5-super-vl:free",
+            "fallback": false,
+            "calls": 1,
+            "malformed": 0,
+            "truncated": false
+          },
+          "strength": null,
+          "strength_reason": null,
+          "freshness_score": null,
           "evidence": {
             "credits": 1,
             "reused": false,
             "live_fetch_refused": null,
             "extracted_url": null,
             "sources": [
-              {
-                "url": "https://go.dev/doc/devel/release",
-                "title": "Release History - The Go Programming Language",
-                "published_date": "Fri, 24 Aug 2018 00:00:00 GMT",
-                "extracted": false
-              },
               {
                 "url": "https://go.dev",
                 "title": "The Go Programming Language",
@@ -74,15 +89,15 @@
                 "extracted": false
               },
               {
-                "url": "https://stackoverflow.com/questions/51933636/url-for-latest-stable-go-release",
-                "title": "URL for latest stable Go release",
-                "published_date": null,
-                "extracted": false
-              },
-              {
                 "url": "https://endoflife.date/go",
                 "title": "Go | endoflife.date",
                 "published_date": "Wed, 21 Oct 2026 00:00:00 GMT",
+                "extracted": false
+              },
+              {
+                "url": "https://www.facebook.com/groups/7daystodie/posts/26888373984191378",
+                "title": "Where is the tab to switch from stable to beta in 7 Days ...",
+                "published_date": null,
                 "extracted": false
               }
             ]
@@ -92,7 +107,7 @@
           "text": "GitHub Copilot Pro costs $10 per month.",
           "span": "GitHub Copilot Pro costs $10 per month.",
           "subject": "GitHub Copilot Pro",
-          "attribute": "monthly price",
+          "attribute": "cost",
           "asserted_value": "$10 per month",
           "category": "price",
           "temporal_scope": "CURRENT",
@@ -104,13 +119,37 @@
           "status": "checked",
           "status_reason": null,
           "search": {
-            "query": "GitHub Copilot Pro monthly price",
+            "query": "GitHub Copilot Pro cost",
             "search_depth": "basic",
             "max_results": 5,
             "chunks_per_source": 3,
             "include_published_date": true,
             "max_age_hours": 24
           },
+          "verdict": "CURRENT",
+          "verdict_reason": "price comparator: USD 10 per month vs USD 10 per user per month",
+          "observed_value": "$10 per user per month",
+          "comparison": {
+            "kind": "price",
+            "result": "same",
+            "detail": "USD 10 per month vs USD 10 per user per month"
+          },
+          "quote": {
+            "source": 0,
+            "url": "https://techjacksolutions.com/ai-tools/github-copilot/github-copilot-pricing",
+            "verified": true
+          },
+          "history_verified": null,
+          "judge": {
+            "model": "nvidia/nemotron-3.5-super-vl:free",
+            "fallback": false,
+            "calls": 1,
+            "malformed": 0,
+            "truncated": false
+          },
+          "strength": "WEAK",
+          "strength_reason": "1 agreeing domain(s), 0 primary",
+          "freshness_score": 60,
           "evidence": {
             "credits": 1,
             "reused": false,
@@ -126,13 +165,7 @@
               {
                 "url": "https://www.reddit.com/r/GithubCopilot/comments/1huccl6/copilot_pro_pricing_whats_the_catch",
                 "title": "Copilot pro pricing, what's the catch? : r/GithubCopilot",
-                "published_date": "Mon, 03 Nov 2025 12:00:00 GMT",
-                "extracted": false
-              },
-              {
-                "url": "https://tavily.com/knowledge/company/WGf4o1saQ1yD",
-                "title": "GitHub | Tavily",
-                "published_date": null,
+                "published_date": "Mon, 03 Nov 2025 16:00:00 GMT",
                 "extracted": false
               }
             ]
@@ -154,6 +187,16 @@
           "status": "not_checked",
           "status_reason": "priority SKIP: historical: not a freshness question",
           "search": null,
+          "verdict": "NOT_CHECKED",
+          "verdict_reason": "priority SKIP: historical: not a freshness question",
+          "observed_value": null,
+          "comparison": null,
+          "quote": null,
+          "history_verified": null,
+          "judge": null,
+          "strength": null,
+          "strength_reason": null,
+          "freshness_score": null,
           "evidence": null
         }
       ]
