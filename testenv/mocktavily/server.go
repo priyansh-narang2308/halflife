@@ -62,6 +62,20 @@ type Server struct {
 	// extracted counts successful URL extractions. Tavily bills Extract per 5
 	// successful URLs across requests, so a single request can cost 0.
 	extracted int
+	// last is what the most recent authenticated request carried, so a test
+	// can check what a relay forwards. Credential values are never kept.
+	last Seen
+}
+
+// Seen describes the last authenticated request: the attribution headers
+// Tavily reads, and whether caller credentials leaked through a relay.
+type Seen struct {
+	Path         string `json:"path"`
+	ProjectID    string `json:"x_project_id"`
+	SessionID    string `json:"x_session_id"`
+	VirtualKey   bool   `json:"x_bf_vk_present"`   // a Bifrost virtual key reached the upstream
+	APIKeyHeader bool   `json:"x_api_key_present"` // an X-Api-Key header reached the upstream
+	IncludeUsage bool   `json:"include_usage"`
 }
 
 // New returns a Server for cfg.
@@ -72,6 +86,7 @@ func New(cfg Config) *Server {
 	s := &Server{cfg: cfg, mux: http.NewServeMux()}
 	s.mux.HandleFunc("POST /search", s.authed(s.search))
 	s.mux.HandleFunc("POST /extract", s.authed(s.extract))
+	s.mux.HandleFunc("GET /usage", s.authed(s.usage))
 	s.mux.HandleFunc("GET /_mock/requests", s.requests)
 	s.mux.HandleFunc("POST /_mock/reset", s.reset)
 	return s
@@ -85,6 +100,10 @@ func (s *Server) authed(next http.HandlerFunc) http.HandlerFunc {
 			writeError(w, http.StatusUnauthorized, "Unauthorized: missing or invalid API key.")
 			return
 		}
+		s.mu.Lock()
+		s.last = Seen{Path: r.URL.Path, ProjectID: r.Header.Get("X-Project-ID"), SessionID: r.Header.Get("X-Session-Id"),
+			VirtualKey: r.Header.Get("x-bf-vk") != "", APIKeyHeader: r.Header.Get("X-Api-Key") != ""}
+		s.mu.Unlock()
 		next(w, r)
 	}
 }
@@ -125,6 +144,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		writeDecodeError(w, err)
 		return
 	}
+	s.noteUsage(req.IncludeUsage)
 	if strings.TrimSpace(req.Query) == "" {
 		writeError(w, http.StatusBadRequest, "Query is missing.")
 		return
@@ -205,6 +225,7 @@ func (s *Server) extract(w http.ResponseWriter, r *http.Request) {
 		writeDecodeError(w, err)
 		return
 	}
+	s.noteUsage(req.IncludeUsage)
 	urls, err := parseURLs(req.URLs)
 	if err != nil || len(urls) == 0 || len(urls) > 20 {
 		writeError(w, http.StatusBadRequest, "urls must be a URL or a list of 1 to 20 URLs.")
@@ -289,14 +310,40 @@ func (s *Server) record(counter *int, credits int) {
 	s.mu.Unlock()
 }
 
+// usage mirrors GET /usage (free): the key's credits used, by product. The
+// mock has one key on one plan, so key and account totals coincide.
+func (s *Server) usage(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	credits := s.credits
+	s.mu.Unlock()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"key":     map[string]any{"usage": credits, "limit": nil},
+		"account": map[string]any{"current_plan": "Mock", "plan_usage": credits, "plan_limit": 9000, "paygo_usage": 0, "paygo_limit": nil},
+	})
+}
+
+func (s *Server) noteUsage(on bool) {
+	s.mu.Lock()
+	s.last.IncludeUsage = on
+	s.mu.Unlock()
+}
+
+// Last returns what the most recent authenticated request carried.
+func (s *Server) Last() Seen {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.last
+}
+
 func (s *Server) requests(w http.ResponseWriter, _ *http.Request) {
 	searches, extracts, credits := s.Stats()
-	writeJSON(w, http.StatusOK, map[string]int{"searches": searches, "extracts": extracts, "credits": credits})
+	writeJSON(w, http.StatusOK, map[string]any{"searches": searches, "extracts": extracts, "credits": credits, "last": s.Last()})
 }
 
 func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
 	s.mu.Lock()
 	s.searches, s.extracts, s.credits, s.extracted = 0, 0, 0, 0
+	s.last = Seen{}
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -815,3 +815,45 @@ Runs: `-race -count=5` and `-count=20` (no race detector), all pass.
 - **chromem-go data race (test store only).** chromem-go v0.7.0 reads its document map in `Delete` without the lock its `Add` takes, so a delete racing a write is a data race inside the in-process store. The harness serializes writes and deletes. Redis, the store the gateway uses, is not affected.
 - **Timing assumption in a test.** Without the race detector the "after write" test ran inside its own 1 ms window and took the bypass path. It now waits the window out explicitly.
 - **Task 18 regression in `smoke-halflife.sh`.** The startup log line gained `cache_ttl=…` in Task 18, and the smoke check still expected the old line. `make smoke` wasn't run for Task 18. It is fixed here; `make smoke` and `make cache` (2 runs each) all pass with the Task 19 gateway.
+
+## Task 20: Tavily relay contract (3 Nov 2026)
+
+**Status:** done. Fork commit `b223df2`. Command: `make relay` (`testenv/relay-tavily.sh`): real gateway, mock Tavily on 9102, config `testenv/configs/relay`. No real Tavily call was made.
+
+### Relay configuration (D32)
+
+```json
+{"name": "tavily", "base_url": "http://127.0.0.1:9102", "auth": {"type": "bearer"}, "credential": {"value": "tvly-mock"},
+ "usage": {"units_path": "usage.credits", "cost_per_unit": 0.008},
+ "routes": [{"method": "POST", "path": "/search"}, {"method": "POST", "path": "/extract"},
+            {"method": "GET", "path": "/usage", "billable": false}]}
+```
+
+The verifier key `vk-verifier` holds the relay grant (`relay_grants: [{"relay_name": "tavily"}]`); `vk-smoke` holds none. $0.008 per credit is Tavily's pay-as-you-go price (docs.tavily.com/documentation/api-credits, read 3 Nov 2026). The live config (Task 21) changes `base_url` and takes the credential from the environment.
+
+### Halflife's Tavily client (`plugins/halflife/tavily.go`)
+
+- Posts to `{gateway}/relay/{tavily_relay}/search` or `/extract` with the verifier's virtual key. It never sends a Tavily credential: the relay injects it.
+- Always sends `include_usage: true` and an explicit `search_depth` (`basic` by default); never sends `auto_parameters`.
+- Sends `X-Project-ID` = tenant and `X-Session-Id` = report (D13), omitted when empty.
+- Errors are `TavilyError{Status, Message, RetryAfter}`, with `Retryable()` (429, 434, 5xx) and `OutOfCredits()` (432, 433). It reads both Tavily's `{"detail":{"error"}}` and the gateway's `{"error":{"message"}}` shapes. Replies are capped at 4 MiB.
+- Unit tests check the request shape, decoding and 8 error cases against a fake relay. `TestTavilyRelayContract` runs the same client against the real relay; the script sets its environment, and it is skipped otherwise.
+
+### Gateway results (23 checks, 3 runs)
+
+| Side | Observed |
+|---|---|
+| What reaches Tavily | The caller's `Authorization: Bearer caller-secret` is replaced by the relay credential (the mock accepts only `tvly-mock`). `x-bf-vk` and the caller's `X-Api-Key` are stripped. `X-Project-ID` and `X-Session-Id` are forwarded. |
+| What the caller gets | Tavily's body unchanged. Advanced search reports 2 credits. Extract of 5 good URLs and 1 failing URL returns 5 results, 1 failure and 1 credit. 432 and its message pass through. 429 keeps `Retry-After: 2`. Replies carry `X-Bifrost-Request-Id` and no `X-Halflife-Status`. |
+| What the gateway enforces | Key without a grant: 403. No key: 401. `POST /crawl` (not in the contract): 404. None of these reached Tavily. |
+| What Bifrost charges | One relay-log row per call: `cost = units × 0.008` (1 credit $0.008, 2 credits $0.016). 432, 429, 401, 403 and `/usage` carry no cost. Refused routes and unknown relays are not in the relay log. The log holds no credential: no virtual key, Tavily key or caller secret appears anywhere in `logs.db`. |
+
+**Measured gap.** A search sent without `include_usage` is billed by Tavily (1 credit; mock `/usage` counted it) but charged $0 by Bifrost, which has no `usage.credits` to read. Over the run Bifrost charged $0.064 (8 credits) while Tavily counted 9. Halflife's client always sends `include_usage`; anything else calling the relay would under-report. Reconciliation against Tavily's `/usage` (Task 38) is what catches it.
+
+### Fixed along the way (D33)
+
+Halflife set `X-Halflife-Status` on every route that runs the transport hooks. Relay replies said `not-audited; reason=failed`, `GET /v1/models` said `reason=verifier`, and `/mcp` said `reason=streaming`. Halflife now creates a slot only for POSTs outside `/relay/`, `/mcp` and `/api/`. `TestStatusHeaderOnlyOnInferenceRoutes` pins 9 routes; rejected chat requests keep `reason=failed`, as the smoke test checks. `make smoke` and `make cache` pass with the new gateway.
+
+### Mock Tavily additions
+
+`GET /usage` (free) and `last` in `/_mock/requests`: path, attribution headers, `include_usage`, and whether `x-bf-vk` or `X-Api-Key` reached it. Values of credentials are never recorded.

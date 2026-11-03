@@ -202,3 +202,33 @@ func TestStatsAndReset(t *testing.T) {
 		t.Errorf("after reset: %d %d %d", a, b, c)
 	}
 }
+
+func TestUsageAndLastSeen(t *testing.T) {
+	s := New(Config{APIKey: "k"})
+	post := func(path, body string, hdr ...string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest("POST", path, strings.NewReader(body))
+		r.Header.Set("Authorization", "Bearer k")
+		for i := 0; i+1 < len(hdr); i += 2 {
+			r.Header.Set(hdr[i], hdr[i+1])
+		}
+		w := httptest.NewRecorder()
+		s.ServeHTTP(w, r)
+		return w
+	}
+	post("/search", `{"query":"q","include_usage":true,"search_depth":"advanced"}`, "X-Project-ID", "vk-a", "X-Session-Id", "hlr_1", "x-bf-vk", "leak")
+	if got := s.Last(); got != (Seen{Path: "/search", ProjectID: "vk-a", SessionID: "hlr_1", VirtualKey: true, IncludeUsage: true}) {
+		t.Errorf("last = %+v", got)
+	}
+	r := httptest.NewRequest("GET", "/usage", nil)
+	r.Header.Set("Authorization", "Bearer k")
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, r)
+	var u struct {
+		Key struct {
+			Usage int `json:"usage"`
+		} `json:"key"`
+	}
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &u) != nil || u.Key.Usage != 2 {
+		t.Errorf("usage: %d %s", w.Code, w.Body)
+	}
+}

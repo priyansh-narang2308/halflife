@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 19 (invalidation and race), 3 Nov 2026.
-- **Next:** Task 20 (Tavily relay contract).
+- **Last completed:** Task 20 (Tavily relay contract), 3 Nov 2026.
+- **Next:** Task 21 (live Tavily validation).
 
 ## Completed
 
@@ -30,6 +30,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 17 | 2026-11-02 | Cache ↔ report linkage (fork commit `e79513c`): a miss links its cache entry to its new report; direct and semantic hits get that report (`X-Halflife-Status: cached`) and no new audit; unlinked or cross-tenant hits are audited as new answers. Plugin now imports `semanticcache` v1.7.4 (the gateway's own version; gateway `go.mod`/`go.sum` unchanged). Tests run the real core + cache on an in-process store; `testenv/cache-halflife.sh` 29/29 ×3 |
 | 18 | 2026-11-03 | TTL override (fork commit `2062159`): `cache_ttl_seconds` caps the semantic cache TTL in Halflife's PreLLMHook, before the cache reads it for its async write; a shorter client `x-bf-cache-ttl` is kept. Plugin tests read each written entry's `expires_at` and check expiry; `cache-halflife.sh` 36/36 ×3 confirms it on Redis |
 | 19 | 2026-11-03 | Invalidation and race (fork commit `3118d0c`): a stale verdict evicts the answer's entry through the cache's own `ClearCacheForCacheID`, wired in `plugins.go`. Within the cache's write window its partition bypasses the cache until a final delete succeeds. Real-core tests cover verification before the write lands, repeated, paraphrased and concurrent requests, and failed deletes; no gateway-level stale trigger until the verifier exists |
+| 20 | 2026-11-03 | Tavily relay contract (fork commit `b223df2`): relay `tavily` with routes `POST /search`, `POST /extract` and free `GET /usage`, priced `usage.credits` × $0.008. Halflife's Tavily client (always `include_usage`, explicit depth, never `auto_parameters`) is tested against a fake and against the real relay. `relay-tavily.sh` 23/23 ×3. Also fixed: relay, MCP and GET responses were getting `X-Halflife-Status` |
 
 ## Decisions
 
@@ -66,6 +67,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D29 | Plugin tests drive Bifrost's real core and real `semantic_cache` plugin, on the in-process chromem store, wrapped so a test can hold cache writes | Hook order, short-circuits and the cache's async write are what Halflife depends on; a hand-written fake would test our assumptions about them, not them. Wrapping the store's `Add` makes the write timing controllable for Task 19's race. |
 | D30 | Halflife caps the cache TTL (min of its own and the client's) rather than replacing it; "Redis TTL" is checked as the entry's `expires_at` field | A client asking for a shorter life should get it; a longer one would let an unaudited answer outlive Halflife's freshness window. Bifrost's cache sets no Redis key expiry (`TTL` = -1) and filters on `expires_at` at lookup, so that field is the TTL to confirm. |
 | D31 | A stale answer found inside the cache's write window (default 35 s = the cache's 30 s write timeout + 5) sends its whole cache partition past the cache until a delete after the window succeeds | A delete can't remove a write that hasn't landed, and Halflife can't see when it lands. Bypassing only the same question would still let paraphrases semantically hit the late write. The partition (`x-bf-cache-key`, or the default key) is the narrowest scope that covers every request that could be served that entry, under any identity-scoping mode. The cost is uncached traffic in that partition for up to the window, only after a stale finding. The bypass uses a cache type the cache doesn't know, so it skips lookup, write and embedding, and the cache logs one warning per bypassed request. |
+| D32 | The relay allows only the routes Halflife uses (`POST /search`, `POST /extract`, `GET /usage` as non-billable) and prices each call as `usage.credits` × $0.008, Tavily's pay-as-you-go rate | An allowlist keeps the verifier key from reaching costly endpoints (crawl, research) through the relay. Pricing the credits Tavily reports keeps Bifrost's charges aligned with Tavily's bill. A call without `include_usage` is billed by Tavily but charged $0 by Bifrost (measured), so Halflife's client always sends it, and reconciliation against `/usage` stays in the plan. |
+| D33 | `X-Halflife-Status` is set only on POSTs outside `/relay/`, `/mcp` and `/api/` | Those routes run the transport hooks but never produce an answer, so they were labelled `failed`, `verifier` or `streaming`, which was misleading. A rejected chat request (no key, provider error) still gets `not-audited; reason=failed`. |
 
 ## Blockers and inputs needed
 

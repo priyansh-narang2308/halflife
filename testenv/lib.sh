@@ -1,9 +1,10 @@
-# Shared helpers for the gateway test scripts that need Redis. Source it after
-# setting ROOT; it sets GW, MOCK and REDIS and installs an EXIT trap.
+# Shared helpers for the gateway test scripts. Source it after setting ROOT;
+# it sets GW, MOCK, TAVILY and REDIS and installs an EXIT trap.
 #
-#   require_free_ports           refuse to run if the gateway or mock port answers
+#   require_free_ports           refuse to run if the gateway or a mock port answers
 #   ensure_redis                 start the Redis container unless it is running
 #   start_mock                   build and start the mock LLM provider
+#   start_mock_tavily            build and start the mock Tavily (key tvly-mock)
 #   start_gateway CONFIG LOG [NS] start a gateway on 8090 from testenv/configs/CONFIG,
 #                                with the semantic cache namespace set to NS if given
 #   stop_gateway                 stop it (Halflife drains its audit queue)
@@ -12,10 +13,11 @@
 
 GW=http://127.0.0.1:8090
 MOCK=http://127.0.0.1:9101
+TAVILY=http://127.0.0.1:9102
 REDIS=halflife-redis
 LIB_TMP="$(mktemp -d)"
 fails=0
-_mock_pid="" _gw_pid="" _started_redis="" _namespaces=()
+_mock_pid="" _tavily_pid="" _gw_pid="" _started_redis="" _namespaces=()
 
 rcli() { docker exec "$REDIS" redis-cli "$@"; }
 
@@ -23,7 +25,9 @@ stop_gateway() { [ -n "$_gw_pid" ] && { kill "$_gw_pid" 2>/dev/null || true; wai
 
 _cleanup() {
   stop_gateway
-  [ -n "$_mock_pid" ] && { kill "$_mock_pid" 2>/dev/null || true; wait "$_mock_pid" 2>/dev/null || true; }
+  for pid in "$_mock_pid" "$_tavily_pid"; do
+    [ -n "$pid" ] && { kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; }
+  done
   if [ -n "$_started_redis" ]; then
     docker stop "$REDIS" >/dev/null 2>&1 || true
   else # bash 3.2: an empty "${a[@]}" is unbound under set -u
@@ -34,7 +38,7 @@ _cleanup() {
 trap _cleanup EXIT
 
 require_free_ports() {
-  for u in "$GW" "$MOCK"; do # a leftover mock would silently serve this run
+  for u in "$GW" "$MOCK" "$TAVILY"; do # a leftover mock would silently serve this run
     if curl -s -o /dev/null "$u"; then echo "$u is in use (stop the dev stack with: make down)" >&2; exit 1; fi
   done
 }
@@ -54,6 +58,15 @@ start_mock() {
   (cd "$ROOT/testenv" && go build -o "$ROOT/bin/mockllm" ./cmd/mockllm)
   MOCK_LLM_API_KEY=sk-halflife-mock "$ROOT/bin/mockllm" -fixtures "$ROOT/testenv/fixtures/llm.json" > "$ROOT/logs/$(basename "$0" .sh)-mockllm.log" 2>&1 &
   _mock_pid=$!
+}
+
+start_mock_tavily() {
+  mkdir -p "$ROOT/logs" "$ROOT/bin"
+  (cd "$ROOT/testenv" && go build -o "$ROOT/bin/mocktavily" ./cmd/mocktavily)
+  MOCK_TAVILY_API_KEY=tvly-mock "$ROOT/bin/mocktavily" -fixtures "$ROOT/testenv/fixtures/tavily.json" > "$ROOT/logs/$(basename "$0" .sh)-mocktavily.log" 2>&1 &
+  _tavily_pid=$!
+  for _ in $(seq 1 40); do curl -s -o /dev/null "$TAVILY/_mock/requests" && return; sleep 0.25; done
+  echo "mock Tavily did not start" >&2; exit 1
 }
 
 start_gateway() {

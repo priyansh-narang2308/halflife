@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke bench cache
+.PHONY: up down status build test smoke bench cache relay
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -26,3 +26,6 @@ bench:   ## Halflife on/off latency and body integrity (needs ports 8090-8091 fr
 cache:   ## Semantic cache on Redis, alone and with Halflife (needs Docker, ports 8090 and 9101 free)
 	testenv/cache-baseline.sh
 	testenv/cache-halflife.sh
+
+relay:   ## Tavily relay contract against mock Tavily (ports 8090, 9101 and 9102 free)
+	testenv/relay-tavily.sh

@@ -53,7 +53,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 
 | # | Task | Done when | Needs |
 |---|---|---|---|
-| [ ] 20 | Tavily relay contract | Relay configured for Search (and Extract); `include_usage`; `units_path: usage.credits`; contract tests against mock Tavily pass | — |
+| [x] 20 | Tavily relay contract | Relay configured for Search (and Extract); `include_usage`; `units_path: usage.credits`; contract tests against mock Tavily pass | — |
 | [ ] 21 | Live Tavily validation | ≤10 controlled live Search calls; actual `usage.credits` fields, latency and errors recorded (redacted) | `TAVILY_API_KEY` |
 | [ ] 22 | Relay authorisation and budgets | Granted key → 200; ungranted key → denied; tiny budget → refused once exhausted; charges = credits × configured rate | — |
 | [ ] 23 | Risk A: tenant attribution | 3 tenants with distinct keys and budgets; measured which budget each verification charges (shared vs per-tenant verifier key); decision recorded | — |
