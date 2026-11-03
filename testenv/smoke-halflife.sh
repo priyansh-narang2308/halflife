@@ -78,7 +78,7 @@ start_gateway halflife "$LOG"
 run_cases "$TMP/on"
 stop_gateway
 
-check "startup log: plugin initialized" "$(grep -c '"halflife: initialized (queue_size=256 workers=2 max_claims=5 tavily_relay=tavily verifier_vk=vk-verifier cache_ttl=cache-default)"' "$LOG")" 1
+check "startup log: plugin initialized" "$(grep -c '"halflife: initialized (queue_size=256 workers=2 max_claims=5 tavily_relay=tavily verifier_vk=vk-verifier verifiers=0 gateway=http://127.0.0.1:8080 cache_ttl=cache-default)"' "$LOG")" 1
 check "startup log: plugin status active" "$(grep -c '"plugin status: halflife - active"' "$LOG")" 1
 # Shutdown drains the audit queue: everything queued was audited, nothing lost.
 check "shutdown log: queue drained" "$(grep -c '"halflife: stopped (enqueued=3 dropped=0 audited=3 failed=0 abandoned=0 queued=0)"' "$LOG")" 1
@@ -136,7 +136,7 @@ check "status header exposed to browsers: stream" "$(grep -ciE '^access-control-
 check "report ids distinct" "$(for c in ok default fallback; do report "$c"; done | sort -u | grep -c .)" 3
 
 # Audit queue: each reported ID reached a worker exactly once.
-audits=$(grep -o '"halflife: audit report=[^ ]*' "$LOG" | sed 's/.*report=//' | sort || true)
+audits=$(grep -o '"halflife: report [^ ]* complete' "$LOG" | sed 's/"halflife: report //; s/ complete//' | sort || true)
 check "audits: one per report header" "$(echo "$audits" | grep -c .)" 3
 check "audits: exactly the reported ids" "$(echo "$audits" | tr '\n' ' ')" "$(for c in ok default fallback; do report "$c"; done | sort | tr '\n' ' ')"
 

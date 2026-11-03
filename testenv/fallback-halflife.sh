@@ -65,7 +65,7 @@ expect() {
   check "$name: provider attempts" "$(jq -cS . "$dir/$name.attempts")" "$(echo "$attempts" | jq -cS .)"
   if [ "$audited" = 1 ]; then
     check "$name: report header" "$(echo "$id" | grep -c '^hlr_')" 1
-    check "$name: audited exactly once" "$(grep -c "\"halflife: audit report=$id " "$log")" 1
+    check "$name: audited exactly once" "$(grep -c "\"halflife: report $id complete:" "$log")" 1
     check "$name: captured once, fallback=$fallback" "$(grep -c "fallback=$fallback) report=$id " "$log")" 1
     check "$name: answer served by ok" "$(jq -r '.model' "$dir/$name.body")" ok
   else

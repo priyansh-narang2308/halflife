@@ -1,5 +1,5 @@
 {
-  "_comment": "Synthetic evidence for the fictional company Acme Cloud (.example domains are reserved and never resolve).",
+  "_comment": "Synthetic evidence for the fictional company Acme Cloud (.example domains are reserved and never resolve). Keys are normalised queries; the long ones are what the verifier sends for the replies in fixtures/llm.json.",
   "search": {
     "acme cloud pro plan price": [
       {
@@ -27,6 +27,40 @@
       }
     ],
     "acme cloud ceo": [
+      {
+        "title": "Leadership | Acme Cloud",
+        "url": "https://acme.example/about/leadership",
+        "content": "Priya Raman, Chief Executive Officer (since June 2026). Jordan Lee, Founder and Board Chair.",
+        "score": 0.91,
+        "published_date": "2026-06-30"
+      }
+    ],
+    "the acme cloud pro plan costs $20 per month and includes 100 gb of storage.": [
+      {
+        "title": "Pricing | Acme Cloud",
+        "url": "https://acme.example/pricing",
+        "content": "Pro plan: $29 per month, billed monthly. Includes 250 GB of storage. Prices updated 1 October 2026.",
+        "score": 0.93,
+        "published_date": "2026-10-01"
+      },
+      {
+        "title": "Acme Cloud raises Pro plan price",
+        "url": "https://news.example/acme-pro-price",
+        "content": "Acme Cloud increased its Pro plan from $20 to $29 per month, effective 1 October 2026.",
+        "score": 0.88,
+        "published_date": "2026-09-15"
+      }
+    ],
+    "the latest version of the acme sdk is 3.2.0, released in march 2025.": [
+      {
+        "title": "Releases · acme/acme-sdk",
+        "url": "https://code.example/acme/acme-sdk/releases",
+        "content": "v4.1.0 (latest), released 20 October 2026. v4.0.0 dropped Python 3.9 support.",
+        "score": 0.95,
+        "published_date": "2026-10-20"
+      }
+    ],
+    "acme cloud's ceo is jordan lee, who founded the company in 2015.": [
       {
         "title": "Leadership | Acme Cloud",
         "url": "https://acme.example/about/leadership",

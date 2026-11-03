@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke bench cache relay budget tenants
+.PHONY: up down status build test smoke bench cache relay budget tenants verify
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -35,3 +35,6 @@ budget:  ## Relay grants and budgets against mock Tavily (ports 8090, 9101 and 9
 
 tenants: ## Which budget each tenant's verification charges, two key layouts (ports 8090, 9101 and 9102 free)
 	testenv/tenant-attribution.sh
+
+verify:  ## Minimal verifier and report endpoint through the gateway (ports 8090, 9101 and 9102 free)
+	testenv/verify-report.sh
