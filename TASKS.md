@@ -47,7 +47,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | [x] 16 | Semantic cache baseline | Built-in semantic cache on Redis; miss → write → hit observed and logged | Task 06 |
 | [x] 17 | Cache ↔ report linkage | `cache_id` captured on miss; cache hits resolve to the report of the response that filled the cache | — |
 | [x] 18 | TTL override | Halflife sets the cache TTL before the cache's async write; Redis TTL confirmed | — |
-| [ ] 19 | Invalidation and race | Evict by `cache_id`; deterministic test where verification finishes before the cache write; repeated and concurrent requests after invalidation never return the stale entry | — |
+| [x] 19 | Invalidation and race | Evict by `cache_id`; deterministic test where verification finishes before the cache write; repeated and concurrent requests after invalidation never return the stale entry | — |
 
 ## Milestone 1-D: Tavily through Bifrost (+ Risk A)
 

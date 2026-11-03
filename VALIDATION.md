@@ -780,3 +780,38 @@ While probing, port 9101 was still held by a mock provider left over from a Task
 
   Redis key `TTL` is -1 in every case: the cache expires entries by the `expires_at` field, not by Redis expiry. Integrity checks (bodies, provider calls) are unchanged.
 - **Caught while writing it:** the first client-TTL question ("When was Acme Cloud founded?") was a semantic hit on the CEO entry, so the 1h check passed by reading the wrong entry. The questions now share no content words with the others, and a check asserts that both are misses with their own entries.
+
+## Task 19: Invalidation and race (3 Nov 2026)
+
+**Status:** done at plugin level, on Bifrost's real core and real `semantic_cache` plugin. Fork commit `3118d0c`. A gateway-level check needs a stale verdict, which only the verifier (Tasks 21+) produces. It is deferred to then, not faked with a debug trigger.
+
+### Behaviour
+
+- The audit is now `verify` then, if stale, `invalidate`. Until the verifier exists, `verify` is a placeholder that finds nothing stale, so nothing is evicted in normal runs.
+- `invalidate` removes the cache link (hits stop resolving to the stale report) and deletes the entry by `cache_id`. The gateway wires the delete to the `semantic_cache` plugin's own `ClearCacheForCacheID`, looked up at eviction time (`plugins.go`, see `UPSTREAM_DIFF.md`).
+- **The race (D31).** The cache writes asynchronously, for up to 30 s after the response. If the audit finishes inside `cache_write_settle_seconds` (default 35) of the response, these steps run in order:
+  1. Halflife first marks the answer's cache partition (`x-bf-cache-key`, or the default key) as bypassed.
+  2. It deletes the entry.
+  3. Once the window closes, it deletes again.
+  4. It lifts the bypass only after that second delete succeeds.
+  
+  Bypassed requests carry a cache type the cache does not know, so it skips lookup, write and embedding. A delete that fails is retried every second with the bypass held. Shutdown stops pending deletes without waiting out the window.
+- Stats gain `Invalidated` and `BypassedRequests`.
+
+### Tests (`invalidate_test.go`; plugin coverage 95.6%)
+
+| Test | What it proves |
+|---|---|
+| `TestStaleAnswerFoundBeforeCacheWrite` | Deterministic: the cache's write is held at a gate, verification returns stale, the first delete runs (finds nothing), then the gate opens and the stale write lands in the store. In the window: 2 repeats, a semantic paraphrase and 16 concurrent requests all get fresh provider answers (19/19 provider calls, 19 bypassed), never the stale one. A request in another partition still uses the cache. After the window: exactly 2 deletes, the next request is a miss, and a further 16 concurrent requests never get the stale answer. |
+| `TestStaleAnswerAfterCacheWrite` | After the write settled: one delete, no bypass, and the stale answer is never served again. |
+| `TestFailedEvictionKeepsBypass` | 3 failed deletes: the stale answer is not served while retrying; the bypass lifts after success. |
+| `TestNoEvictionWithoutStaleOrEvictor` | Fresh answers stay cached; with no evictor a stale verdict is only logged. |
+| `TestCleanupStopsPendingEvictions` | Shutdown does not wait out a 1 h window. |
+
+Runs: `-race -count=5` and `-count=20` (no race detector), all pass.
+
+### Found while testing
+
+- **chromem-go data race (test store only).** chromem-go v0.7.0 reads its document map in `Delete` without the lock its `Add` takes, so a delete racing a write is a data race inside the in-process store. The harness serializes writes and deletes. Redis, the store the gateway uses, is not affected.
+- **Timing assumption in a test.** Without the race detector the "after write" test ran inside its own 1 ms window and took the bypass path. It now waits the window out explicitly.
+- **Task 18 regression in `smoke-halflife.sh`.** The startup log line gained `cache_ttl=…` in Task 18, and the smoke check still expected the old line. `make smoke` wasn't run for Task 18. It is fixed here; `make smoke` and `make cache` (2 runs each) all pass with the Task 19 gateway.
