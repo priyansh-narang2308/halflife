@@ -9,22 +9,44 @@ What we changed in Bifrost, why, and how to check it.
 | Repository | https://github.com/maximhq/bifrost (Apache-2.0) |
 | Tag | `transports/v2.4.0` (annotated tag object `9c6ac22`) |
 | Commit | `e869c3f9adc96ea53c38694a21bb04a8e1085487`, 29 Oct 2026, "fix failing tests (#9306)" |
-| Local checkout | `bifrost/`, created and verified by `scripts/bootstrap-bifrost.sh` |
+| Fork repository | https://github.com/priyansh-narang2308/halflife-bifrost (private until submission), branch `halflife` |
+| Local checkout | `bifrost/`, cloned and verified by `scripts/bootstrap-bifrost.sh` |
 
 ## Branches
 
-- `upstream`: the pinned commit. Never modified.
-- `halflife`: `upstream` plus our commits.
+- `halflife` (the fork repository's default branch):
+  - Its root commit `e69be85` is the tree of upstream `e869c3f` without `docs/` (618 MB of media), committed with upstream's author and date and credited to upstream (Apache-2.0).
+  - Our commits follow on top of it.
+  - `scripts/bootstrap-bifrost.sh` checks that the root's tree, minus `docs/`, is upstream's, hash for hash.
+- `upstream`: the pinned commit, fetched shallow from GitHub. Never modified.
+
+The fork can't simply carry upstream's history: the local clone is shallow (GitHub rejects pushes from it), and a GitHub fork of a public repository can't be private. On 3 Nov 2026 our commits were replayed onto the snapshot root with their original authors, dates and messages. Every tree is identical outside `docs/`, but the hashes changed:
+
+| Before | Now |
+|---|---|
+| `ff8784d` | `cfc3697` |
+| `c7c0589` | `e3e1f1c` |
+| `749649c` | `b0a1657` |
+| `ee3c559` | `2e9a928` |
+| `33dfa10` | `6c0b439` |
+| `d1c2f45` | `2cb9684` |
+| `e79513c` | `12b7583` |
+| `2062159` | `92454da` |
+| `3118d0c` | `fb5b14c` |
+| `b223df2` | `936899a` |
+| `8c24ed1` | `08e5596` |
+| `1775dc7` | `d9bff71` |
+| `f1b6df3` | `9f822eb` |
 
 To see every change we made:
 
 ```bash
-git -C bifrost diff --stat upstream..halflife
+git -C bifrost diff --stat upstream halflife -- . ':!docs'
 ```
 
 ## Ownership
 
-- **Ours:** everything under `bifrost/plugins/halflife/` (added in fork commit `ff8784d`), plus the files listed under "Modified upstream files". The module path `github.com/maximhq/bifrost/plugins/halflife` is the fork's namespace, not a claim of upstream authorship.
+- **Ours:** everything under `bifrost/plugins/halflife/` (added in fork commit `cfc3697`), plus the files listed under "Modified upstream files". The module path `github.com/maximhq/bifrost/plugins/halflife` is the fork's namespace, not a claim of upstream authorship.
 
 ## Added files
 
@@ -45,7 +67,7 @@ git -C bifrost diff --stat upstream..halflife
 
 ## Modified upstream files (v1)
 
-Four upstream files, nothing removed or rewritten: three in fork commit `c7c0589` (extended in Task 19), `server.go` in Task 25.
+Four upstream files, nothing removed or rewritten: three in fork commit `e3e1f1c` (extended in Task 19), `server.go` in Task 25.
 
 | File | Change | Why |
 |---|---|---|

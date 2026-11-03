@@ -14,7 +14,7 @@ Status: early engineering. See [TASKS.md](TASKS.md) for the plan and [PROGRESS.m
 - `VALIDATION.md`: commands, outputs, and live-vs-mock status for every test
 - `.env.example`: every key the project needs; copy to `.env` (gitignored)
 - `UPSTREAM_DIFF.md`: every change made to Bifrost, and why
-- `scripts/bootstrap-bifrost.sh`: checks out and verifies the pinned Bifrost source into `bifrost/`
+- `scripts/bootstrap-bifrost.sh`: clones the fork ([halflife-bifrost](https://github.com/priyansh-narang2308/halflife-bifrost), private until submission) into `bifrost/` and verifies it against the pinned upstream release
 - `scripts/build-gateway.sh`: builds the dashboard and `bifrost/tmp/bifrost-http` the way upstream does
 - `scripts/run-gateway.sh`: runs the gateway on 127.0.0.1:8090 with only `.env` credentials visible
 - `scripts/dev-stack.sh` (`make up` / `make down` / `make status`): starts Redis (Docker, 127.0.0.1:6380), the mock LLM (9101), mock Tavily (9102) and the gateway (8090) in one command; needs Docker Desktop running

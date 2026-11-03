@@ -348,7 +348,7 @@ After `make down`, `make test` (15/15 under `-race`) and `make smoke` (12/12, AL
 
 ## Task 07: Halflife plugin skeleton (2 Nov 2026)
 
-**Status:** done. Fork commit `ff8784d` on branch `halflife` (`git -C bifrost diff --stat upstream..halflife`: 7 files, all new under `plugins/halflife/`; no upstream file modified).
+**Status:** done. Fork commit `cfc3697` on branch `halflife` (`git -C bifrost diff --stat upstream..halflife`: 7 files, all new under `plugins/halflife/`; no upstream file modified).
 
 ### What it is
 
@@ -379,7 +379,7 @@ Not yet tested: loading inside the gateway (Tasks 08–09).
 
 ## Task 08: In-tree registration (2 Nov 2026)
 
-**Status:** done. Fork commit `c7c0589`; details in `UPSTREAM_DIFF.md` (v1).
+**Status:** done. Fork commit `e3e1f1c`; details in `UPSTREAM_DIFF.md` (v1).
 
 - `scripts/build-gateway.sh --skip-ui` builds `bifrost/tmp/bifrost-http` (SHA-256 `31c0e896…c01c2`). `go version -m` shows `dep github.com/maximhq/bifrost/plugins/halflife v0.1.0 => ../plugins/halflife`.
 - `transports/go.sum` is byte-identical before and after (`cmp`).
@@ -428,7 +428,7 @@ ALL PASS
 
 ## Task 10: Final-response capture (2 Nov 2026)
 
-**Status:** done. Fork commit `749649c` (`plugins/halflife/capture.go`, hook changes in `main.go`, `capture_test.go`).
+**Status:** done. Fork commit `b0a1657` (`plugins/halflife/capture.go`, hook changes in `main.go`, `capture_test.go`).
 
 ### Probe: how the gateway's contexts relate
 
@@ -497,7 +497,7 @@ The first run reported `fallback=false` for the fallback request. Core sets `Rou
 
 ## Task 11: Report identity (2 Nov 2026)
 
-**Status:** done. Fork commit `ee3c559`.
+**Status:** done. Fork commit `2e9a928`.
 
 ### What a captured answer now carries
 
@@ -607,7 +607,7 @@ Per run: `halflife: stopped (enqueued=5 dropped=0 audited=5 failed=0 abandoned=0
 
 ## Task 14: Recursion guard and streaming status (2 Nov 2026)
 
-**Status:** done. Fork commit `d1c2f45`. Real gateway and mock provider only.
+**Status:** done. Fork commit `2cb9684`. Real gateway and mock provider only.
 
 ### Behaviour
 
@@ -737,7 +737,7 @@ While probing, port 9101 was still held by a mock provider left over from a Task
 
 ## Task 17: Cache ↔ report linkage (2 Nov 2026)
 
-**Status:** done. Fork commit `e79513c`. Commands: `make test` (plugin) and `make cache` (`cache-baseline.sh`, then `cache-halflife.sh`).
+**Status:** done. Fork commit `12b7583`. Commands: `make test` (plugin) and `make cache` (`cache-baseline.sh`, then `cache-halflife.sh`).
 
 ### Behaviour
 
@@ -759,7 +759,7 @@ While probing, port 9101 was still held by a mock provider left over from a Task
 
 ## Task 18: TTL override (3 Nov 2026)
 
-**Status:** done. Fork commit `2062159`. Commands: `make test` and `make cache`.
+**Status:** done. Fork commit `92454da`. Commands: `make test` and `make cache`.
 
 ### Behaviour
 
@@ -783,7 +783,7 @@ While probing, port 9101 was still held by a mock provider left over from a Task
 
 ## Task 19: Invalidation and race (3 Nov 2026)
 
-**Status:** done at plugin level, on Bifrost's real core and real `semantic_cache` plugin. Fork commit `3118d0c`. A gateway-level check needs a stale verdict, which only the verifier (Tasks 21+) produces. It is deferred to then, not faked with a debug trigger.
+**Status:** done at plugin level, on Bifrost's real core and real `semantic_cache` plugin. Fork commit `fb5b14c`. A gateway-level check needs a stale verdict, which only the verifier (Tasks 21+) produces. It is deferred to then, not faked with a debug trigger.
 
 ### Behaviour
 
@@ -818,7 +818,7 @@ Runs: `-race -count=5` and `-count=20` (no race detector), all pass.
 
 ## Task 20: Tavily relay contract (3 Nov 2026)
 
-**Status:** done. Fork commit `b223df2`. Command: `make relay` (`testenv/relay-tavily.sh`): real gateway, mock Tavily on 9102, config `testenv/configs/relay`. No real Tavily call was made.
+**Status:** done. Fork commit `936899a`. Command: `make relay` (`testenv/relay-tavily.sh`): real gateway, mock Tavily on 9102, config `testenv/configs/relay`. No real Tavily call was made.
 
 ### Relay configuration (D32)
 
@@ -971,7 +971,7 @@ Mock Tavily now sums credits per `X-Project-ID` (`credits_by_project` in `/_mock
 
 ## Task 24: Minimal verifier (3 Nov 2026)
 
-**Status:** done; decision D38. Fork commit `8c24ed1`. Plugin code: `claim.go`, `verifier.go`, config `verifiers`, `gateway_url`, `search_max_results`. Command: `make verify` (`testenv/verify-report.sh`, shared with Task 25): real gateway, mock LLM, mock Tavily, config `testenv/configs/verify`. No real Tavily or LLM call. 21 checks, 3 runs, all pass.
+**Status:** done; decision D38. Fork commit `08e5596`. Plugin code: `claim.go`, `verifier.go`, config `verifiers`, `gateway_url`, `search_max_results`. Command: `make verify` (`testenv/verify-report.sh`, shared with Task 25): real gateway, mock LLM, mock Tavily, config `testenv/configs/verify`. No real Tavily or LLM call. 21 checks, 3 runs, all pass.
 
 ### What it does, per audited answer
 
@@ -1016,7 +1016,7 @@ The recursion guard now covers every verifier key in `verifiers` as well as `ver
 
 ## Task 25: Report store and endpoint (3 Nov 2026)
 
-**Status:** done; decision D39. Fork commits `8c24ed1` (store) and `1775dc7` (endpoint). Plugin: `report.go`; gateway: `handlers/halflife.go` and 9 lines in `server/server.go` (`UPSTREAM_DIFF.md`). Checked by `make verify` (above) and unit tests.
+**Status:** done; decision D39. Fork commits `08e5596` (store) and `d9bff71` (endpoint). Plugin: `report.go`; gateway: `handlers/halflife.go` and 9 lines in `server/server.go` (`UPSTREAM_DIFF.md`). Checked by `make verify` (above) and unit tests.
 
 - **Lifecycle.** A report is stored as `queued` just before its answer is queued (so a fast worker always finds it), becomes `running`, then `complete` with an outcome and `completed_at`. If the queue is full, the report is removed together with the response's report header.
 - **Content.** Request ID (linking to Bifrost's request and logs), tenant key ID and name, the answer (provider, model, fallback, question, text, cache entry), the claim and query, and the evidence. Key values never appear; the script and a unit test check for `sk-bf-` in every report.
@@ -1051,7 +1051,7 @@ The recursion guard now covers every verifier key in `verifiers` as well as `ver
 
 ## Task 27: Verifier LLM client (3 Nov 2026)
 
-**Status:** done; decision D41. Fork commit `f1b6df3`: `plugins/halflife/llm.go`, config fields `verifier_models`, `verifier_max_tokens` (default 1024), `verifier_reasoning_effort` (default unset), wired as `verifier.llmFor(tenant)`; nothing calls it yet (Task 28 does). Script `testenv/verifier-llm.sh` (`make llm`), records `testenv/results/verifier-llm-{mock,live}.json`.
+**Status:** done; decision D41. Fork commit `9f822eb`: `plugins/halflife/llm.go`, config fields `verifier_models`, `verifier_max_tokens` (default 1024), `verifier_reasoning_effort` (default unset), wired as `verifier.llmFor(tenant)`; nothing calls it yet (Task 28 does). Script `testenv/verifier-llm.sh` (`make llm`), records `testenv/results/verifier-llm-{mock,live}.json`.
 
 - **Request.**
   - `POST <gateway_url>/v1/chat/completions` with the tenant's verifier key in `x-bf-vk`.
