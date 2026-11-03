@@ -12,6 +12,9 @@
 //
 //	[mock:400] [mock:429] [mock:432] [mock:433] [mock:434] [mock:500]
 //
+// and latency with [mock:slow-N], which delays the reply N ms (at most 5000);
+// live searches took 1.1-2.8 s. /_mock/requests reports credits per X-Project-ID.
+//
 // A missing or wrong bearer key returns 401. Extract URLs containing
 // "mock-fail" land in failed_results.
 package mocktavily
@@ -24,8 +27,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Config controls a Server.
@@ -65,6 +71,9 @@ type Server struct {
 	// extracted counts successful URL extractions. Tavily bills Extract per 5
 	// successful URLs across requests, so a single request can cost 0.
 	extracted int
+	// byProject sums credits per X-Project-ID ("" when absent), the tag Tavily
+	// attributes usage to.
+	byProject map[string]int
 	// last is what the most recent authenticated request carried, so a test
 	// can check what a relay forwards. Credential values are never kept.
 	last Seen
@@ -124,6 +133,18 @@ var injected = map[string]struct {
 	"[mock:500]": {500, "Internal server error."},
 }
 
+var slowRe = regexp.MustCompile(`\[mock:slow-(\d{1,4})\]`)
+
+// slowMarker returns the delay a [mock:slow-N] marker asks for, capped at 5 s.
+func slowMarker(query string) time.Duration {
+	m := slowRe.FindStringSubmatch(query)
+	if m == nil {
+		return 0
+	}
+	ms, _ := strconv.Atoi(m[1])
+	return time.Duration(min(ms, 5000)) * time.Millisecond
+}
+
 var depthCredits = map[string]int{"basic": 1, "fast": 1, "ultra-fast": 1, "advanced": 2}
 
 type searchRequest struct {
@@ -148,6 +169,13 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.noteUsage(req.IncludeUsage)
+	if d := slowMarker(req.Query); d > 0 {
+		select {
+		case <-time.After(d):
+		case <-r.Context().Done():
+			return
+		}
+	}
 	if strings.TrimSpace(req.Query) == "" {
 		writeError(w, http.StatusBadRequest, "Query is missing.")
 		return
@@ -198,7 +226,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		answer = "Mock answer for: " + req.Query
 	}
 
-	s.record(&s.searches, credits)
+	s.record(r, &s.searches, credits)
 	resp := map[string]any{
 		"query":               req.Query,
 		"follow_up_questions": nil,
@@ -268,7 +296,7 @@ func (s *Server) extract(w http.ResponseWriter, r *http.Request) {
 	credits := (s.extracted/5 - before/5) * perBlock
 	s.mu.Unlock()
 
-	s.record(&s.extracts, credits)
+	s.record(r, &s.extracts, credits)
 	resp := map[string]any{
 		"results":        results,
 		"failed_results": failed,
@@ -309,11 +337,26 @@ func (s *Server) Stats() (searches, extracts, credits int) {
 	return s.searches, s.extracts, s.credits
 }
 
-func (s *Server) record(counter *int, credits int) {
+func (s *Server) record(r *http.Request, counter *int, credits int) {
 	s.mu.Lock()
 	*counter++
 	s.credits += credits
+	if s.byProject == nil {
+		s.byProject = map[string]int{}
+	}
+	s.byProject[r.Header.Get("X-Project-ID")] += credits
 	s.mu.Unlock()
+}
+
+// CreditsByProject reports credits per X-Project-ID since the last reset.
+func (s *Server) CreditsByProject() map[string]int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make(map[string]int, len(s.byProject))
+	for k, v := range s.byProject {
+		out[k] = v
+	}
+	return out
 }
 
 // usage mirrors GET /usage (free): the key's credits used, by product. The
@@ -343,12 +386,14 @@ func (s *Server) Last() Seen {
 
 func (s *Server) requests(w http.ResponseWriter, _ *http.Request) {
 	searches, extracts, credits := s.Stats()
-	writeJSON(w, http.StatusOK, map[string]any{"searches": searches, "extracts": extracts, "credits": credits, "last": s.Last()})
+	writeJSON(w, http.StatusOK, map[string]any{"searches": searches, "extracts": extracts, "credits": credits,
+		"credits_by_project": s.CreditsByProject(), "last": s.Last()})
 }
 
 func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
 	s.mu.Lock()
 	s.searches, s.extracts, s.credits, s.extracted = 0, 0, 0, 0
+	s.byProject = nil
 	s.last = Seen{}
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)

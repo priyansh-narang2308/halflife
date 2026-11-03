@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke bench cache relay
+.PHONY: up down status build test smoke bench cache relay budget tenants
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -29,3 +29,9 @@ cache:   ## Semantic cache on Redis, alone and with Halflife (needs Docker, port
 
 relay:   ## Tavily relay contract against mock Tavily (ports 8090, 9101 and 9102 free)
 	testenv/relay-tavily.sh
+
+budget:  ## Relay grants and budgets against mock Tavily (ports 8090, 9101 and 9102 free)
+	testenv/relay-budget.sh
+
+tenants: ## Which budget each tenant's verification charges, two key layouts (ports 8090, 9101 and 9102 free)
+	testenv/tenant-attribution.sh

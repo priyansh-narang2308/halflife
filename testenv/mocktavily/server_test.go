@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 const key = "tvly-mock"
@@ -198,7 +199,7 @@ func TestStatsAndReset(t *testing.T) {
 	if resp, err := http.Post(ts.URL+"/_mock/reset", "", nil); err != nil || resp.StatusCode != 204 {
 		t.Fatalf("reset: %v", err)
 	}
-	if a, b, c := s.Stats(); a+b+c != 0 {
+	if a, b, c := s.Stats(); a+b+c != 0 || len(s.CreditsByProject()) != 0 {
 		t.Errorf("after reset: %d %d %d", a, b, c)
 	}
 }
@@ -216,6 +217,12 @@ func TestUsageAndLastSeen(t *testing.T) {
 		return w
 	}
 	post("/search", `{"query":"q","include_usage":true,"search_depth":"advanced"}`, "X-Project-ID", "vk-a", "X-Session-Id", "hlr_1", "x-bf-vk", "leak")
+	post("/search", `{"query":"q"}`, "X-Project-ID", "vk-b")
+	post("/search", `{"query":"q"}`)
+	if got := s.CreditsByProject(); len(got) != 3 || got["vk-a"] != 2 || got["vk-b"] != 1 || got[""] != 1 {
+		t.Errorf("credits by project = %v", got)
+	}
+	post("/search", `{"query":"q","include_usage":true,"search_depth":"advanced"}`, "X-Project-ID", "vk-a", "X-Session-Id", "hlr_1", "x-bf-vk", "leak")
 	if got := s.Last(); got != (Seen{Path: "/search", ProjectID: "vk-a", SessionID: "hlr_1", VirtualKey: true, IncludeUsage: true}) {
 		t.Errorf("last = %+v", got)
 	}
@@ -228,7 +235,24 @@ func TestUsageAndLastSeen(t *testing.T) {
 			Usage int `json:"usage"`
 		} `json:"key"`
 	}
-	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &u) != nil || u.Key.Usage != 2 {
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &u) != nil || u.Key.Usage != 6 {
 		t.Errorf("usage: %d %s", w.Code, w.Body)
+	}
+}
+
+func TestSlowMarker(t *testing.T) {
+	_, ts := newTestServer(t, nil)
+	start := time.Now()
+	resp, out := call(t, ts, "/search", key, map[string]any{"query": "q [mock:slow-150]", "include_usage": true})
+	if took := time.Since(start); resp.StatusCode != 200 || took < 150*time.Millisecond {
+		t.Errorf("status %d after %v, want 200 after >= 150ms", resp.StatusCode, took)
+	}
+	if got, _ := credits(t, out); got != 1 {
+		t.Errorf("credits = %v", got)
+	}
+	for q, want := range map[string]time.Duration{"q": 0, "[mock:slow-9999]": 5 * time.Second, "[mock:slow-x]": 0} {
+		if got := slowMarker(q); got != want {
+			t.Errorf("slowMarker(%q) = %v, want %v", q, got, want)
+		}
 	}
 }
