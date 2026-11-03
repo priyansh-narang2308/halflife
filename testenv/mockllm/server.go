@@ -10,7 +10,10 @@
 //	fail-<status>                  error response with that HTTP status
 //
 // Replies are looked up by the last user message (exact match after trimming
-// whitespace); anything else gets a fixed echo reply. Response IDs are derived
+// whitespace). A request whose response_format names a JSON schema listed in
+// SchemaReplies gets the reply of the longest key its last user message
+// contains, so a structured prompt need not be copied whole. Anything else
+// gets a fixed echo reply. Response IDs are derived
 // from the request body, so identical requests produce byte-identical bodies.
 package mockllm
 
@@ -36,6 +39,9 @@ type Config struct {
 	APIKey string
 	// Replies maps a trimmed last user message to the assistant reply.
 	Replies map[string]string
+	// SchemaReplies maps a json_schema name to replies keyed by a substring
+	// of the last user message.
+	SchemaReplies map[string]map[string]string
 }
 
 // Server is an http.Handler. Safe for concurrent use.
@@ -139,6 +145,11 @@ func (s *Server) chatCompletions(w http.ResponseWriter, r *http.Request) {
 
 	prompt := lastUserText(req.Messages)
 	reply, ok := s.cfg.Replies[strings.TrimSpace(prompt)]
+	if f := req.ResponseFormat; f != nil && f.JSONSchema != nil {
+		if r, found := containedReply(s.cfg.SchemaReplies[f.JSONSchema.Name], prompt); found {
+			reply, ok = r, true
+		}
+	}
 	if !ok {
 		reply = "Mock reply to: " + strings.TrimSpace(prompt)
 	}
@@ -276,6 +287,17 @@ func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
 	s.lastFormat = ""
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// containedReply returns the reply of the longest key prompt contains.
+func containedReply(replies map[string]string, prompt string) (string, bool) {
+	best, reply := "", ""
+	for key, r := range replies {
+		if strings.Contains(prompt, key) && len(key) > len(best) {
+			best, reply = key, r
+		}
+	}
+	return reply, best != ""
 }
 
 // lastUserText returns the text of the last user message. Content may be a

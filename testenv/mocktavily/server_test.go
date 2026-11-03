@@ -262,3 +262,47 @@ func TestSlowMarker(t *testing.T) {
 		}
 	}
 }
+
+func TestSearchLogAndLiveFetchRefusal(t *testing.T) {
+	s, ts := newTestServer(t, &Fixtures{RefuseLiveFetch: []string{"acme stock price"}})
+	resp, _ := call(t, ts, "/search", key, map[string]any{"query": "Acme stock price", "max_age_hours": 0, "topic": "news"})
+	if resp.StatusCode != 434 {
+		t.Errorf("live fetch: status %d, want 434", resp.StatusCode)
+	}
+	resp, _ = call(t, ts, "/search", key, map[string]any{"query": "Acme stock price", "include_domains": []string{"acme.example"},
+		"include_domains_mode": "prefer", "exact_match": true, "chunks_per_source": 3, "include_published_date": true, "time_range": "year"})
+	if resp.StatusCode != 200 {
+		t.Errorf("without max_age_hours: status %d", resp.StatusCode)
+	}
+	call(t, ts, "/extract", key, map[string]any{"urls": []string{"https://acme.example/x"}, "query": "Acme stock price"})
+
+	searches, extracts := s.Logs()
+	if len(searches) != 2 || searches[0].Status != 434 || searches[0].MaxAgeHours == nil || *searches[0].MaxAgeHours != 0 || searches[0].Topic != "news" {
+		t.Errorf("first search %+v", searches)
+	}
+	if l := searches[1]; l.Status != 200 || l.MaxAgeHours != nil || !l.ExactMatch || l.ChunksPerSource != 3 || !l.IncludePublishedDate ||
+		l.IncludeDomainsMode != "prefer" || l.TimeRange != "year" {
+		t.Errorf("second search %+v", l)
+	}
+	if len(extracts) != 1 || extracts[0].Query != "Acme stock price" || extracts[0].URLs[0] != "https://acme.example/x" {
+		t.Errorf("extracts %+v", extracts)
+	}
+	// Refused searches cost nothing; the log empties on reset.
+	if n, _, c := s.Stats(); n != 1 || c != 1 {
+		t.Errorf("searches=%d credits=%d", n, c)
+	}
+	http.Post(ts.URL+"/_mock/reset", "", nil)
+	if searches, extracts := s.Logs(); len(searches)+len(extracts) != 0 {
+		t.Error("logs survived reset")
+	}
+}
+
+func TestSearchLogBounded(t *testing.T) {
+	s, ts := newTestServer(t, nil)
+	for range maxLogged + 5 {
+		call(t, ts, "/search", key, map[string]any{"query": "q"})
+	}
+	if searches, _ := s.Logs(); len(searches) != maxLogged {
+		t.Errorf("log holds %d", len(searches))
+	}
+}

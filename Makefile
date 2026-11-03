@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke bench cache relay budget tenants verify m1 llm
+.PHONY: up down status build test smoke bench cache relay budget tenants verify m1 llm claims
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -44,3 +44,6 @@ m1:      ## M1 end-to-end proof: request -> capture -> Tavily relay -> report (L
 
 llm:     ## Verifier LLM client through the gateway: schema, fallbacks, retries, budget (LIVE=1: free OpenRouter models, $0)
 	testenv/verifier-llm.sh
+
+claims:  ## Claim extraction, scope, priority and retrieval policies through the gateway (LIVE=1: free OpenRouter models + real Tavily, at most 5 credits)
+	testenv/claims-pipeline.sh

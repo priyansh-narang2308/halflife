@@ -1,0 +1,317 @@
+{
+  "recorded_at": "2026-11-03T12:19:25Z",
+  "mode": "mock",
+  "verifier_models": [
+    "openai/ok"
+  ],
+  "note": "Synthetic keys; no credential and no page text recorded.",
+  "reports": [
+    {
+      "name": "overview",
+      "outcome": "evidence_found",
+      "error": null,
+      "extraction": {
+        "model": "ok",
+        "provider": "openai",
+        "fallback": false,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false
+      },
+      "claims": [
+        {
+          "text": "Acme Cloud Pro costs $20 per month.",
+          "span": "Acme Cloud Pro costs $20 per month",
+          "subject": "Acme Cloud Pro",
+          "attribute": "monthly price",
+          "asserted_value": "$20",
+          "category": "price",
+          "temporal_scope": "CURRENT",
+          "scope_reason": "extractor's label",
+          "as_of": null,
+          "volatility_band": "WEEKS_MONTHS",
+          "priority": "HIGH",
+          "priority_reason": "540d since default 18-month cutoff age ≥ WEEKS_MONTHS band change",
+          "status": "checked",
+          "status_reason": null,
+          "search": {
+            "query": "Acme Cloud Pro monthly price",
+            "search_depth": "basic",
+            "max_results": 5,
+            "chunks_per_source": 3,
+            "include_published_date": true,
+            "max_age_hours": 24
+          },
+          "evidence": {
+            "credits": 1,
+            "reused": false,
+            "live_fetch_refused": null,
+            "extracted_url": null,
+            "sources": [
+              {
+                "url": "https://acme.example/pricing",
+                "title": "Pricing | Acme Cloud",
+                "published_date": "2026-10-01",
+                "extracted": false
+              },
+              {
+                "url": "https://news.example/acme-pro-price",
+                "title": "Acme Cloud raises Pro plan price",
+                "published_date": "2026-09-15",
+                "extracted": false
+              }
+            ]
+          }
+        },
+        {
+          "text": "Acme Cloud Pro includes 100 GB of storage.",
+          "span": "includes 100 GB of storage",
+          "subject": "Acme Cloud Pro",
+          "attribute": "included storage",
+          "asserted_value": "100 GB",
+          "category": "other",
+          "temporal_scope": "CURRENT",
+          "scope_reason": "extractor's label",
+          "as_of": null,
+          "volatility_band": "YEAR",
+          "priority": "HIGH",
+          "priority_reason": "540d since default 18-month cutoff age ≥ YEAR band change",
+          "status": "checked",
+          "status_reason": null,
+          "search": {
+            "query": "Acme Cloud Pro included storage",
+            "search_depth": "basic",
+            "max_results": 5,
+            "chunks_per_source": 3,
+            "include_published_date": true,
+            "max_age_hours": 168
+          },
+          "evidence": {
+            "credits": 1,
+            "reused": false,
+            "live_fetch_refused": null,
+            "extracted_url": "https://example.com/a/ece3767536a85de3",
+            "sources": [
+              {
+                "url": "https://example.com/a/ece3767536a85de3",
+                "title": "Mock source A",
+                "published_date": null,
+                "extracted": true
+              },
+              {
+                "url": "https://example.org/b/ece3767536a85de3",
+                "title": "Mock source B",
+                "published_date": null,
+                "extracted": false
+              }
+            ]
+          }
+        },
+        {
+          "text": "Acme Cloud was founded in 2015 by Jordan Lee.",
+          "span": "Acme Cloud was founded in 2015 by Jordan Lee",
+          "subject": "Acme Cloud",
+          "attribute": "founding",
+          "asserted_value": "2015",
+          "category": "event",
+          "temporal_scope": "HISTORICAL",
+          "scope_reason": "tied to a past date (as_of)",
+          "as_of": "2015",
+          "volatility_band": "NEVER",
+          "priority": "SKIP",
+          "priority_reason": "historical: not a freshness question",
+          "status": "not_checked",
+          "status_reason": "priority SKIP: historical: not a freshness question",
+          "search": null,
+          "evidence": null
+        },
+        {
+          "text": "The current Acme SDK release is 3.2.0.",
+          "span": "The current Acme SDK release is 3.2.0",
+          "subject": "Acme SDK",
+          "attribute": "latest version",
+          "asserted_value": "3.2.0",
+          "category": "version",
+          "temporal_scope": "CURRENT",
+          "scope_reason": "extractor's label",
+          "as_of": null,
+          "volatility_band": "WEEKS_MONTHS",
+          "priority": "HIGH",
+          "priority_reason": "says latest/current/now",
+          "status": "checked",
+          "status_reason": null,
+          "search": {
+            "query": "\"Acme SDK\" latest version",
+            "search_depth": "basic",
+            "max_results": 5,
+            "include_domains": [
+              "code.example"
+            ],
+            "include_domains_mode": "prefer",
+            "exact_match": true,
+            "chunks_per_source": 3,
+            "include_published_date": true,
+            "max_age_hours": 24
+          },
+          "evidence": {
+            "credits": 1,
+            "reused": false,
+            "live_fetch_refused": null,
+            "extracted_url": null,
+            "sources": [
+              {
+                "url": "https://code.example/acme/acme-sdk/releases",
+                "title": "Releases · acme/acme-sdk",
+                "published_date": "2026-10-20",
+                "extracted": false
+              }
+            ]
+          }
+        },
+        {
+          "text": "Acme Cloud Pro costs $25 per month.",
+          "span": "Acme Cloud Pro costs $20 per month",
+          "subject": "Acme Cloud Pro",
+          "attribute": "monthly price",
+          "asserted_value": "$25",
+          "category": "price",
+          "temporal_scope": null,
+          "scope_reason": null,
+          "as_of": null,
+          "volatility_band": "WEEKS_MONTHS",
+          "priority": null,
+          "priority_reason": null,
+          "status": "rejected",
+          "status_reason": "asserted value is not in the span",
+          "search": null,
+          "evidence": null
+        }
+      ]
+    },
+    {
+      "name": "today",
+      "outcome": "evidence_found",
+      "error": null,
+      "extraction": {
+        "model": "ok",
+        "provider": "openai",
+        "fallback": false,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false
+      },
+      "claims": [
+        {
+          "text": "Acme stock trades at $120 a share.",
+          "span": "Acme stock trades at $120 a share right now",
+          "subject": "Acme stock",
+          "attribute": "share price",
+          "asserted_value": "$120",
+          "category": "price",
+          "temporal_scope": "CURRENT",
+          "scope_reason": "extractor's label",
+          "as_of": null,
+          "volatility_band": "HOURS_DAYS",
+          "priority": "HIGH",
+          "priority_reason": "says latest/current/now",
+          "status": "checked",
+          "status_reason": null,
+          "search": {
+            "query": "Acme stock share price",
+            "search_depth": "basic",
+            "max_results": 5,
+            "chunks_per_source": 3,
+            "include_published_date": true,
+            "max_age_hours": 0
+          },
+          "evidence": {
+            "credits": 1,
+            "reused": false,
+            "live_fetch_refused": true,
+            "extracted_url": null,
+            "sources": [
+              {
+                "url": "https://markets.example/acme",
+                "title": "ACME stock quote",
+                "published_date": "2026-11-02",
+                "extracted": false
+              }
+            ]
+          }
+        },
+        {
+          "text": "Dana Cruz is the CEO of Acme Cloud.",
+          "span": "Dana Cruz is the current CEO of Acme Cloud",
+          "subject": "Acme Cloud",
+          "attribute": "CEO",
+          "asserted_value": "Dana Cruz",
+          "category": "leadership",
+          "temporal_scope": "CURRENT",
+          "scope_reason": "extractor's label",
+          "as_of": null,
+          "volatility_band": "YEARS",
+          "priority": "HIGH",
+          "priority_reason": "says latest/current/now",
+          "status": "checked",
+          "status_reason": null,
+          "search": {
+            "query": "Acme Cloud CEO",
+            "search_depth": "basic",
+            "max_results": 5,
+            "topic": "news",
+            "time_range": "year",
+            "chunks_per_source": 3,
+            "include_published_date": true
+          },
+          "evidence": {
+            "credits": 1,
+            "reused": false,
+            "live_fetch_refused": null,
+            "extracted_url": null,
+            "sources": [
+              {
+                "url": "https://acme.example/about/leadership",
+                "title": "Leadership | Acme Cloud",
+                "published_date": "2026-06-30",
+                "extracted": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "history",
+      "outcome": "nothing_to_check",
+      "error": null,
+      "extraction": {
+        "model": "ok",
+        "provider": "openai",
+        "fallback": false,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false
+      },
+      "claims": [
+        {
+          "text": "Acme Cloud was started in 2015 in Berlin.",
+          "span": "Acme Cloud was started in 2015 in Berlin",
+          "subject": "Acme Cloud",
+          "attribute": "founding",
+          "asserted_value": "2015",
+          "category": "event",
+          "temporal_scope": "HISTORICAL",
+          "scope_reason": "tied to a past date (as_of)",
+          "as_of": "2015",
+          "volatility_band": "NEVER",
+          "priority": "SKIP",
+          "priority_reason": "historical: not a freshness question",
+          "status": "not_checked",
+          "status_reason": "priority SKIP: historical: not a freshness question",
+          "search": null,
+          "evidence": null
+        }
+      ]
+    }
+  ]
+}

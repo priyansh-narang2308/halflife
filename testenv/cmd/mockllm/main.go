@@ -17,7 +17,7 @@ import (
 
 func main() {
 	addr := flag.String("addr", "127.0.0.1:9101", "listen address")
-	fixtures := flag.String("fixtures", "", "JSON file: {\"replies\": {\"<prompt>\": \"<reply>\"}}")
+	fixtures := flag.String("fixtures", "", "JSON file: {\"replies\": {\"<prompt>\": \"<reply>\"}, \"schema_replies\": {\"<schema>\": {\"<substring>\": \"<reply>\"}}}")
 	flag.Parse()
 
 	cfg := mockllm.Config{APIKey: os.Getenv("MOCK_LLM_API_KEY")}
@@ -27,12 +27,13 @@ func main() {
 			log.Fatalf("read fixtures: %v", err)
 		}
 		var f struct {
-			Replies map[string]string `json:"replies"`
+			Replies       map[string]string            `json:"replies"`
+			SchemaReplies map[string]map[string]string `json:"schema_replies"`
 		}
 		if err := json.Unmarshal(b, &f); err != nil {
 			log.Fatalf("parse fixtures: %v", err)
 		}
-		cfg.Replies = f.Replies
+		cfg.Replies, cfg.SchemaReplies = f.Replies, f.SchemaReplies
 	}
 	log.Printf("mockllm listening on %s (%d scripted replies, auth=%t)", *addr, len(cfg.Replies), cfg.APIKey != "")
 	log.Fatal(http.ListenAndServe(*addr, mockllm.New(cfg)))

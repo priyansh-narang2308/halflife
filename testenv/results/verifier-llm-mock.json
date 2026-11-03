@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-03T11:34:30Z",
+  "recorded_at": "2026-11-03T12:18:09Z",
   "mode": "mock",
   "models": [
     "openai/fail-500",
@@ -27,10 +27,10 @@
         "prompt_tokens": 72,
         "completion_tokens": 8,
         "gateway_request_ids": [
-          "cc7f61d5-dfc4-4284-b531-d750977c8aac"
+          "2a2e48e4-820a-4850-b46b-58995f6545da"
         ]
       },
-      "seconds": 0.025042875,
+      "seconds": 0.007012125,
       "truncated": false
     },
     {
@@ -49,11 +49,11 @@
         "prompt_tokens": 150,
         "completion_tokens": 45,
         "gateway_request_ids": [
-          "e5dac3ad-acba-46c5-92db-7322c10266ec",
-          "d9ee5bdb-1ca8-40a0-bdf8-93479b2e6a04"
+          "c57a781e-5015-4851-98ae-321e4cc1f5f1",
+          "9e1d7d9e-f762-4c42-a32a-156a793b60ef"
         ]
       },
-      "seconds": 0.008442291,
+      "seconds": 0.0023215,
       "truncated": false
     },
     {
@@ -72,10 +72,10 @@
         "prompt_tokens": 0,
         "completion_tokens": 0,
         "gateway_request_ids": [
-          "4a19ffec-81b5-496d-99bd-abdc00892c4b"
+          "1bfb3aaa-c0bc-49ba-abe2-b7851c27d127"
         ]
       },
-      "seconds": 0.011870459,
+      "seconds": 0.000987208,
       "truncated": false
     }
   ]

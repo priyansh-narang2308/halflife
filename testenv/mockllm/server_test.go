@@ -261,3 +261,30 @@ func TestRecordsResponseFormat(t *testing.T) {
 		t.Errorf("after reset %q", got)
 	}
 }
+
+func TestSchemaReplies(t *testing.T) {
+	_, ts := newTestServer(t, Config{
+		Replies: map[string]string{"<answer>Acme</answer>": "exact"},
+		SchemaReplies: map[string]map[string]string{"atomic_claims": {
+			"Acme": `{"claims":[]}`, "Acme Cloud Pro": `{"claims":[1]}`,
+		}},
+	})
+	withSchema := func(name, prompt string) string {
+		b, _ := json.Marshal(map[string]any{
+			"model": "ok", "messages": []any{map[string]any{"role": "user", "content": prompt}},
+			"response_format": map[string]any{"type": "json_schema", "json_schema": map[string]any{"name": name, "strict": true}},
+		})
+		return string(b)
+	}
+	for _, tc := range []struct{ body, want string }{
+		{withSchema("atomic_claims", "<answer>Acme Cloud Pro costs $49.</answer>"), `{"claims":[1]}`}, // longest key wins
+		{withSchema("atomic_claims", "<answer>Acme</answer>"), `{"claims":[]}`},                       // schema replies win over exact
+		{withSchema("claim_check", "<answer>Acme</answer>"), "exact"},                                 // other schemas fall back
+		{chat("ok", "<answer>Acme Cloud Pro</answer>"), "Mock reply to: <answer>Acme Cloud Pro</answer>"},
+	} {
+		_, b := post(t, ts, tc.body, nil)
+		if got := decode(t, b).Choices[0].Message.Content; got != tc.want {
+			t.Errorf("got %q, want %q", got, tc.want)
+		}
+	}
+}

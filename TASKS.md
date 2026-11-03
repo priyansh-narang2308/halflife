@@ -71,10 +71,10 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | # | Task | Done when | Needs |
 |---|---|---|---|
 | [x] 27 | Verifier LLM client | Calls go through Bifrost with the verifier key; structured JSON output with schema validation and retries | `OPENROUTER_API_KEY` (free models OK) |
-| [ ] 28 | Atomic claim extraction | Claims with verbatim source spans; span check rejects paraphrase drift; unit tests on fixtures | — |
-| [ ] 29 | Temporal scope classifier | CURRENT / HISTORICAL / TIMELESS / FUTURE / UNCLEAR; historical claims skipped | — |
-| [ ] 30 | Volatility and priority | 5 volatility bands (from RecencyQA's scale); knowledge-cutoff table; HIGH / MEDIUM / LOW / SKIP priority | — |
-| [ ] 31 | Retrieval policies | Per-category Tavily parameters (topic, time range, `max_age_hours`, preferred domains, Extract when snippets are thin) | — |
+| [x] 28 | Atomic claim extraction | Claims with verbatim source spans; span check rejects paraphrase drift; unit tests on fixtures | — |
+| [x] 29 | Temporal scope classifier | CURRENT / HISTORICAL / TIMELESS / FUTURE / UNCLEAR; historical claims skipped | — |
+| [x] 30 | Volatility and priority | 5 volatility bands (from RecencyQA's scale); knowledge-cutoff table; HIGH / MEDIUM / LOW / SKIP priority | — |
+| [x] 31 | Retrieval policies | Per-category Tavily parameters (topic, time range, `max_age_hours`, preferred domains, Extract when snippets are thin) | — |
 | [ ] 32 | Typed comparators | Deterministic semver, price, name and date comparison with tests | — |
 | [ ] 33 | Evidence-backed verdicts | CURRENT / OUTDATED / CONTRADICTED / CONFLICTING / UNVERIFIABLE; OUTDATED requires proof it was once true; quotes verified verbatim | — |
 | [ ] 34 | Evidence strength and freshness score | STRONG / MODERATE / WEAK; 0–100 freshness score labelled heuristic | — |

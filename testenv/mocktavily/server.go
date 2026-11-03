@@ -16,7 +16,10 @@
 // live searches took 1.1-2.8 s. /_mock/requests reports credits per X-Project-ID.
 //
 // A missing or wrong bearer key returns 401. Extract URLs containing
-// "mock-fail" land in failed_results.
+// "mock-fail" land in failed_results. Queries listed in
+// Fixtures.RefuseLiveFetch get 434 when they set max_age_hours, as Tavily
+// does when live fetching is unavailable. /_mock/requests also lists each
+// search's and extract's parameters, most recent last.
 package mocktavily
 
 import (
@@ -28,6 +31,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -51,6 +55,34 @@ type Fixtures struct {
 	Search map[string][]Result `json:"search"`
 	// Extract maps a URL to its raw_content.
 	Extract map[string]string `json:"extract"`
+	// RefuseLiveFetch lists normalised queries refused with 434 when the
+	// search sets max_age_hours.
+	RefuseLiveFetch []string `json:"refuse_live_fetch"`
+}
+
+// maxLogged bounds the search and extract logs.
+const maxLogged = 100
+
+// SearchLog is what one search asked for.
+type SearchLog struct {
+	Query                string   `json:"query"`
+	Topic                string   `json:"topic,omitempty"`
+	TimeRange            string   `json:"time_range,omitempty"`
+	MaxAgeHours          *int     `json:"max_age_hours,omitempty"`
+	IncludeDomains       []string `json:"include_domains,omitempty"`
+	IncludeDomainsMode   string   `json:"include_domains_mode,omitempty"`
+	ExactMatch           bool     `json:"exact_match,omitempty"`
+	ChunksPerSource      int      `json:"chunks_per_source,omitempty"`
+	IncludePublishedDate bool     `json:"include_published_date,omitempty"`
+	ProjectID            string   `json:"x_project_id"`
+	Status               int      `json:"status"`
+}
+
+// ExtractLog is what one extract asked for.
+type ExtractLog struct {
+	URLs      []string `json:"urls"`
+	Query     string   `json:"query,omitempty"`
+	ProjectID string   `json:"x_project_id"`
 }
 
 // Result is one Search result.
@@ -80,6 +112,9 @@ type Server struct {
 	// last is what the most recent authenticated request carried, so a test
 	// can check what a relay forwards. Credential values are never kept.
 	last Seen
+
+	searchLog  []SearchLog
+	extractLog []ExtractLog
 }
 
 // Seen describes the last authenticated request: the attribution headers
@@ -151,13 +186,19 @@ func slowMarker(query string) time.Duration {
 var depthCredits = map[string]int{"basic": 1, "fast": 1, "ultra-fast": 1, "advanced": 2}
 
 type searchRequest struct {
-	Query              string   `json:"query"`
-	SearchDepth        string   `json:"search_depth"`
-	MaxResults         *int     `json:"max_results"`
-	IncludeAnswer      any      `json:"include_answer"`
-	IncludeUsage       bool     `json:"include_usage"`
-	IncludeDomains     []string `json:"include_domains"`
-	IncludeDomainsMode string   `json:"include_domains_mode"`
+	Query                string   `json:"query"`
+	SearchDepth          string   `json:"search_depth"`
+	MaxResults           *int     `json:"max_results"`
+	IncludeAnswer        any      `json:"include_answer"`
+	IncludeUsage         bool     `json:"include_usage"`
+	IncludeDomains       []string `json:"include_domains"`
+	IncludeDomainsMode   string   `json:"include_domains_mode"`
+	Topic                string   `json:"topic"`
+	TimeRange            string   `json:"time_range"`
+	MaxAgeHours          *int     `json:"max_age_hours"`
+	ExactMatch           bool     `json:"exact_match"`
+	ChunksPerSource      int      `json:"chunks_per_source"`
+	IncludePublishedDate bool     `json:"include_published_date"`
 }
 
 func (s *Server) search(w http.ResponseWriter, r *http.Request) {
@@ -179,8 +220,14 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	status := http.StatusOK
+	defer func() { s.logSearch(r, req, status) }()
+	fail := func(code int, msg string) {
+		status = code
+		writeError(w, code, msg)
+	}
 	if strings.TrimSpace(req.Query) == "" {
-		writeError(w, http.StatusBadRequest, "Query is missing.")
+		fail(http.StatusBadRequest, "Query is missing.")
 		return
 	}
 	for marker, e := range injected {
@@ -188,9 +235,13 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 			if e.status == http.StatusTooManyRequests {
 				w.Header().Set("Retry-After", "2")
 			}
-			writeError(w, e.status, e.msg)
+			fail(e.status, e.msg)
 			return
 		}
+	}
+	if req.MaxAgeHours != nil && slices.Contains(s.cfg.Fixtures.RefuseLiveFetch, normalise(req.Query)) {
+		fail(434, injected["[mock:434]"].msg)
+		return
 	}
 	depth := req.SearchDepth
 	if depth == "" {
@@ -198,11 +249,11 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	}
 	credits, ok := depthCredits[depth]
 	if !ok {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("Invalid search_depth %q.", depth))
+		fail(http.StatusBadRequest, fmt.Sprintf("Invalid search_depth %q.", depth))
 		return
 	}
 	if req.IncludeDomainsMode != "" && len(req.IncludeDomains) == 0 {
-		writeError(w, http.StatusBadRequest, "include_domains_mode requires include_domains.")
+		fail(http.StatusBadRequest, "include_domains_mode requires include_domains.")
 		return
 	}
 	maxResults := 10 // OpenAPI default; the best-practices page says 5
@@ -211,7 +262,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		// results for 1 credit (testenv/results/tavily-live.json, 3 Nov 2026),
 		// so only a negative value is refused here (message assumed).
 		if *req.MaxResults < 0 {
-			writeError(w, http.StatusBadRequest, "max_results must not be negative.")
+			fail(http.StatusBadRequest, "max_results must not be negative.")
 			return
 		}
 		maxResults = *req.MaxResults
@@ -249,6 +300,7 @@ type extractRequest struct {
 	URLs         json.RawMessage `json:"urls"`
 	ExtractDepth string          `json:"extract_depth"`
 	IncludeUsage bool            `json:"include_usage"`
+	Query        string          `json:"query"`
 }
 
 func (s *Server) extract(w http.ResponseWriter, r *http.Request) {
@@ -300,6 +352,9 @@ func (s *Server) extract(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 
 	s.record(r, &s.extracts, credits)
+	s.mu.Lock()
+	s.extractLog = appendBounded(s.extractLog, ExtractLog{URLs: urls, Query: req.Query, ProjectID: r.Header.Get("X-Project-ID")})
+	s.mu.Unlock()
 	resp := map[string]any{
 		"results":        results,
 		"failed_results": failed,
@@ -331,6 +386,31 @@ func defaultResults(query string) []Result {
 		{Title: "Mock source A", URL: "https://example.com/a/" + slug, Content: "Mock evidence A about: " + query, Score: 0.81},
 		{Title: "Mock source B", URL: "https://example.org/b/" + slug, Content: "Mock evidence B about: " + query, Score: 0.64},
 	}
+}
+
+func (s *Server) logSearch(r *http.Request, req searchRequest, status int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.searchLog = appendBounded(s.searchLog, SearchLog{
+		Query: req.Query, Topic: req.Topic, TimeRange: req.TimeRange, MaxAgeHours: req.MaxAgeHours,
+		IncludeDomains: req.IncludeDomains, IncludeDomainsMode: req.IncludeDomainsMode, ExactMatch: req.ExactMatch,
+		ChunksPerSource: req.ChunksPerSource, IncludePublishedDate: req.IncludePublishedDate,
+		ProjectID: r.Header.Get("X-Project-ID"), Status: status,
+	})
+}
+
+func appendBounded[T any](log []T, v T) []T {
+	if len(log) >= maxLogged {
+		log = log[1:]
+	}
+	return append(log, v)
+}
+
+// Logs returns the search and extract logs since the last reset.
+func (s *Server) Logs() ([]SearchLog, []ExtractLog) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]SearchLog{}, s.searchLog...), append([]ExtractLog{}, s.extractLog...)
 }
 
 // Stats reports requests and credits since the last reset.
@@ -389,8 +469,9 @@ func (s *Server) Last() Seen {
 
 func (s *Server) requests(w http.ResponseWriter, _ *http.Request) {
 	searches, extracts, credits := s.Stats()
+	searchLog, extractLog := s.Logs()
 	writeJSON(w, http.StatusOK, map[string]any{"searches": searches, "extracts": extracts, "credits": credits,
-		"credits_by_project": s.CreditsByProject(), "last": s.Last()})
+		"credits_by_project": s.CreditsByProject(), "last": s.Last(), "search_log": searchLog, "extract_log": extractLog})
 }
 
 func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
@@ -398,6 +479,7 @@ func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
 	s.searches, s.extracts, s.credits, s.extracted = 0, 0, 0, 0
 	s.byProject = nil
 	s.last = Seen{}
+	s.searchLog, s.extractLog = nil, nil
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
 }

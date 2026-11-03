@@ -58,9 +58,14 @@ git -C bifrost diff --stat upstream halflife -- . ':!docs'
 | `plugins/halflife/capture.go`, `pool.go`, `links.go` | Answer capture, bounded audit queue, cache entry → report links |
 | `plugins/halflife/invalidate.go` | Stale-answer eviction and the write-window bypass |
 | `plugins/halflife/tavily.go` | Tavily client that only calls the gateway's relay |
-| `plugins/halflife/claim.go`, `verifier.go` | Minimal verifier: one claim per answer, one search per claim, reused within 10 minutes |
+| `plugins/halflife/claim.go`, `verifier.go` | Verifier: the M1 keyword path when no verifier model is configured, else extract → classify → rank → search; searches reused within 10 minutes |
 | `plugins/halflife/report.go` | Report type and bounded in-memory store |
 | `plugins/halflife/llm.go` | Verifier LLM client: structured JSON through the gateway's chat endpoint, schema-validated, one corrective retry |
+| `plugins/halflife/extract.go` | Atomic claim extraction: pre-filter, one strict-schema LLM call, span check |
+| `plugins/halflife/scope.go` | Temporal scope: the extractor's label confirmed or overruled by cues in the span |
+| `plugins/halflife/priority.go` | Verification priority from volatility band and elapsed time; operator-supplied knowledge-cutoff table |
+| `plugins/halflife/retrieval.go` | Per-category Tavily Search parameters; when to Extract |
+| `plugins/halflife/testdata/claims/*.json` | Synthetic extraction fixtures (fictional companies) |
 | `plugins/halflife/*_test.go`, `version` | Unit tests; version `0.1.0` |
 | `transports/bifrost-http/handlers/halflife.go`, `halflife_test.go` | `GET /api/halflife/reports/{id}`, resolving the plugin per request like the cache handler |
 - **Upstream:** everything else, unchanged.

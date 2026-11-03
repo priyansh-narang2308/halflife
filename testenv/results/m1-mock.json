@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-03T10:53:00Z",
+  "recorded_at": "2026-11-03T12:11:05Z",
   "mode": "mock",
   "answer_model": "mock",
   "tavily": "mock",
@@ -8,8 +8,8 @@
     {
       "name": "acme",
       "http_status": 200,
-      "report_id": "hlr_01a1a10a-6b45-7de2-8ec1-c5f1f7bb27e3",
-      "request_id": "acc77349-d57e-4d3a-8a29-427c8d2f4f7d",
+      "report_id": "hlr_01a1a151-e4bb-714f-b97a-dc75a14a2b93",
+      "request_id": "8baa87ae-477b-44ed-905b-1d0286526853",
       "tenant": "vk-acme",
       "model": "ok",
       "is_fallback": false,
@@ -17,16 +17,13 @@
       "answer": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
       "outcome": "evidence_found",
       "verdict": "not_judged",
-      "claim": {
-        "text": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
-        "query": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage."
-      },
+      "claim": null,
       "error": null,
       "evidence": {
         "verifier_virtual_key_id": "vk-verifier-acme",
         "credits": 1,
         "reused": false,
-        "gateway_request_id": "b2e05edf-019d-4a03-a741-3a499d24323b",
+        "gateway_request_id": "0df84194-4546-4dce-854e-2724297550e1",
         "tavily_request_id": "mock-495eb47d4796c675",
         "sources": [
           {
@@ -48,8 +45,8 @@
     {
       "name": "fallback",
       "http_status": 200,
-      "report_id": "hlr_01a1a10a-6ff6-7cd9-8d96-be073b428276",
-      "request_id": "eb983cec-c890-4f35-aac9-f9b167667a34",
+      "report_id": "hlr_01a1a151-e922-71f7-8915-7353dcab713a",
+      "request_id": "38904928-ba97-4eb4-acdc-a696f9de1eb4",
       "tenant": "vk-acme",
       "model": "ok",
       "is_fallback": true,
@@ -57,16 +54,13 @@
       "answer": "The latest version of the Acme SDK is 3.2.0, released in March 2025.",
       "outcome": "evidence_found",
       "verdict": "not_judged",
-      "claim": {
-        "text": "The latest version of the Acme SDK is 3.2.0, released in March 2025.",
-        "query": "The latest version of the Acme SDK is 3.2.0, released in March 2025."
-      },
+      "claim": null,
       "error": null,
       "evidence": {
         "verifier_virtual_key_id": "vk-verifier-acme",
         "credits": 1,
         "reused": false,
-        "gateway_request_id": "127fc323-09d2-4453-9764-ffbf078c7c7e",
+        "gateway_request_id": "7ab6c95c-058e-407e-92d4-5b68672aec4d",
         "tavily_request_id": "mock-df9de307bcb43d26",
         "sources": [
           {
@@ -82,8 +76,8 @@
     {
       "name": "budget",
       "http_status": 200,
-      "report_id": "hlr_01a1a10a-7449-7b2f-aec8-e993fbeb732b",
-      "request_id": "7b7509d7-e814-4119-b1f9-a723b348f25a",
+      "report_id": "hlr_01a1a151-ed5b-76ab-85c4-7feb26ee0c1c",
+      "request_id": "49fc6c7d-7091-4c04-becf-979ef4dceb41",
       "tenant": "vk-acme",
       "model": "ok",
       "is_fallback": false,
@@ -91,10 +85,7 @@
       "answer": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015.",
       "outcome": "budget_exhausted",
       "verdict": "not_judged",
-      "claim": {
-        "text": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015.",
-        "query": "Acme Cloud's CEO is Jordan Lee, who founded the company in 2015."
-      },
+      "claim": null,
       "error": "tavily relay: 402 Budget exceeded: vk_model_config * budget exceeded: 0.0160 >= 0.0160 dollars",
       "evidence": {
         "verifier_virtual_key_id": "vk-verifier-acme",
@@ -109,8 +100,8 @@
     {
       "name": "globex",
       "http_status": 200,
-      "report_id": "hlr_01a1a10a-7508-7255-8ddf-966911fbf1a8",
-      "request_id": "886f8fab-5493-4240-8f0f-f3f0ff063a03",
+      "report_id": "hlr_01a1a151-ede5-74a7-bc16-8bfee9650e10",
+      "request_id": "c7b6faed-1607-45e3-bacf-4b38473ef04d",
       "tenant": "vk-globex",
       "model": "ok",
       "is_fallback": false,
@@ -118,16 +109,13 @@
       "answer": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
       "outcome": "evidence_found",
       "verdict": "not_judged",
-      "claim": {
-        "text": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
-        "query": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage."
-      },
+      "claim": null,
       "error": null,
       "evidence": {
         "verifier_virtual_key_id": "vk-verifier-globex",
         "credits": 1,
         "reused": false,
-        "gateway_request_id": "7bbf0304-fdf6-449f-8834-96d5ffc30519",
+        "gateway_request_id": "e48299a9-a48f-4672-8ed2-45bd67c54ebe",
         "tavily_request_id": "mock-495eb47d4796c675",
         "sources": [
           {
@@ -149,8 +137,8 @@
     {
       "name": "initech",
       "http_status": 200,
-      "report_id": "hlr_01a1a10a-7954-7c63-89fb-ed6cf65c2df1",
-      "request_id": "7cb93e4e-89a6-415f-8b38-68e6b1cf9c31",
+      "report_id": "hlr_01a1a151-f284-754f-85fc-8dacb6dc061f",
+      "request_id": "4348c96f-61b3-4844-b379-225888612847",
       "tenant": "vk-initech",
       "model": "ok",
       "is_fallback": false,
@@ -158,10 +146,7 @@
       "answer": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
       "outcome": "no_verifier_key",
       "verdict": "not_judged",
-      "claim": {
-        "text": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage.",
-        "query": "The Acme Cloud Pro plan costs $20 per month and includes 100 GB of storage."
-      },
+      "claim": null,
       "error": null,
       "evidence": null,
       "seconds_to_report": 0
@@ -179,10 +164,10 @@
       "status_code": 200,
       "units": 1.0,
       "cost": 0.008000000000000000166,
-      "latency": 1004.9375,
-      "upstream_latency": 1001.834833000000003,
-      "overhead_latency": 3.102666999999996734,
-      "gateway_request_id": "b2e05edf-019d-4a03-a741-3a499d24323b"
+      "latency": 1001.138249999999971,
+      "upstream_latency": 1000.782417000000009,
+      "overhead_latency": 0.3558329999999614302,
+      "gateway_request_id": "0df84194-4546-4dce-854e-2724297550e1"
     },
     {
       "virtual_key_id": "vk-verifier-acme",
@@ -190,10 +175,10 @@
       "status_code": 200,
       "units": 1.0,
       "cost": 0.008000000000000000166,
-      "latency": 1001.865832999999953,
-      "upstream_latency": 1001.439958000000046,
-      "overhead_latency": 0.4258749999999054126,
-      "gateway_request_id": "127fc323-09d2-4453-9764-ffbf078c7c7e"
+      "latency": 1017.244958999999995,
+      "upstream_latency": 1001.554876000000035,
+      "overhead_latency": 15.69008299999995871,
+      "gateway_request_id": "7ab6c95c-058e-407e-92d4-5b68672aec4d"
     },
     {
       "virtual_key_id": "vk-verifier-acme",
@@ -201,10 +186,10 @@
       "status_code": 402,
       "units": null,
       "cost": null,
-      "latency": 0.2250000000000000055,
+      "latency": 0.1969170000000000086,
       "upstream_latency": 0.0,
-      "overhead_latency": 0.2250000000000000055,
-      "gateway_request_id": "bc48cb23-9a15-469e-a6d5-9012eff321cd"
+      "overhead_latency": 0.1969170000000000086,
+      "gateway_request_id": "97883a05-200e-4a37-8242-c6c001c73990"
     },
     {
       "virtual_key_id": "vk-acme",
@@ -212,10 +197,10 @@
       "status_code": 403,
       "units": null,
       "cost": null,
-      "latency": 0.365792000000000006,
+      "latency": 0.2422910000000000063,
       "upstream_latency": 0.0,
-      "overhead_latency": 0.365792000000000006,
-      "gateway_request_id": "03bd4771-7f31-4092-8481-40e3aa5d8a0b"
+      "overhead_latency": 0.2422910000000000063,
+      "gateway_request_id": "5e3bbf9a-305b-4861-ada2-9bd965cbe707"
     },
     {
       "virtual_key_id": null,
@@ -223,10 +208,10 @@
       "status_code": 401,
       "units": null,
       "cost": null,
-      "latency": 0.3126249999999999863,
+      "latency": 0.1761669999999999903,
       "upstream_latency": 0.0,
-      "overhead_latency": 0.3126249999999999863,
-      "gateway_request_id": "e01a8138-6513-45b3-b7fa-e714aba472a1"
+      "overhead_latency": 0.1761669999999999903,
+      "gateway_request_id": "6322ac1a-e815-46f7-a062-488add17c66e"
     },
     {
       "virtual_key_id": "vk-verifier-globex",
@@ -234,10 +219,10 @@
       "status_code": 200,
       "units": 1.0,
       "cost": 0.008000000000000000166,
-      "latency": 1001.979124999999954,
-      "upstream_latency": 1001.597292000000038,
-      "overhead_latency": 0.381832999999915046,
-      "gateway_request_id": "7bbf0304-fdf6-449f-8834-96d5ffc30519"
+      "latency": 1001.796042000000056,
+      "upstream_latency": 1001.442209000000048,
+      "overhead_latency": 0.3538330000000087238,
+      "gateway_request_id": "e48299a9-a48f-4672-8ed2-45bd67c54ebe"
     }
   ],
   "budgets": [

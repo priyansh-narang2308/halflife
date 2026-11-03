@@ -1,0 +1,162 @@
+{
+  "recorded_at": "2026-11-03T12:15:13Z",
+  "mode": "live",
+  "verifier_models": [
+    "openrouter/nvidia/nemotron-3.5-super-vl:free",
+    "openrouter/xingchen-agi/xing4.0-29b-a4b:free",
+    "openrouter/openrouter/free"
+  ],
+  "note": "Synthetic keys; no credential and no page text recorded.",
+  "reports": [
+    {
+      "name": "live",
+      "outcome": "evidence_found",
+      "error": null,
+      "extraction": {
+        "model": "nvidia/nemotron-3.5-super-vl:free",
+        "provider": "openrouter",
+        "fallback": false,
+        "calls": 1,
+        "malformed": 0,
+        "truncated": false
+      },
+      "claims": [
+        {
+          "text": "The latest stable version of Go is 1.25.",
+          "span": "The latest stable version of Go is 1.25.",
+          "subject": "Go",
+          "attribute": "latest stable version",
+          "asserted_value": "1.25",
+          "category": "version",
+          "temporal_scope": "CURRENT",
+          "scope_reason": "extractor's label",
+          "as_of": null,
+          "volatility_band": "WEEKS_MONTHS",
+          "priority": "HIGH",
+          "priority_reason": "says latest/current/now",
+          "status": "checked",
+          "status_reason": null,
+          "search": {
+            "query": "\"Go\" latest stable version",
+            "search_depth": "basic",
+            "max_results": 5,
+            "include_domains": [
+              "go.dev"
+            ],
+            "include_domains_mode": "prefer",
+            "exact_match": true,
+            "chunks_per_source": 3,
+            "include_published_date": true,
+            "max_age_hours": 24
+          },
+          "evidence": {
+            "credits": 1,
+            "reused": false,
+            "live_fetch_refused": null,
+            "extracted_url": null,
+            "sources": [
+              {
+                "url": "https://go.dev/doc/devel/release",
+                "title": "Release History - The Go Programming Language",
+                "published_date": "Fri, 24 Aug 2018 00:00:00 GMT",
+                "extracted": false
+              },
+              {
+                "url": "https://go.dev",
+                "title": "The Go Programming Language",
+                "published_date": "Sun, 27 Oct 2019 00:00:00 GMT",
+                "extracted": false
+              },
+              {
+                "url": "https://cacm.acm.org/research/the-go-programming-language-and-environment",
+                "title": "The Go Programming Language and Environment",
+                "published_date": "Sun, 01 May 2022 05:00:00 GMT",
+                "extracted": false
+              },
+              {
+                "url": "https://stackoverflow.com/questions/51933636/url-for-latest-stable-go-release",
+                "title": "URL for latest stable Go release",
+                "published_date": null,
+                "extracted": false
+              },
+              {
+                "url": "https://endoflife.date/go",
+                "title": "Go | endoflife.date",
+                "published_date": "Wed, 21 Oct 2026 00:00:00 GMT",
+                "extracted": false
+              }
+            ]
+          }
+        },
+        {
+          "text": "GitHub Copilot Pro costs $10 per month.",
+          "span": "GitHub Copilot Pro costs $10 per month.",
+          "subject": "GitHub Copilot Pro",
+          "attribute": "monthly price",
+          "asserted_value": "$10 per month",
+          "category": "price",
+          "temporal_scope": "CURRENT",
+          "scope_reason": "extractor's label",
+          "as_of": null,
+          "volatility_band": "WEEKS_MONTHS",
+          "priority": "HIGH",
+          "priority_reason": "540d since default 18-month cutoff age ≥ WEEKS_MONTHS band change",
+          "status": "checked",
+          "status_reason": null,
+          "search": {
+            "query": "GitHub Copilot Pro monthly price",
+            "search_depth": "basic",
+            "max_results": 5,
+            "chunks_per_source": 3,
+            "include_published_date": true,
+            "max_age_hours": 24
+          },
+          "evidence": {
+            "credits": 1,
+            "reused": false,
+            "live_fetch_refused": null,
+            "extracted_url": null,
+            "sources": [
+              {
+                "url": "https://techjacksolutions.com/ai-tools/github-copilot/github-copilot-pricing",
+                "title": "GitHub Copilot Pricing: Definitive Guide 2026",
+                "published_date": "Tue, 16 Jun 2026 23:40:00 GMT",
+                "extracted": false
+              },
+              {
+                "url": "https://www.reddit.com/r/GithubCopilot/comments/1huccl6/copilot_pro_pricing_whats_the_catch",
+                "title": "Copilot pro pricing, what's the catch? : r/GithubCopilot",
+                "published_date": "Mon, 03 Nov 2025 12:00:00 GMT",
+                "extracted": false
+              },
+              {
+                "url": "https://tavily.com/knowledge/company/WGf4o1saQ1yD",
+                "title": "GitHub | Tavily",
+                "published_date": null,
+                "extracted": false
+              }
+            ]
+          }
+        },
+        {
+          "text": "Go was first released publicly in 2009.",
+          "span": "Go was first released publicly in 2009.",
+          "subject": "Go",
+          "attribute": "first public release date",
+          "asserted_value": "2009",
+          "category": "event",
+          "temporal_scope": "HISTORICAL",
+          "scope_reason": "tied to a past date (as_of)",
+          "as_of": "2009",
+          "volatility_band": "NEVER",
+          "priority": "SKIP",
+          "priority_reason": "historical: not a freshness question",
+          "status": "not_checked",
+          "status_reason": "priority SKIP: historical: not a freshness question",
+          "search": null,
+          "evidence": null
+        }
+      ]
+    }
+  ]
+}

@@ -1089,3 +1089,69 @@ The recursion guard now covers every verifier key in `verifiers` as well as `ver
 
   All runs: nemotron answered (no fallback needed), nothing was captured for audit, and every call was logged on Acme's verifier key and customer.
 - **Not shown yet:** judgement quality on real Tavily evidence (Tasks 28–33), and verbatim-quote checking in code (Task 33). Three hand-written checks are a smoke test, not an evaluation.
+
+## Tasks 28–31: Claim extraction, temporal scope, priority, retrieval policies (3 Nov 2026)
+
+**Status:** done; decisions D43–D46. Fork commit `c36dd14`: files `extract.go`, `scope.go`, `priority.go`, `retrieval.go`; `verifier.go`, `report.go`, `tavily.go`, `config.go` changed. The verifier uses the new path whenever `verifier_models` is set; without it, the M1 keyword path runs unchanged. Script `testenv/claims-pipeline.sh` (`make claims`), records `testenv/results/claims-{mock,live}.json`.
+
+### What runs, per audited answer
+
+1. **Pre-filter** (no cost): sentences minus headers (lines ending in ":"), questions, fragments and advice ("You should…", "I recommend…"). Nothing left → `no_claim`, no LLM call.
+2. **Extraction**: one call to `/v1/chat/completions` on the tenant's verifier key, strict `json_schema` `atomic_claims`, the answer inside `<answer>` tags with an instruction to ignore instructions in it. Each claim has `text`, a verbatim `span`, `subject`, `attribute`, `asserted_value`, `category` (7), `temporal_scope` (5), `as_of`, `volatility_band` (5). At most 10. A 402 → `budget_exhausted`; malformed twice → `extraction_failed`.
+3. **Span check** (`checkSpan`): rejected, with the reason on the report, when the span is not in the answer (after normalising Markdown emphasis, typographic quotes and dashes, whitespace), the asserted value is not in the span (numbers compared without thousands separators), the text adds a number, negation differs between text and span, there is no subject, the text has under 3 words, or `as_of` is not `YYYY[-MM[-DD]]`.
+4. **Temporal scope** (`classifyScope`): see D45. Recorded with `scope_reason`.
+5. **Priority** (`prioritise`): SKIP for HISTORICAL, TIMELESS, FUTURE or band NEVER. Otherwise elapsed time since `as_of`, else the answering model's configured cutoff, else 18 months (D43), against the band's shortest change interval (D44): HIGH at or over it, MEDIUM from half of it, LOW below; "latest/current/now" in the span is HIGH. Boosted categories rise one level. Recorded with `priority_reason`, e.g. `540d since default 18-month cutoff age ≥ YEAR band change`.
+6. **Search** in priority order (then boosted category, then answer order), at most `max_claims_per_response`; the rest `not_checked` with the reason. After a 402, every later claim is `not_checked (402)`, unsearched.
+7. **Retrieval policy** (`retrievalPolicy`, D46):
+
+   | Category / band | Parameters |
+   |---|---|
+   | all | query = subject + attribute; `search_depth` basic; `chunks_per_source` 3; `include_published_date` |
+   | version | query `"<subject>" <attribute>`, `exact_match` |
+   | leadership | `topic` news, `time_range` year |
+   | event | `topic` news |
+   | `preferred_domains[category]` set | `include_domains`, `include_domains_mode` prefer |
+   | HOURS_DAYS / WEEKS_MONTHS / YEAR | `max_age_hours` 0 / 24 / 168; on 434, retried once without it |
+
+   One Extract of the top page (a preferred domain first) with `query` = subject + attribute when no snippet names the subject with a value of the claim's shape (version number, price, number). An Extract failure keeps the search's evidence; an Extract 402 stops later searches.
+
+Outcome: `evidence_found` > `no_evidence` > `budget_exhausted` > `search_failed` > `no_claim` > `nothing_to_check` (claims extracted, none worth searching).
+
+### Unit tests
+
+- `claims_test.go`: 29 tests. Fixtures `testdata/claims/` (pricing with a drifted value, a paraphrased version span, negation kept and dropped, five scope overrides), each run through the full verifier with a fake gateway and fake Tavily. Tables for the span check (14 cases), scope (14), priority (17), cutoff lookup, ranking, retrieval policy (10), thin evidence (8), Extract target and domains. Pipeline cases: policy and attribution on each search, `disable_extract`, max claims, boosted category first, preferred domains, budget spent mid-run, Extract 402, Extract failure, 434 retry, search failure, nothing to check, all rejected, no claims, no LLM call when nothing is checkable, extraction 402, malformed extraction, tenant without a key.
+- `config_test.go`: 6 new validation cases and a decode test for `model_cutoffs`, `priority_boost_categories`, `preferred_domains`, `disable_extract`.
+- Plugin: all pass, `-race` clean, coverage 96.1%.
+- Mocks: mock LLM `schema_replies` (reply chosen by schema name and a contained sentence); mock Tavily logs each search's parameters and status and each Extract's URLs and query in `/_mock/requests`, and refuses listed queries with 434 when they set `max_age_hours`. Tests for both.
+
+### Through the gateway, mock (`make claims`, all pass)
+
+22 of 22 checks, 2 runs.
+
+- An answer with five extracted claims: price, storage and SDK version checked; the 2015 founding claim HISTORICAL (`tied to a past date (as_of)`), SKIP, never searched; a claim whose value ($25) differed from its span ($20) rejected before any search.
+- Price search: `Acme Cloud Pro monthly price`, `max_age_hours` 24, 3 chunks, published dates, `X-Project-ID` = the tenant. Version search: `"Acme SDK" latest version`, `exact_match`, `include_domains ["code.example"]` mode prefer; evidence from that domain. No query held an asserted value.
+- Storage snippets named Acme but no figure: one Extract of the top page with `Acme Cloud Pro included storage` as its query. Price snippets were not thin: no Extract.
+- A share-price claim (HOURS_DAYS): `max_age_hours` 0 refused with 434, retried without it at once, evidence recorded with `live_fetch_refused: true`. CEO claim: `topic` news, `time_range` year, no `max_age_hours`.
+- An answer of settled history only: `nothing_to_check`, no search.
+- Tavily credits charged to the tenant: 5 (the refused 434 cost none). Extraction calls never captured for audit; each is in Bifrost's request log on `vk-verifier-acme` / `cust-acme`. No key value in reports or the gateway log.
+
+### Through the gateway, live (`LIVE=1 make claims`, all pass on the second run)
+
+11 of 11 checks.
+
+Fixed answer from the mock provider: "The latest stable version of Go is 1.25. GitHub Copilot Pro costs $10 per month. Go was first released publicly in 2009." Extraction on free `nvidia/nemotron-3.5-super-vl:free` with `reasoning.effort` low (1 call, no fallback, not malformed or truncated), searches on real Tavily through the relay.
+
+| Claim | Category / scope / band | Priority | Result |
+|---|---|---|---|
+| The latest stable version of Go is 1.25 | version / CURRENT / WEEKS_MONTHS | HIGH | searched `"Go" latest stable version`, `exact_match`, preferring go.dev; top source `go.dev/doc/devel/release`; 1 credit |
+| GitHub Copilot Pro costs $10 per month | price / CURRENT / WEEKS_MONTHS | HIGH | searched `GitHub Copilot Pro monthly price`; top source a third-party pricing page; 1 credit |
+| Go was first released publicly in 2009 | event / HISTORICAL / NEVER | SKIP | not searched |
+
+No Extract was needed: both snippet sets named the subject with a value of the right shape. The first live run's pipeline was identical; one check failed on a bug in the script's own jq (it compared the query with itself), fixed and rerun. Spend over both runs: 4 credits ($0.032); models $0.
+
+### Not shown yet
+
+- Whether the evidence supports or contradicts each claim: that is the comparators and judge (Tasks 32–33). Reports still say `not_judged`.
+- Extraction quality at scale: one live answer and four fixtures are a smoke test, not an evaluation (Milestone 4).
+- No built-in model cutoffs (D43); the live run used the 18-month default.
+

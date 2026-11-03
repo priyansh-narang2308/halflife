@@ -132,7 +132,7 @@ echo "--- D. Tavily through the relay, priced and budgeted"
 budget_q_status=$(ask budget sk-bf-halflife-acme openai/ok "$CEO_Q" >/dev/null; report budget)
 acme_outcomes="$(r acme .outcome) $(r fallback .outcome)"
 echo "Acme outcomes: $acme_outcomes"
-searched=$(jq -s '[.[] | select(.evidence.credits != null and .evidence.reused == false)] | length' "$LIB_TMP/acme.json" "$LIB_TMP/fallback.json")
+searched=$(jq -s '[.[] | select(.claims[0].evidence.credits != null and .claims[0].evidence.reused == false)] | length' "$LIB_TMP/acme.json" "$LIB_TMP/fallback.json")
 if [ "$searched" = 2 ]; then
   check "Acme's third claim: its 2-search verifier budget is spent (402, not retried)" "$budget_q_status/$(r budget .outcome)" '200/"budget_exhausted"'
 else
@@ -146,9 +146,9 @@ check "relay refuses Acme's app key (no grant) and a keyless call" "$ungranted/$
 
 echo "--- F. tenants: each verification charged to its own tenant"
 ask globex sk-bf-halflife-globex "$MODEL_A" "$Q_B" "$FB_A"
-check "Globex's report: its own verifier key" "$(report globex)/$(r globex '.evidence.verifier_virtual_key_id // .outcome')" '200/"vk-verifier-globex"'
+check "Globex's report: its own verifier key" "$(report globex)/$(r globex '.claims[0].evidence.verifier_virtual_key_id // .outcome')" '200/"vk-verifier-globex"'
 ask initech sk-bf-halflife-initech openai/ok "$PRICE_Q" >/dev/null
-check "Initech has no verifier key: not verified, nothing spent" "$(report initech)/$(r initech '[.outcome, .evidence]')" '200/["no_verifier_key",null]'
+check "Initech has no verifier key: not verified, nothing spent" "$(report initech)/$(r initech '[.outcome, .claims[0].evidence]')" '200/["no_verifier_key",null]'
 
 echo "--- G. the report endpoint"
 check "without the setup token: 401" "$(curl -s -o /dev/null -w '%{http_code}' "$GW/api/halflife/reports/$(hdr acme x-halflife-report)")" 401
@@ -161,10 +161,10 @@ relay=$(sqlite3 -json "$GATEWAY_APP/logs.db" "select request_id, virtual_key_id,
 relay=${relay:-[]}
 mismatch=0
 for n in "${names[@]}"; do
-  gid=$(jq -r '.evidence.gateway_request_id // ""' "$LIB_TMP/$n.json")
+  gid=$(jq -r '.claims[0].evidence.gateway_request_id // ""' "$LIB_TMP/$n.json")
   [ -n "$gid" ] || continue
   row=$(echo "$relay" | jq -c --arg id "$gid" 'map(select(.request_id == $id))[0]')
-  want=$(jq -r --arg rate "$RATE" '"\(.tenant.virtual_key_id | sub("^vk-"; "vk-verifier-")) \(.tenant.virtual_key_id | sub("^vk-"; "cust-")) \((.evidence.credits * ($rate | tonumber) * 1000 | round) / 1000)"' "$LIB_TMP/$n.json")
+  want=$(jq -r --arg rate "$RATE" '"\(.tenant.virtual_key_id | sub("^vk-"; "vk-verifier-")) \(.tenant.virtual_key_id | sub("^vk-"; "cust-")) \((.claims[0].evidence.credits * ($rate | tonumber) * 1000 | round) / 1000)"' "$LIB_TMP/$n.json")
   got=$(echo "$row" | jq -r '"\(.virtual_key_id) \(.customer_id) \((.cost * 1000 | round) / 1000)"')
   [ "$got" = "$want" ] || { echo "  $n: relay log '$got', report says '$want'"; mismatch=$((mismatch + 1)); }
 done
@@ -181,7 +181,7 @@ for n in "${names[@]}"; do
       name: $name, http_status: ($status | tonumber), report_id: .id, request_id, tenant: .tenant.virtual_key_id,
       model: .answer.model, is_fallback: .answer.is_fallback, question: .answer.question, answer: .answer.text,
       outcome, verdict, claim, error,
-      evidence: (.evidence | if . == null then null else {verifier_virtual_key_id, credits, reused, gateway_request_id,
+      evidence: (.claims[0].evidence | if . == null then null else {verifier_virtual_key_id, credits, reused, gateway_request_id,
         tavily_request_id, sources: [.sources[] | {title, url, published_date, score}]} end),
       seconds_to_report: (((.completed_at | sub("\\.[0-9]+"; "") | fromdateiso8601) - (.created_at | sub("\\.[0-9]+"; "") | fromdateiso8601)))
     }' "$LIB_TMP/$n.json"
