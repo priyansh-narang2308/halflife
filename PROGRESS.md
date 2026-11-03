@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Task 17 (cache ↔ report linkage), 2 Nov 2026.
-- **Next:** Task 18 (TTL override).
+- **Last completed:** Task 18 (TTL override), 3 Nov 2026.
+- **Next:** Task 19 (invalidation and race).
 
 ## Completed
 
@@ -28,6 +28,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 15 | 2026-11-02 | `make bench` (`testenv/bench-halflife.sh` + `testenv/cmd/hlbench`): 2,000 paired requests per run, fresh gateways per comparison, A/A control. One request in flight: Halflife adds 7.8–9.6 µs paired median (control −0.4 to +0.5 µs); at 16 in flight the difference is below the control's noise. 2,000/2,000 bodies byte-identical every run; 2,200/2,200 audited, 0 dropped |
 | 16 | 2026-11-02 | `make cache` (`testenv/cache-baseline.sh`): Bifrost's unmodified `semantic_cache` on Redis 8.2.2 with deterministic mock embeddings (new `/v1/embeddings`, 64-dim). Miss → entry in Redis → direct hit → semantic hit (similarity 0.926 ≥ 0.8) → unrelated miss → other-tenant miss, each checked in headers, provider counts, Redis and Bifrost's request log. 34/34 ×6. Fixed a Task 15 script bug that leaked the mock provider |
 | 17 | 2026-11-02 | Cache ↔ report linkage (fork commit `e79513c`): a miss links its cache entry to its new report; direct and semantic hits get that report (`X-Halflife-Status: cached`) and no new audit; unlinked or cross-tenant hits are audited as new answers. Plugin now imports `semanticcache` v1.7.4 (the gateway's own version; gateway `go.mod`/`go.sum` unchanged). Tests run the real core + cache on an in-process store; `testenv/cache-halflife.sh` 29/29 ×3 |
+| 18 | 2026-11-03 | TTL override (fork commit `2062159`): `cache_ttl_seconds` caps the semantic cache TTL in Halflife's PreLLMHook, before the cache reads it for its async write; a shorter client `x-bf-cache-ttl` is kept. Plugin tests read each written entry's `expires_at` and check expiry; `cache-halflife.sh` 36/36 ×3 confirms it on Redis |
 
 ## Decisions
 
@@ -62,6 +63,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D27 | The cache baseline runs Bifrost's cache alone, without Halflife | Task 16 establishes what the built-in cache does before Halflife changes anything, so later freshness behaviour can be compared to it. Halflife and the cache together start in Task 17. |
 | D28 | A cache hit gets the report of the answer that filled the entry, not a new audit; links are an in-memory LRU (100k) until the report store (Task 25) | The cached answer is byte-for-byte the audited one, so re-auditing it would spend Tavily credits on known work. A hit is audited afresh only when no report is known (restart, dropped report) or the report is another tenant's (possible only with identity scoping off): one tenant is never pointed at another's report. |
 | D29 | Plugin tests drive Bifrost's real core and real `semantic_cache` plugin, on the in-process chromem store, wrapped so a test can hold cache writes | Hook order, short-circuits and the cache's async write are what Halflife depends on; a hand-written fake would test our assumptions about them, not them. Wrapping the store's `Add` makes the write timing controllable for Task 19's race. |
+| D30 | Halflife caps the cache TTL (min of its own and the client's) rather than replacing it; "Redis TTL" is checked as the entry's `expires_at` field | A client asking for a shorter life should get it; a longer one would let an unaudited answer outlive Halflife's freshness window. Bifrost's cache sets no Redis key expiry (`TTL` = -1) and filters on `expires_at` at lookup, so that field is the TTL to confirm. |
 
 ## Blockers and inputs needed
 

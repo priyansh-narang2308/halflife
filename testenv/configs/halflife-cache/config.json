@@ -126,7 +126,8 @@
         "workers": 2,
         "max_claims_per_response": 5,
         "tavily_relay": "tavily",
-        "verifier_virtual_key": "vk-verifier"
+        "verifier_virtual_key": "vk-verifier",
+        "cache_ttl_seconds": 60
       }
     }
   ]

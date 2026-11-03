@@ -756,3 +756,27 @@ While probing, port 9101 was still held by a mock provider left over from a Task
 
 - The plugin now requires `semanticcache` v1.7.4, the version the gateway already uses; the gateway's `go.mod`/`go.sum` are unchanged.
 - `testenv/lib.sh` holds the shared start/stop/check helpers for the cache scripts. `vk-other` was added to the cache configs as a real second tenant (the verifier key had been standing in, and is correctly never audited).
+
+## Task 18: TTL override (3 Nov 2026)
+
+**Status:** done. Fork commit `2062159`. Commands: `make test` and `make cache`.
+
+### Behaviour
+
+- New config `cache_ttl_seconds` (0 = leave the cache's TTL; at most 30 days). In its PreLLMHook, Halflife sets `semantic_cache-ttl` to that value unless the request already asks for a shorter one (`x-bf-cache-ttl`), as D30 sets out. Halflife's PreLLMHook runs before every other plugin's hooks, and the cache reads the TTL in its PostLLMHook, before it spawns the async write. So the cap is in place when the entry is written.
+- The init log line reports it (`cache_ttl=1m0s`, or `cache-default`).
+
+### Tests
+
+- **Plugin (real core + cache):** `ttl_test.go` reads `expires_at` from every entry that reaches the store. It covers six cases: no cap (cache 1m), cap below, cap above, longer client TTL capped, shorter client TTL kept, and client TTL with the cap disabled. A second test confirms that an entry written with a 1 s cap is served before expiry and misses afterwards. All pass with `-race -count=3`.
+- **Gateway (`cache-halflife.sh`, 36/36, 3 runs):** `halflife-cache` sets `cache_ttl_seconds: 60`.
+
+  | Request | Entry expires in |
+  |---|---|
+  | Without Halflife (cache TTL 5m) | ~300 s |
+  | With Halflife | ~60 s |
+  | `x-bf-cache-ttl: 1h` | ~60 s (capped) |
+  | `x-bf-cache-ttl: 20` | ~20 s (kept) |
+
+  Redis key `TTL` is -1 in every case: the cache expires entries by the `expires_at` field, not by Redis expiry. Integrity checks (bodies, provider calls) are unchanged.
+- **Caught while writing it:** the first client-TTL question ("When was Acme Cloud founded?") was a semantic hit on the CEO entry, so the 1h check passed by reading the wrong entry. The questions now share no content words with the others, and a check asserts that both are misses with their own entries.
