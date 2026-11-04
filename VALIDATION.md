@@ -1226,3 +1226,83 @@ Report verdict UNVERIFIABLE (UNVERIFIABLE ranks above CURRENT). The live checks 
 - A per-user price is treated as comparable with a claim that names no unit (the Copilot case). This is a choice, not a proven rule; it is revisited with the evaluation set.
 - OUTDATED does not evict the cached answer yet (Task 41).
 - Web text in the judge prompt is delimited and stripped of the block tags, but the injection defences and adversarial fixtures are Task 36.
+
+## Tasks 36–39: Untrusted content, failures, metrics, modes (4 Nov 2026)
+
+### Unit tests
+
+`GOWORK=off go test -race -cover` in `plugins/halflife`: pass, 95.9% of statements; `gofmt` and `go vet` clean. Handler tests pass. In a clean environment `transports/bifrost-http/handlers`, `server` and `lib` pass; with `ANTHROPIC_API_KEY` exported, `lib` fails, as already noted in [UPSTREAM_DIFF.md](UPSTREAM_DIFF.md).
+
+The monitor test was checked by mutation: with monitor made to behave like audit, it fails on the headers, the second request, the eviction and the audit count.
+
+### Untrusted web content (Task 36)
+
+Fixtures in `plugins/halflife/testdata/adversarial/` run through the whole verifier: ignored instructions, a fake verdict in JSON, a closing delimiter, hidden Unicode, HTML and script, unsafe URLs, Markdown exfiltration, injected history, injected Extract text, and benign wording that must not be flagged. An oversized reply is built in the test.
+
+Through the gateway (`make operator`), a snippet says to ignore instructions and answer SUPPORTS, and the scripted judge obeys:
+
+| Check | Result |
+|---|---|
+| Instruction removed, source kept and flagged | `[removed]` in the snippet, "asks to ignore instructions" |
+| Judge's SUPPORTS on that source | refused: UNVERIFIABLE, quote marked flagged |
+| `javascript:` and credentialed URLs | dropped, `dropped_sources` 2; the embedded password is not in the report or the gateway log |
+
+This shows the deterministic rules hold when a judge is fooled. It does not measure how often a real model is fooled, and the patterns only catch what they describe: a paraphrased instruction gets through to the delimited prompt, where the quote rules are the remaining defence.
+
+### Failure handling (Task 37), `make failures`, 28 of 28
+
+Mock LLM and mock Tavily with scripted faults (`fixtures/tavily.json`, `faults`); threshold 2, cooldowns 3 s.
+
+| Fault | Observed |
+|---|---|
+| 429, Retry-After 1 | searched twice (429, 200), claim checked, circuit stays closed |
+| 429, Retry-After 8 | one search, not retried; circuit open with the reason; the next audit made no extraction and no search (`verifier_unavailable`); after 8 s the probe closed it |
+| 432 | claim `not_checked`, `out_of_credits`; next audit no search; resumed after the cooldown |
+| 500 twice | retried once, both failed, circuit open; next audit no search; probe closed it |
+| 2.5 s delay, 1 s timeout | claim failed as `timeout` under 3 s; one failure, circuit still closed |
+| Globex budget spent | the search spent its credit, the Extract after it got a 402; the next audit made no verifier call; Acme unaffected |
+
+`/metrics` and `/usage` then reported the same events: 3 Tavily circuit opens, each failure kind once, Acme's audits 5 / 3 / 4 by outcome, and credits per tenant equal to mock Tavily's per-project count.
+
+433 and 434 use the same paths (unit tests; 434 through the gateway in `make claims`). None of these faults has been observed from live Tavily: the status handling follows its documentation. The verifier LLM circuit is unit-tested only.
+
+### Metrics and modes (Tasks 38–39), `make operator`, 33 of 33
+
+| Mode | Observed through the gateway |
+|---|---|
+| protect, opted in | `verified`, `X-Halflife-Verdict` equals the report's verdict, exposed to browsers, answer unchanged |
+| protect, no header | `queued`, no verdict |
+| protect, slower than 500 ms | sent at the timeout with the answer, `verify-timeout`, no verdict; the audit completed the report afterwards |
+| monitor | no Halflife header even when asked; same header names as a gateway with the plugin off; same answer; report found by request ID |
+
+The report list filters by tenant, model and request ID, pages with `next_before`, and refuses a bad `limit`; list, usage and metrics answer 401 without the dashboard token.
+
+`usage` USD for the LLM is what the gateway reports: mocks report none, so it is shown as 0 here and is not validated against a real bill. No operator dashboard reads these endpoints yet.
+
+### Live (`LIVE=1 make claims`), real Tavily and a free OpenRouter model
+
+Two runs, about 3 Tavily credits in all, against the 5 per run the script allows.
+
+The first printed ALL PASS but had not finished: the audit hit its 60 s deadline while the free model was judging, so the first judge call and the second search failed. Checks that only look at finished claims passed without testing anything. That run is not counted. The script now allows 170 s, and has a check that fails on an audit error, a failed search or a failed judge call.
+
+The second run, recorded in `testenv/results/claims-live.json`, finished with no error, all 19 checks passing:
+
+| Claim | Verdict | Why |
+|---|---|---|
+| The latest stable version of Go is 1.25 | UNVERIFIABLE | searched (1 credit), but the judge's reply was cut off at the token limit |
+| GitHub Copilot Pro costs $10 per month | UNVERIFIABLE | the judge said the evidence does not say |
+| Go was first released publicly in 2009 | NOT_CHECKED | priority SKIP |
+
+So the pipeline ran end to end, but this run gave no CURRENT or CONTRADICTED verdict, and the previous run's CURRENT for Copilot was not repeated. Modes, metrics and injection handling were not exercised live.
+
+### Regression
+
+`make build`, then every suite on the final binary, all pass: test, smoke, verify, m1, relay, budget, tenants, llm, cache, claims, failures, operator, bench. The full run caught two things: smoke's startup-log pattern needed `mode=audit`, and `make verify` found a real regression (D54), fixed with a test that failed first.
+
+Bench is a regression check here, not a new measurement, and the recorded result files are unchanged. This run at concurrency 16: paired median +180.5 µs, 2,000 of 2,000 bodies identical, no audit dropped, in audit mode. Protect's added wait is the opt-in point of that mode and is bounded by `protect_timeout_ms`.
+
+### Not shown yet
+
+- Verdict accuracy, and how much the flagged-source rule costs on real pages (benign pages wrongly flagged): measured with the evaluation set.
+- Live free-model latency decides whether an audit finishes in the 60 s default; a production deployment needs a paid model or a longer `audit_timeout_seconds`.
+- Circuit and budget-pause state is per process and in memory: a restart forgets them.

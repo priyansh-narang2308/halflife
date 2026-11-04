@@ -69,9 +69,14 @@ git -C bifrost diff --stat upstream halflife -- . ':!docs'
 | `plugins/halflife/compare.go` | Typed comparators: versions, prices, names, dates, quantities (`golang.org/x/text` for accent folding, already in the gateway's build) |
 | `plugins/halflife/judge.go` | Judge call, verbatim quote verification, deterministic verdict rules |
 | `plugins/halflife/strength.go` | Evidence strength and freshness score (`golang.org/x/net/publicsuffix`, already in the gateway's build) |
-| `plugins/halflife/testdata/claims/*.json` | Synthetic extraction fixtures (fictional companies) |
+| `plugins/halflife/untrusted.go` | Web text cleaning, instruction removal and flagging, safe URLs, prompt delimiter safety |
+| `plugins/halflife/resilience.go` | Failure kinds, circuit breakers, budget backoff, Retry-After handling |
+| `plugins/halflife/metrics.go` | Per-tenant usage, Prometheus text output |
+| `plugins/halflife/list.go` | Report list: filters, paging, summaries |
+| `plugins/halflife/modes.go` | Audit, monitor and protect behaviour |
+| `plugins/halflife/testdata/claims/*.json`, `testdata/adversarial/*.json` | Synthetic extraction and injection fixtures (fictional companies) |
 | `plugins/halflife/*_test.go`, `version` | Unit tests; version `0.1.0` |
-| `transports/bifrost-http/handlers/halflife.go`, `halflife_test.go` | `GET /api/halflife/reports/{id}`, resolving the plugin per request like the cache handler |
+| `transports/bifrost-http/handlers/halflife.go`, `halflife_test.go` | `GET /api/halflife/reports/{id}`, `/reports` (list), `/usage` and `/metrics`, resolving the plugin per request like the cache handler |
 - **Upstream:** everything else, unchanged.
 
 ## Modified upstream files (v1)

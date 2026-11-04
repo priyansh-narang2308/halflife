@@ -306,3 +306,42 @@ func TestSearchLogBounded(t *testing.T) {
 		t.Errorf("log holds %d", len(searches))
 	}
 }
+
+func TestScriptedFaults(t *testing.T) {
+	s, ts := newTestServer(t, &Fixtures{Faults: map[string][]Fault{
+		"acme seats": {{Status: 429, RetryAfter: "8"}, {Status: 500}, {DelayMs: 150}},
+	}})
+	search := func() (int, string, map[string]any, time.Duration) {
+		start := time.Now()
+		resp, out := call(t, ts, "/search", key, map[string]any{"query": "  Acme Seats "})
+		return resp.StatusCode, resp.Header.Get("Retry-After"), out, time.Since(start)
+	}
+	if status, ra, out, _ := search(); status != 429 || ra != "8" || out["detail"].(map[string]any)["error"] == "" {
+		t.Errorf("first: %d Retry-After %q %v", status, ra, out)
+	}
+	if status, ra, _, _ := search(); status != 500 || ra != "" {
+		t.Errorf("second: %d Retry-After %q", status, ra)
+	}
+	if status, _, _, took := search(); status != 200 || took < 150*time.Millisecond {
+		t.Errorf("third (delay only): %d after %s", status, took)
+	}
+	if status, _, _, took := search(); status != 200 || took > 100*time.Millisecond {
+		t.Errorf("faults used up: %d after %s", status, took)
+	}
+	if resp, _ := call(t, ts, "/search", key, map[string]any{"query": "other"}); resp.StatusCode != 200 {
+		t.Errorf("unscripted query: %d", resp.StatusCode)
+	}
+	searchLog, _ := s.Logs()
+	if len(searchLog) != 5 || searchLog[0].Status != 429 || searchLog[1].Status != 500 || searchLog[2].Status != 200 {
+		t.Errorf("log %+v", searchLog)
+	}
+
+	// Reset rewinds the scripts.
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/_mock/reset", nil)
+	if resp, err := http.DefaultClient.Do(req); err != nil || resp.StatusCode != 204 {
+		t.Fatalf("reset: %v", err)
+	}
+	if status, _, _, _ := search(); status != 429 {
+		t.Errorf("after reset: %d", status)
+	}
+}

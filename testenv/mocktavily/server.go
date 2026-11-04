@@ -15,6 +15,12 @@
 // and latency with [mock:slow-N], which delays the reply N ms (at most 5000);
 // live searches took 1.1-2.8 s. /_mock/requests reports credits per X-Project-ID.
 //
+// Fixtures.Faults scripts failures per query instead, for queries a test
+// cannot mark (they are built from extracted claims): each search for the
+// query takes the next fault in its list (a status with an optional
+// Retry-After, a delay, or both); once the list is used up the query is
+// answered normally. /_mock/reset rewinds the lists.
+//
 // A missing or wrong bearer key returns 401. Extract URLs containing
 // "mock-fail" land in failed_results. Queries listed in
 // Fixtures.RefuseLiveFetch get 434 when they set max_age_hours, as Tavily
@@ -58,6 +64,17 @@ type Fixtures struct {
 	// RefuseLiveFetch lists normalised queries refused with 434 when the
 	// search sets max_age_hours.
 	RefuseLiveFetch []string `json:"refuse_live_fetch"`
+	// Faults maps a normalised query to the faults its searches meet, in order.
+	Faults map[string][]Fault `json:"faults"`
+}
+
+// Fault is one scripted search failure: the reply is held DelayMs, then,
+// when Status is set, refused with that status (Tavily's message for it)
+// and Retry-After if given. A delay alone still answers normally.
+type Fault struct {
+	Status     int    `json:"status,omitempty"`
+	RetryAfter string `json:"retry_after,omitempty"`
+	DelayMs    int    `json:"delay_ms,omitempty"`
 }
 
 // maxLogged bounds the search and extract logs.
@@ -115,6 +132,7 @@ type Server struct {
 
 	searchLog  []SearchLog
 	extractLog []ExtractLog
+	faultsUsed map[string]int // query -> faults consumed
 }
 
 // Seen describes the last authenticated request: the attribution headers
@@ -213,7 +231,8 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.noteUsage(req.IncludeUsage)
-	if d := s.cfg.SearchDelay + slowMarker(req.Query); d > 0 {
+	fault := s.nextFault(req.Query)
+	if d := s.cfg.SearchDelay + slowMarker(req.Query) + time.Duration(min(fault.DelayMs, 60000))*time.Millisecond; d > 0 {
 		select {
 		case <-time.After(d):
 		case <-r.Context().Done():
@@ -228,6 +247,13 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.TrimSpace(req.Query) == "" {
 		fail(http.StatusBadRequest, "Query is missing.")
+		return
+	}
+	if fault.Status != 0 {
+		if fault.RetryAfter != "" {
+			w.Header().Set("Retry-After", fault.RetryAfter)
+		}
+		fail(fault.Status, faultMessage(fault.Status))
 		return
 	}
 	for marker, e := range injected {
@@ -367,6 +393,32 @@ func (s *Server) extract(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+// nextFault takes the query's next scripted fault, if any.
+func (s *Server) nextFault(query string) Fault {
+	q := normalise(query)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	faults := s.cfg.Fixtures.Faults[q]
+	if s.faultsUsed[q] >= len(faults) {
+		return Fault{}
+	}
+	if s.faultsUsed == nil {
+		s.faultsUsed = map[string]int{}
+	}
+	s.faultsUsed[q]++
+	return faults[s.faultsUsed[q]-1]
+}
+
+// faultMessage is Tavily's message for a status the markers inject.
+func faultMessage(status int) string {
+	for _, e := range injected {
+		if e.status == status {
+			return e.msg
+		}
+	}
+	return http.StatusText(status)
+}
+
 func parseURLs(raw json.RawMessage) ([]string, error) {
 	var one string
 	if json.Unmarshal(raw, &one) == nil {
@@ -480,6 +532,7 @@ func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
 	s.byProject = nil
 	s.last = Seen{}
 	s.searchLog, s.extractLog = nil, nil
+	s.faultsUsed = nil
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
 }

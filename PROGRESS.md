@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Tasks 32–35 (typed comparators, evidence-backed verdicts, strength and freshness score, persistent reports), 3 Nov 2026. M1 decision: **GO** ([M1_REPORT.md](M1_REPORT.md)).
-- **Next:** Task 36 (untrusted web content).
+- **Last completed:** Tasks 36–39 (untrusted web content, failure handling, operator metrics, audit/monitor/protect modes), 4 Nov 2026. M1 decision: **GO** ([M1_REPORT.md](M1_REPORT.md)).
+- **Next:** Task 40 (adaptive verification budget).
 
 ## Completed
 
@@ -46,6 +46,10 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 33 | 2026-11-03 | Evidence-backed verdicts (`judge.go`): one strict-schema judge call per checked claim on the tenant's verifier key, evidence in delimited blocks with injected tags stripped; every quote verified verbatim against its cited source; the typed comparator overrules the judge when it applies; OUTDATED only with a verified history quote stating the claimed value, else CONTRADICTED; CONFLICTING needs a verified quote from a second source; a 402 stops the rest. Report verdict is the claims' worst |
 | 34 | 2026-11-03 | Strength and score (`strength.go`): STRONG / MODERATE / WEAK from agreeing registrable domains (public suffix list), primary sources (preferred domain or named after the subject) and the verified quote; freshness score from the audit's fixed table, labelled heuristic |
 | 35 | 2026-11-03 | Persistent reports (`store.go`): `report_store_path` → SQLite (the gateway's own driver); in-flight reports in memory, completed ones written in one transaction with claim and source rows (verifier key, credits, relay and judge request ids, quote, domain); retention by age (`report_retention_hours`, 30 days) and count; versioned migrations, a newer schema refused; answer text not persisted unless `persist_answer_text`. `make claims`: mock 35/35 (incl. restart), live 18/18. Every other suite rerun green |
+| 36 | 2026-11-04 | `untrusted.go`: web text cleaned (markup, hidden Unicode, size caps), instruction-like sentences removed and the source flagged, unsafe URLs dropped and counted. A flagged source backs no verdict. 10 adversarial fixtures plus an oversized reply; checked through the gateway by `make operator` |
+| 37 | 2026-11-04 | `resilience.go`: failures classified; short Retry-After waited, long one opens the circuit; circuit breakers for Tavily and the verifier LLM; 432/433 pause Tavily; 402 pauses that tenant's audits; search timeout. `make failures`: 28 of 28 against scripted mock Tavily faults |
+| 38 | 2026-11-04 | `metrics.go`: per-tenant audits, verdicts, credits, USD, tokens and failures; `GET /api/halflife/usage` (JSON) and `/metrics` (Prometheus text). Credits match mock Tavily's per-project count |
+| 39 | 2026-11-04 | `modes.go`, `list.go`: `audit` (default), `monitor` (same response headers as with the plugin off) and `protect` (opt-in wait for `X-Halflife-Verdict`, fail-open at `protect_timeout_ms`); `GET /api/halflife/reports` list. `make operator`: 33 of 33 |
 
 ## Decisions
 
@@ -102,6 +106,12 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D48 | OUTDATED needs a verified quote showing the claimed value once held; without it a differing value is CONTRADICTED | "Outdated" says the answer was right once; claiming that without evidence would flatter the model. This is the audit's distinction (§3.4) and keeps the two verdicts honest. Cache eviction on OUTDATED waits for Task 41; until then `verify()` evicts nothing. |
 | D49 | Strength counts registrable domains, not hosts; the freshness score is the audit's fixed table (§3.5), labelled heuristic | docs.acme.example and acme.example are one publisher. The score is for display and ranking, never a probability; calibration is checked on held-out data in Milestone 5 before anything is claimed about it. |
 | D50 | Completed reports go to SQLite; in-flight ones stay in memory; the answer text is not persisted by default | The verifier mutates a report many times while it runs, so writing once on completion keeps writes to one transaction per report. The answer text is the tenant's data and is not needed for metrics or provenance (claims and spans are), so storing it is opt-in (`persist_answer_text`). The driver is the one the gateway already ships (`mattn/go-sqlite3`), so no new dependency enters the build. |
+| D51 | A flagged source backs no verdict: a quote from one gives UNVERIFIABLE, and it can't serve as a history or conflicting quote | Removing the instruction isn't enough: the rest of a page that tries to steer the model is not evidence anyone should rest a verdict on. Benign wording fixtures pin the false-positive side |
+| D52 | Short Retry-After (≤ 5 s) is waited out once; a longer one opens the circuit (at most 10 min) instead of holding a worker | A worker asleep for a minute blocks every tenant's audits, and the audit deadline would kill it anyway |
+| D53 | One circuit per dependency, shared by all tenants; only outages count (timeouts, network, 429, 5xx). Any other reply closes it. One probe after the cooldown | A 402 or 400 says the service is up. Audits skip extraction while either circuit is open, so nothing is paid for claims that can't be checked; the report says `verifier_unavailable` and why |
+| D54 | A 402 pauses that tenant's audits for `budget_backoff_seconds`, without a call; other tenants go on. The pause applies only once there is something to spend on | Budget-aware degradation. Found by `make verify`: an answer with nothing to check must still report `no_claim` during a pause |
+| D55 | USD is credits × `tavily_credit_usd` plus the cost the gateway reports for LLM calls; counters live in memory and restart at zero | Same price the relay charges. A provider that reports no cost counts as 0, so LLM USD is a floor; tokens stay exact. SQLite keeps the per-claim record for longer periods |
+| D56 | `protect` is opt-in per request (or `protect_all`), non-streaming, fail-open, and never changes the body; `monitor` changes nothing in the response or the cache | Waiting on web search can't be the default on a gateway. An operator can run monitor first and compare; a timeout must degrade to the normal path, never to an error |
 
 ## Blockers and inputs needed
 

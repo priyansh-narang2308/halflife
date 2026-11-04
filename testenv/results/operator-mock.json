@@ -1,0 +1,115 @@
+{
+  "recorded_at": "2026-11-04T03:18:40Z",
+  "mode": "mock",
+  "note": "Synthetic keys; mock LLM and mock Tavily. No page text recorded.",
+  "reports": [
+    {
+      "name": "wave",
+      "outcome": "evidence_found",
+      "verdict": "UNVERIFIABLE",
+      "claims": [
+        {
+          "text": "Hooli Wave has a limit of 60 seats.",
+          "status": "checked",
+          "verdict": "UNVERIFIABLE",
+          "verdict_reason": "the quote comes from a source flagged for instruction-like text",
+          "quote_flagged": true,
+          "dropped_sources": 2,
+          "sources": [
+            {
+              "url": "https://hooli.example/wave/plans",
+              "flagged": null,
+              "flag_reason": null
+            },
+            {
+              "url": "https://forum.example/hooli-wave",
+              "flagged": true,
+              "flag_reason": "asks to ignore instructions"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "chat",
+      "outcome": "evidence_found",
+      "verdict": "UNVERIFIABLE",
+      "claims": [
+        {
+          "text": "Hooli Chat has a limit of 50 seats.",
+          "status": "checked",
+          "verdict": "UNVERIFIABLE",
+          "verdict_reason": "the evidence does not say",
+          "quote_flagged": null,
+          "dropped_sources": null,
+          "sources": [
+            {
+              "url": "https://example.com/a/279e9741fd129f9b",
+              "flagged": null,
+              "flag_reason": null
+            },
+            {
+              "url": "https://example.org/b/279e9741fd129f9b",
+              "flagged": null,
+              "flag_reason": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "pages",
+      "outcome": "evidence_found",
+      "verdict": "UNVERIFIABLE",
+      "claims": [
+        {
+          "text": "Hooli Pages has a limit of 50 seats.",
+          "status": "checked",
+          "verdict": "UNVERIFIABLE",
+          "verdict_reason": "the evidence does not say",
+          "quote_flagged": null,
+          "dropped_sources": null,
+          "sources": [
+            {
+              "url": "https://example.com/a/5596d7b763da80fb",
+              "flagged": null,
+              "flag_reason": null
+            },
+            {
+              "url": "https://example.org/b/5596d7b763da80fb",
+              "flagged": null,
+              "flag_reason": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "quiet",
+      "outcome": "evidence_found",
+      "verdict": "UNVERIFIABLE",
+      "claims": [
+        {
+          "text": "Hooli Tasks has a limit of 50 seats.",
+          "status": "checked",
+          "verdict": "UNVERIFIABLE",
+          "verdict_reason": "the evidence does not say",
+          "quote_flagged": null,
+          "dropped_sources": null,
+          "sources": [
+            {
+              "url": "https://example.com/a/3a66e156a388fafe",
+              "flagged": null,
+              "flag_reason": null
+            },
+            {
+              "url": "https://example.org/b/3a66e156a388fafe",
+              "flagged": null,
+              "flag_reason": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

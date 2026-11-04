@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke bench cache relay budget tenants verify m1 llm claims
+.PHONY: up down status build test smoke bench cache relay budget tenants verify m1 llm claims failures operator
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -47,3 +47,9 @@ llm:     ## Verifier LLM client through the gateway: schema, fallbacks, retries,
 
 claims:  ## Claim extraction, scope, priority and retrieval policies through the gateway (LIVE=1: free OpenRouter models + real Tavily, at most 5 credits)
 	testenv/claims-pipeline.sh
+
+failures: ## Retries, circuit breakers, timeouts and budget backoff against scripted mock Tavily faults (ports 8090, 9101 and 9102 free)
+	testenv/failures.sh
+
+operator: ## Injected evidence, audit/monitor/protect modes, report list, usage and metrics endpoints (ports 8090, 9101 and 9102 free)
+	testenv/operator.sh

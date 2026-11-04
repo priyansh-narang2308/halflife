@@ -49,7 +49,7 @@ if [ -n "$LIVE" ]; then
     | (.governance.budgets[] | select(.id == "budget-verifier-acme") | .max_limit) = 0.04
     | (.relays[] | select(.name == "tavily")) |= (.base_url = "https://api.tavily.com" | .credential.value = "env.TAVILY_API_KEY")
     | (.plugins[] | select(.name == "halflife") | .config) += {verifier_models: ($models | split(",")), verifier_reasoning_effort: "low",
-        verifier_max_tokens: 4096, max_claims_per_response: 3, preferred_domains: {version: ["go.dev"]}}
+        verifier_max_tokens: 4096, max_claims_per_response: 3, audit_timeout_seconds: 170, preferred_domains: {version: ["go.dev"]}}
   ' "$ROOT/testenv/configs/m1/config.json" > "$CONFIG"
 else
   MODELS=openai/ok
@@ -157,6 +157,8 @@ else
   echo "extraction: $(r live '.extraction | {model, fallback, calls, malformed, truncated}')"
   echo "claims:"
   r live '.claims[] | {text, category, temporal_scope, volatility_band, priority, status, status_reason, query: .search.query, max_age: .search.max_age_hours, credits: .evidence.credits, top: .evidence.sources[0].url}' | sed 's/^/  /'
+  check "the audit finished: no error, no failed search, no judge failure" \
+    "$(r live '[.error, ([.claims[] | select(.status == "failed" or (.verdict_reason // "" | startswith("judge failed")))] | length)]')" '[null,0]'
   check "extraction returned schema-valid claims" "$(r live '(.claims | length) > 0')" true
   check "every claim passed the span check or was rejected with a reason" \
     "$(r live '[.claims[] | select(.status == "rejected") | .status_reason != null] | all')" true

@@ -84,10 +84,10 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | # | Task | Done when | Needs |
 |---|---|---|---|
 | [x] 35 | Persistent reports | SQLite store with claim-level provenance, retention limit, migrations | — |
-| [ ] 36 | Untrusted web content | Injection defences, size caps, sanitisation; adversarial fixtures pass | — |
-| [ ] 37 | Failure handling | Tavily 429 (Retry-After), 432/433/434, timeouts, circuit breaker; budget-aware degradation; failure-injection tests | — |
-| [ ] 38 | Operator attribution and metrics | Per-key audits, verdicts, credits and USD; metrics endpoint | — |
-| [ ] 39 | Audit / Protect / Monitor modes | Config-selectable modes with documented behaviour and tests | — |
+| [x] 36 | Untrusted web content | Injection defences, size caps, sanitisation; adversarial fixtures pass | 2026-11-04 |
+| [x] 37 | Failure handling | Tavily 429 (Retry-After), 432/433/434, timeouts, circuit breaker; budget-aware degradation; failure-injection tests | 2026-11-04 |
+| [x] 38 | Operator attribution and metrics | Per-key audits, verdicts, credits and USD; metrics endpoint | 2026-11-04 |
+| [x] 39 | Audit / Protect / Monitor modes | Config-selectable modes with documented behaviour and tests | 2026-11-04 |
 
 ## Milestone 4: Differentiation
 

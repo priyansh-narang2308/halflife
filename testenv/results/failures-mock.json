@@ -1,0 +1,265 @@
+{
+  "recorded_at": "2026-11-04T03:18:20Z",
+  "mode": "mock",
+  "note": "Synthetic keys; mock LLM and mock Tavily with scripted faults.",
+  "reports": [
+    {
+      "name": "notes",
+      "outcome": "evidence_found",
+      "outcome_reason": null,
+      "error": null,
+      "claims": [
+        {
+          "text": "Hooli Notes has a limit of 50 seats.",
+          "status": "checked",
+          "status_reason": null,
+          "failure": null,
+          "credits": 1
+        }
+      ]
+    },
+    {
+      "name": "drive",
+      "outcome": "search_failed",
+      "outcome_reason": null,
+      "error": "tavily relay: 429 Your request has been blocked due to excessive requests. Please reduce the rate of requests.",
+      "claims": [
+        {
+          "text": "Hooli Drive has a limit of 50 seats.",
+          "status": "failed",
+          "status_reason": "tavily relay: 429 Your request has been blocked due to excessive requests. Please reduce the rate of requests.",
+          "failure": "rate_limited",
+          "credits": 0
+        }
+      ]
+    },
+    {
+      "name": "mail",
+      "outcome": "verifier_unavailable",
+      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T03:18:11Z): rate limited, Retry-After 8s",
+      "error": null,
+      "claims": []
+    },
+    {
+      "name": "chat",
+      "outcome": "evidence_found",
+      "outcome_reason": null,
+      "error": null,
+      "claims": [
+        {
+          "text": "Hooli Chat has a limit of 50 seats.",
+          "status": "checked",
+          "status_reason": null,
+          "failure": null,
+          "credits": 1
+        }
+      ]
+    },
+    {
+      "name": "docs",
+      "outcome": "verifier_unavailable",
+      "outcome_reason": null,
+      "error": "tavily relay: 432 This request exceeds your plan's set usage limit. Please upgrade your plan or contact support.",
+      "claims": [
+        {
+          "text": "Hooli Docs has a limit of 50 seats.",
+          "status": "not_checked",
+          "status_reason": "Tavily credits exhausted: tavily relay: 432 This request exceeds your plan's set usage limit. Please upgrade your plan or contact support.",
+          "failure": "out_of_credits",
+          "credits": 0
+        }
+      ]
+    },
+    {
+      "name": "sheets",
+      "outcome": "verifier_unavailable",
+      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T03:18:14Z): Tavily credits exhausted: tavily relay: 432 This request exceeds your plan's set usage limit. Please upgrade your plan or contact support.",
+      "error": null,
+      "claims": []
+    },
+    {
+      "name": "slides",
+      "outcome": "evidence_found",
+      "outcome_reason": null,
+      "error": null,
+      "claims": [
+        {
+          "text": "Hooli Slides has a limit of 50 seats.",
+          "status": "checked",
+          "status_reason": null,
+          "failure": null,
+          "credits": 1
+        }
+      ]
+    },
+    {
+      "name": "forms",
+      "outcome": "search_failed",
+      "outcome_reason": null,
+      "error": "tavily relay: 500 Internal server error.",
+      "claims": [
+        {
+          "text": "Hooli Forms has a limit of 50 seats.",
+          "status": "failed",
+          "status_reason": "tavily relay: 500 Internal server error.",
+          "failure": "server_error",
+          "credits": 0
+        }
+      ]
+    },
+    {
+      "name": "keep",
+      "outcome": "verifier_unavailable",
+      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T03:18:19Z): 2 consecutive failures, last: tavily relay: 500 Internal server error.",
+      "error": null,
+      "claims": []
+    },
+    {
+      "name": "tasks",
+      "outcome": "evidence_found",
+      "outcome_reason": null,
+      "error": null,
+      "claims": [
+        {
+          "text": "Hooli Tasks has a limit of 50 seats.",
+          "status": "checked",
+          "status_reason": null,
+          "failure": null,
+          "credits": 1
+        }
+      ]
+    },
+    {
+      "name": "meet",
+      "outcome": "search_failed",
+      "outcome_reason": null,
+      "error": "tavily relay: search: Post \"http://127.0.0.1:8090/relay/tavily/search\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+      "claims": [
+        {
+          "text": "Hooli Meet has a limit of 50 seats.",
+          "status": "failed",
+          "status_reason": "tavily relay: search: Post \"http://127.0.0.1:8090/relay/tavily/search\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+          "failure": "timeout",
+          "credits": 0
+        }
+      ]
+    },
+    {
+      "name": "voice",
+      "outcome": "evidence_found",
+      "outcome_reason": null,
+      "error": "tavily relay: 402 Budget exceeded: vk_model_config * budget exceeded: 0.0080 >= 0.0080 dollars",
+      "claims": [
+        {
+          "text": "Hooli Voice has a limit of 50 seats.",
+          "status": "checked",
+          "status_reason": "extract refused: verifier budget spent (402)",
+          "failure": null,
+          "credits": 1
+        }
+      ]
+    },
+    {
+      "name": "photos",
+      "outcome": "budget_exhausted",
+      "outcome_reason": "verifier budget refused a call (402); audits for this tenant paused until 2026-11-04T03:28:20Z",
+      "error": null,
+      "claims": []
+    },
+    {
+      "name": "sheets2",
+      "outcome": "evidence_found",
+      "outcome_reason": null,
+      "error": null,
+      "claims": [
+        {
+          "text": "Hooli Sheets has a limit of 50 seats.",
+          "status": "checked",
+          "status_reason": null,
+          "failure": null,
+          "credits": 2
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "tenants": [
+      {
+        "tenant_virtual_key_id": "vk-acme",
+        "tenant_virtual_key_name": "Acme app",
+        "verifier_virtual_key_id": "vk-verifier-acme",
+        "audits": 12,
+        "outcomes": {
+          "evidence_found": 5,
+          "search_failed": 3,
+          "verifier_unavailable": 4
+        },
+        "verdicts": {
+          "NOT_CHECKED": 4,
+          "UNVERIFIABLE": 5,
+          "not_judged": 3
+        },
+        "claim_verdicts": {
+          "NOT_CHECKED": 4,
+          "UNVERIFIABLE": 5
+        },
+        "claims_checked": 5,
+        "searches": 5,
+        "searches_reused": 0,
+        "extracts": 5,
+        "tavily_credits": 6,
+        "tavily_usd": 0.048,
+        "llm_calls": 14,
+        "llm_prompt_tokens": 3911,
+        "llm_completion_tokens": 167,
+        "llm_usd": 0,
+        "failures": {
+          "out_of_credits": 1,
+          "rate_limited": 1,
+          "server_error": 1,
+          "timeout": 1
+        }
+      },
+      {
+        "tenant_virtual_key_id": "vk-globex",
+        "tenant_virtual_key_name": "Globex app",
+        "verifier_virtual_key_id": "vk-verifier-globex",
+        "audits": 2,
+        "outcomes": {
+          "budget_exhausted": 1,
+          "evidence_found": 1
+        },
+        "verdicts": {
+          "NOT_CHECKED": 1,
+          "not_judged": 1
+        },
+        "claim_verdicts": {
+          "NOT_CHECKED": 1
+        },
+        "claims_checked": 1,
+        "searches": 1,
+        "searches_reused": 0,
+        "extracts": 0,
+        "tavily_credits": 1,
+        "tavily_usd": 0.008,
+        "llm_calls": 1,
+        "llm_prompt_tokens": 309,
+        "llm_completion_tokens": 18,
+        "llm_usd": 0,
+        "failures": {}
+      }
+    ],
+    "dependencies": {
+      "llm": {
+        "state": "closed",
+        "consecutive_failures": 0,
+        "opens": 0
+      },
+      "tavily": {
+        "state": "closed",
+        "consecutive_failures": 0,
+        "opens": 3
+      }
+    }
+  }
+}

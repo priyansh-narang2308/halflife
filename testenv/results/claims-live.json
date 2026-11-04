@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-03T16:14:03Z",
+  "recorded_at": "2026-11-04T03:23:17Z",
   "mode": "live",
   "verifier_models": [
     "openrouter/nvidia/nemotron-3.5-super-vl:free",
@@ -51,6 +51,84 @@
             "max_age_hours": 24
           },
           "verdict": "UNVERIFIABLE",
+          "verdict_reason": "judge reply unusable: verifier llm: reply cut off at the token limit (4096 tokens)",
+          "observed_value": null,
+          "comparison": null,
+          "quote": null,
+          "history_verified": null,
+          "judge": {
+            "model": "nvidia/nemotron-3.5-super-vl:free",
+            "fallback": false,
+            "calls": 1,
+            "malformed": 1,
+            "truncated": true
+          },
+          "strength": null,
+          "strength_reason": null,
+          "freshness_score": null,
+          "evidence": {
+            "credits": 1,
+            "reused": false,
+            "live_fetch_refused": null,
+            "extracted_url": null,
+            "sources": [
+              {
+                "url": "https://go.dev/doc/go1.25",
+                "title": "Go 1.25 Release Notes - The Go Programming Language",
+                "published_date": "Thu, 27 Mar 2025 00:00:00 GMT",
+                "extracted": false
+              },
+              {
+                "url": "https://go.dev/dl",
+                "title": "All releases - The Go Programming Language",
+                "published_date": null,
+                "extracted": false
+              },
+              {
+                "url": "https://stackoverflow.com/questions/51933636/url-for-latest-stable-go-release",
+                "title": "URL for latest stable Go release",
+                "published_date": "Tue, 06 Nov 2018 03:00:00 GMT",
+                "extracted": false
+              },
+              {
+                "url": "https://registry.suse.com/repositories/bci-golang-stable",
+                "title": "SLE BCI Go (stable) development Container Image | SUSE Container Images",
+                "published_date": null,
+                "extracted": false
+              },
+              {
+                "url": "https://www.reddit.com/r/golang/comments/1lzmbcc/made_a_bash_script_to_autoinstall_the_lastest",
+                "title": "Made a bash script to autoinstall the lastest stable version ...",
+                "published_date": "Tue, 04 Nov 2025 03:00:00 GMT",
+                "extracted": false
+              }
+            ]
+          }
+        },
+        {
+          "text": "GitHub Copilot Pro costs $10 per month.",
+          "span": "GitHub Copilot Pro costs $10 per month.",
+          "subject": "GitHub Copilot Pro",
+          "attribute": "monthly price",
+          "asserted_value": "$10 per month",
+          "category": "price",
+          "temporal_scope": "CURRENT",
+          "scope_reason": "extractor's label",
+          "as_of": null,
+          "volatility_band": "WEEKS_MONTHS",
+          "priority": "HIGH",
+          "priority_reason": "540d since default 18-month cutoff age ≥ WEEKS_MONTHS band change",
+          "status": "checked",
+          "status_reason": null,
+          "search": {
+            "query": "GitHub Copilot Pro monthly price",
+            "search_depth": "basic",
+            "max_results": 5,
+            "chunks_per_source": 3,
+            "include_published_date": true,
+            "max_age_hours": 24
+          },
+          "verdict": "UNVERIFIABLE",
           "verdict_reason": "the evidence does not say",
           "observed_value": null,
           "comparison": null,
@@ -74,98 +152,18 @@
             "credits": 1,
             "reused": false,
             "live_fetch_refused": null,
-            "extracted_url": null,
+            "extracted_url": "https://www.reddit.com/r/GithubCopilot/comments/1huccl6/copilot_pro_pricing_whats_the_catch",
             "sources": [
-              {
-                "url": "https://go.dev",
-                "title": "The Go Programming Language",
-                "published_date": "Sun, 27 Oct 2019 00:00:00 GMT",
-                "extracted": false
-              },
-              {
-                "url": "https://cacm.acm.org/research/the-go-programming-language-and-environment",
-                "title": "The Go Programming Language and Environment",
-                "published_date": "Sun, 01 May 2022 05:00:00 GMT",
-                "extracted": false
-              },
-              {
-                "url": "https://endoflife.date/go",
-                "title": "Go | endoflife.date",
-                "published_date": "Wed, 21 Oct 2026 00:00:00 GMT",
-                "extracted": false
-              },
-              {
-                "url": "https://www.facebook.com/groups/7daystodie/posts/26888373984191378",
-                "title": "Where is the tab to switch from stable to beta in 7 Days ...",
-                "published_date": null,
-                "extracted": false
-              }
-            ]
-          }
-        },
-        {
-          "text": "GitHub Copilot Pro costs $10 per month.",
-          "span": "GitHub Copilot Pro costs $10 per month.",
-          "subject": "GitHub Copilot Pro",
-          "attribute": "cost",
-          "asserted_value": "$10 per month",
-          "category": "price",
-          "temporal_scope": "CURRENT",
-          "scope_reason": "extractor's label",
-          "as_of": null,
-          "volatility_band": "WEEKS_MONTHS",
-          "priority": "HIGH",
-          "priority_reason": "540d since default 18-month cutoff age ≥ WEEKS_MONTHS band change",
-          "status": "checked",
-          "status_reason": null,
-          "search": {
-            "query": "GitHub Copilot Pro cost",
-            "search_depth": "basic",
-            "max_results": 5,
-            "chunks_per_source": 3,
-            "include_published_date": true,
-            "max_age_hours": 24
-          },
-          "verdict": "CURRENT",
-          "verdict_reason": "price comparator: USD 10 per month vs USD 10 per user per month",
-          "observed_value": "$10 per user per month",
-          "comparison": {
-            "kind": "price",
-            "result": "same",
-            "detail": "USD 10 per month vs USD 10 per user per month"
-          },
-          "quote": {
-            "source": 0,
-            "url": "https://techjacksolutions.com/ai-tools/github-copilot/github-copilot-pricing",
-            "verified": true
-          },
-          "history_verified": null,
-          "judge": {
-            "model": "nvidia/nemotron-3.5-super-vl:free",
-            "fallback": false,
-            "calls": 1,
-            "malformed": 0,
-            "truncated": false
-          },
-          "strength": "WEAK",
-          "strength_reason": "1 agreeing domain(s), 0 primary",
-          "freshness_score": 60,
-          "evidence": {
-            "credits": 1,
-            "reused": false,
-            "live_fetch_refused": null,
-            "extracted_url": null,
-            "sources": [
-              {
-                "url": "https://techjacksolutions.com/ai-tools/github-copilot/github-copilot-pricing",
-                "title": "GitHub Copilot Pricing: Definitive Guide 2026",
-                "published_date": "Tue, 16 Jun 2026 23:40:00 GMT",
-                "extracted": false
-              },
               {
                 "url": "https://www.reddit.com/r/GithubCopilot/comments/1huccl6/copilot_pro_pricing_whats_the_catch",
                 "title": "Copilot pro pricing, what's the catch? : r/GithubCopilot",
-                "published_date": "Mon, 03 Nov 2025 16:00:00 GMT",
+                "published_date": null,
+                "extracted": false
+              },
+              {
+                "url": "https://tavily.com/knowledge/company/WGf4o1saQ1yD",
+                "title": "GitHub | Tavily",
+                "published_date": null,
                 "extracted": false
               }
             ]
