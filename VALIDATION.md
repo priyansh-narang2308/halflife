@@ -1349,7 +1349,7 @@ The optional live fallback run with a second provider key was not done.
 
 ### Task 43: HL-Claims (not finished)
 
-`eval/hl-claims/`: 240 claims (60 / 40 / 30 / 30 / 20 / 30 / 30 by stratum), split 96 dev, 144 test by question, frozen in `MANIFEST.json`; `make dataset` rebuilds identically and fails if the split would change. Sources: FreshQA snapshots of 26 Feb 2024 and 21 Apr 2026 (159 usable changed answers before filtering), RecencyQA at `21b0c3b`, 20 curated disputed facts whose URLs load.
+`eval/hl-claims/`: 240 claims (60 / 40 / 30 / 30 / 20 / 30 / 30 by stratum), split 96 dev, 144 test by question, frozen in `MANIFEST.json`; `make dataset` rebuilds identically and fails if the split would change. Sources: FreshQA snapshots of 26 Feb 2024 and 21 Apr 2026 (160 changed answers before filtering), RecencyQA at `21b0c3b`, 20 curated disputed facts whose URLs load.
 
 **Not done:** human labelling. Labels are rule-made drafts, there is no Cohen's kappa, and no evaluation result may use them yet. Curated Jan–Oct 2026 changes and HL-Answers were not added. FreshQA's data licence is unstated, so check it before publishing the dataset.
 
