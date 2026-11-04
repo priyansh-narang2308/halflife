@@ -5,7 +5,7 @@
 # model would answer afresh.
 set -Eeuo pipefail
 GW="${GW:-http://127.0.0.1:8080}"
-TOKEN=halflife-test-setup-token # synthetic, from deploy/demo/config.json
+TOKEN="${TOKEN:-halflife-test-setup-token}" # synthetic default, from deploy/demo/config.json
 Q="${Q:-Give me an overview of Acme Cloud.}"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 

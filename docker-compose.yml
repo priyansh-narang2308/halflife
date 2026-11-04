@@ -2,10 +2,13 @@
 # cache, and, in the demo profile, mock providers that make no external call.
 #
 #   docker compose --profile demo up --build                                 mocks, no keys
-#   HALFLIFE_CONFIG=./deploy/live/config.json docker compose up --build      real providers, keys from .env
+#   HALFLIFE_ENV_FILE=.env HALFLIFE_CONFIG=./deploy/live/config.json docker compose up --build      real providers
+#   ./deploy/share.sh                                                        the demo, on a public link
 #
-# The virtual keys and setup token in deploy/ are synthetic. Replace them
-# before exposing the gateway to anyone.
+# The virtual keys and setup token in deploy/ are synthetic and public. Replace
+# them before exposing the gateway; share.sh replaces the token. Keys from .env
+# reach the gateway only when HALFLIFE_ENV_FILE asks for them: the setup token
+# can reconfigure providers, so the demo must never hold real keys.
 name: halflife
 
 services:
@@ -16,7 +19,7 @@ services:
     ports:
       - "${GATEWAY_BIND:-127.0.0.1}:${GATEWAY_PORT:-8080}:8080" # loopback until the deploy/ keys are replaced
     env_file:
-      - path: .env
+      - path: ${HALFLIFE_ENV_FILE:-/dev/null}
         required: false
     volumes:
       - ${HALFLIFE_CONFIG:-./deploy/demo/config.json}:/app/data/config.json:ro

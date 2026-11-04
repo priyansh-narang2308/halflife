@@ -1387,3 +1387,7 @@ Status: harness, dashboard and stack verified. The accuracy pilot is live but on
 **Judge with reasoning off (live, 1 direct call).** Real judge prompt and schema, real Tavily evidence, Nemotron: CONTRADICTS, current value 2976 against the claimed 2974, 3.7 s, 110 completion tokens. Not through the gateway. It used the day's last free request (49 of 50 before it).
 
 **Span fix.** Red first (`widenSpan` undefined), then green. Plugin tests under `-race`, 96.1% coverage; smoke, claims, verify, m1, llm, failures and operator all pass on the rebuilt gateway. The other suites were not rerun for this change.
+
+**Sharing the demo.** Hugging Face now requires a paid plan to create a Docker Space (official docs, 4 Nov 2026). Render's free tier sleeps after 15 minutes idle; the stack measured about 415 MiB, too close to the 512 MB reported for it. So `deploy/share.sh` runs the mock stack on your machine with a fresh setup token. Tested with `NO_TUNNEL=1`, so the ngrok step itself has not been run.
+
+`docker-compose.yml` used to load `.env` into the demo gateway, where the public setup token could have reached real keys. `.env` now loads only with `HALFLIFE_ENV_FILE`.

@@ -23,10 +23,12 @@ Then open the dashboard at <http://localhost:8080/workspace/halflife>.
 With real providers, put `OPENROUTER_API_KEY` and `TAVILY_API_KEY` in `.env` (see `.env.example`) and point the stack at the live config. It uses free models, and has no semantic cache because it has no embedding provider configured.
 
 ```bash
-HALFLIFE_CONFIG=./deploy/live/config.json docker compose up --build
+HALFLIFE_ENV_FILE=.env HALFLIFE_CONFIG=./deploy/live/config.json docker compose up --build
 ```
 
-The keys and setup token in `deploy/` are synthetic. Replace them before exposing the gateway.
+To show the demo on a public link, `./deploy/share.sh` starts it with a fresh setup token and opens an ngrok tunnel (needs a free ngrok account). It needs your machine running, and the mock stack never receives your `.env`.
+
+The keys and setup token in `deploy/` are synthetic and public. Never expose the live config with them.
 
 ## Why a gateway
 

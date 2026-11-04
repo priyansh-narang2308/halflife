@@ -7,7 +7,7 @@ Deadline: 15 Nov 2026, 23:59 IST, on HackCulture. Judging: 29 Nov. Confirm the t
 | Source repository | Done: github.com/priyansh-narang2308/halflife and the fork github.com/priyansh-narang2308/halflife-bifrost. Both must be public on the day |
 | Project description and problem statement | Done: README |
 | Technologies | Done: Go, Bifrost plugin API, Tavily Search and Extract, Redis, React, TanStack Router, Docker |
-| Working demo | Stack done: docker-compose.yml. Hosted URL needs a hosting choice |
+| Working demo | Done: docker-compose.yml, and `deploy/share.sh` for a public link while your laptop runs it. Run it for the live round on 29 Nov |
 | Demo video | Script done: DEMO.md. Needs recording |
 | Evaluation | Pilot only: see EVALUATION.md. Two human labellers, Cohen's kappa and the held-out run are outstanding |
 | AI-use disclosure | Draft below; review it, then include it |

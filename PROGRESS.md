@@ -133,6 +133,7 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D65 | Dashboard reads Halflife reports under the Logs permission | Reports hold audited answers, which are log data |
 | D66 | Compose binds the gateway to loopback by default, and mock providers set `allow_private_network` | The keys in `deploy/` are synthetic; Bifrost refuses private addresses otherwise, and that default stays on in the live config |
 | D67 | Free models only; verifier runs with `reasoning.effort: none`, and the evaluation records across days within the 50-a-day cap | Your call, 4 Nov 2026: no budget for credit. Every free model on OpenRouter reasons by default, and `low` burned the token limit; `none` took 67–88 tokens in a probe |
+| D68 | The public demo is the mock stack on your own machine through ngrok, with a fresh setup token each session; the demo gateway never receives `.env` | No free host fits: Hugging Face Docker Spaces need a paid plan and Render's free tier sleeps with too little memory. The token in the repo is public and can reconfigure providers |
 
 ## Blockers and inputs needed
 

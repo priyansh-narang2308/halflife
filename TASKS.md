@@ -111,6 +111,6 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | # | Task | Done when | Needs |
 |---|---|---|---|
 | [x] 47 | Halflife inside Bifrost's dashboard | A Halflife view in Bifrost's own UI (built from source, Task 04): claims, verdicts, sources, spend and cache events, next to Bifrost's logs and governance pages | — |
-| [ ] 48 | Deployment (Compose stack done; hosted demo open) | Docker Compose stack plus a hosted demo | Hosting choice |
+| [ ] 48 | Deployment (Compose stack and `deploy/share.sh` done; public link not yet opened) | Docker Compose stack plus a hosted demo | Hosting choice |
 | [ ] 49 | Docs and demo video (docs done; video open) | README, ARCHITECTURE, sponsor explanations; recorded before/after demo | You record or approve |
 | [ ] 50 | Submission | Checklist complete, AI-use disclosure, submitted on HackCulture before 15 Nov 23:59 IST | You submit |
