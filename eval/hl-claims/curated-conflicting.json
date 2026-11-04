@@ -1,0 +1,22 @@
+[
+  {"claim": "The Nile is the longest river in the world.", "url": "https://en.wikipedia.org/wiki/Nile", "dispute": "Nile vs Amazon, depending on the source point and how the length is measured"},
+  {"claim": "There are seven continents.", "url": "https://en.wikipedia.org/wiki/Continent", "dispute": "conventions range from four to seven"},
+  {"claim": "Tokyo is the most populous city in the world.", "url": "https://en.wikipedia.org/wiki/List_of_largest_cities", "dispute": "rankings differ by how a city's boundary is defined"},
+  {"claim": "Alexander Graham Bell invented the telephone.", "url": "https://en.wikipedia.org/wiki/Invention_of_the_telephone", "dispute": "Bell, Meucci and Gray"},
+  {"claim": "The Wright brothers made the first powered flight.", "url": "https://en.wikipedia.org/wiki/Gustave_Whitehead", "dispute": "Whitehead and Santos-Dumont claims"},
+  {"claim": "Mount Everest is the tallest mountain on Earth.", "url": "https://en.wikipedia.org/wiki/List_of_highest_mountains_on_Earth", "dispute": "above sea level vs base to peak (Mauna Kea)"},
+  {"claim": "About 70 million people died in World War II.", "url": "https://en.wikipedia.org/wiki/World_War_II_casualties", "dispute": "estimates range from about 70 to 85 million"},
+  {"claim": "The University of al-Qarawiyyin is the oldest university in the world.", "url": "https://en.wikipedia.org/wiki/List_of_oldest_universities_in_continuous_operation", "dispute": "al-Qarawiyyin vs Bologna, on what counts as a university"},
+  {"claim": "Jeanne Calment lived to 122.", "url": "https://en.wikipedia.org/wiki/Jeanne_Calment", "dispute": "a disputed identity-switch theory"},
+  {"claim": "There are 195 countries in the world.", "url": "https://en.wikipedia.org/wiki/List_of_sovereign_states", "dispute": "counts differ by recognition"},
+  {"claim": "La Paz is the capital of Bolivia.", "url": "https://en.wikipedia.org/wiki/Bolivia", "dispute": "Sucre is the constitutional capital; La Paz the seat of government"},
+  {"claim": "Pretoria is the capital of South Africa.", "url": "https://en.wikipedia.org/wiki/South_Africa", "dispute": "three capitals for three branches of government"},
+  {"claim": "The Hubble constant is about 73 km/s/Mpc.", "url": "https://en.wikipedia.org/wiki/Hubble%27s_law", "dispute": "the Hubble tension: about 67 vs about 73"},
+  {"claim": "A free neutron has a mean lifetime of about 888 seconds.", "url": "https://en.wikipedia.org/wiki/Free_neutron_decay", "dispute": "beam and bottle measurements disagree"},
+  {"claim": "William Shakespeare was born on 23 April 1564.", "url": "https://en.wikipedia.org/wiki/William_Shakespeare", "dispute": "only his baptism is recorded"},
+  {"claim": "Christopher Columbus was born in Genoa.", "url": "https://en.wikipedia.org/wiki/Origin_theories_of_Christopher_Columbus", "dispute": "competing origin theories"},
+  {"claim": "The Challenger Deep is 10,935 metres deep.", "url": "https://en.wikipedia.org/wiki/Challenger_Deep", "dispute": "published depths differ by survey"},
+  {"claim": "Thomas Edison invented the light bulb.", "url": "https://en.wikipedia.org/wiki/Incandescent_light_bulb", "dispute": "Edison, Swan and earlier inventors"},
+  {"claim": "Guglielmo Marconi invented radio.", "url": "https://en.wikipedia.org/wiki/Invention_of_radio", "dispute": "Marconi, Tesla, Bose and others"},
+  {"claim": "Napoleon Bonaparte was about 5 feet 7 inches tall.", "url": "https://en.wikipedia.org/wiki/Napoleon_complex", "dispute": "French and English units gave different heights"}
+]

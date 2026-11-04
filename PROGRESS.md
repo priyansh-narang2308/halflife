@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Tasks 36–39 (untrusted web content, failure handling, operator metrics, audit/monitor/protect modes), 4 Nov 2026. M1 decision: **GO** ([M1_REPORT.md](M1_REPORT.md)).
-- **Next:** Task 40 (adaptive verification budget).
+- **Last completed:** Tasks 40–42 (spend cap, freshness-aware cache, fallback and spend experiments), 4 Nov 2026. Task 43 is built but not finished: the HL-Claims labels are drafts until your labelling review. M1 decision: **GO** ([M1_REPORT.md](M1_REPORT.md)).
+- **Next:** the HL-Claims labelling review ([eval/hl-claims/README.md](eval/hl-claims/README.md)), then Task 44.
 
 ## Completed
 
@@ -50,6 +50,10 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 37 | 2026-11-04 | `resilience.go`: failures classified; short Retry-After waited, long one opens the circuit; circuit breakers for Tavily and the verifier LLM; 432/433 pause Tavily; 402 pauses that tenant's audits; search timeout. `make failures`: 28 of 28 against scripted mock Tavily faults |
 | 38 | 2026-11-04 | `metrics.go`: per-tenant audits, verdicts, credits, USD, tokens and failures; `GET /api/halflife/usage` (JSON) and `/metrics` (Prometheus text). Credits match mock Tavily's per-project count |
 | 39 | 2026-11-04 | `modes.go`, `list.go`: `audit` (default), `monitor` (same response headers as with the plugin off) and `protect` (opt-in wait for `X-Halflife-Verdict`, fail-open at `protect_timeout_ms`); `GET /api/halflife/reports` list. `make operator`: 33 of 33 |
+| 40 | 2026-11-04 | Adaptive budget: optional `spend_cap_usd` per verifier entry over a `spend_window_seconds` window. LOW claims stop with under 50% of the cap left, MEDIUM under 20%, HIGH under one claim's cost; passed-over claims are NOT_CHECKED with a reason, and a used-up cap skips extraction too. Shown in `/usage` and `/metrics` |
+| 41 | 2026-11-04 | Freshness-aware cache: an OUTDATED claim evicts the answer; other answers expire at their most volatile claim's band (`volatility_ttl_seconds` overrides); a tombstone keeps an outdated answer's question off the cache and reuses its report for identical repeats, until a new answer passes. Fixed along the way: verifier calls were being answered by the semantic cache |
+| 42 | 2026-11-04 | `make experiments` (24 checks, generated fixtures, mock only): fallback 8 of 8 audits finished during an outage; budget and spend cap leave user requests at 200; per-tenant credits match mock Tavily; 0 audits from verifier traffic; outdated answers served from the cache 40 → 0 of 40 |
+| 43 (partial) | 2026-11-04 | HL-Claims v1 built: 240 claims in 7 strata, 400-question RecencyQA sample, dev/test split frozen by hash, review sheet and kappa script. **Labels are rule-made drafts; no human review or kappa yet, so the task stays open** |
 
 ## Decisions
 
@@ -112,6 +116,12 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D54 | A 402 pauses that tenant's audits for `budget_backoff_seconds`, without a call; other tenants go on. The pause applies only once there is something to spend on | Budget-aware degradation. Found by `make verify`: an answer with nothing to check must still report `no_claim` during a pause |
 | D55 | USD is credits × `tavily_credit_usd` plus the cost the gateway reports for LLM calls; counters live in memory and restart at zero | Same price the relay charges. A provider that reports no cost counts as 0, so LLM USD is a floor; tokens stay exact. SQLite keeps the per-claim record for longer periods |
 | D56 | `protect` is opt-in per request (or `protect_all`), non-streaming, fail-open, and never changes the body; `monitor` changes nothing in the response or the cache | Waiting on web search can't be the default on a gateway. An operator can run monitor first and compare; a timeout must degrade to the normal path, never to an error |
+| D57 | The spend cap is a shaping limit below the governance budget, per process, in a fixed window from the first charge; concurrent audits can overshoot by about a claim per worker | The budget stays the enforced limit, and a hard stop can't choose. Selection only needs to be roughly right, so this adds no store or coordination |
+| D58 | Volatility TTLs are enforced by a timer after the audit, not by setting the cache's TTL as the audit planned | Halflife's post-hook runs after the cache's, which has already read the TTL, and the band isn't known before the answer exists. A timer lost in a restart leaves the entry to the cache's own TTL |
+| D59 | Only OUTDATED evicts. CONTRADICTED doesn't | Audit §3.4: a regenerated answer would say the same. It is reported, not evicted |
+| D60 | Tombstones key on cache partition and normalised question, are tenant-checked for report reuse, and are in memory (bounded at 10,000). A stale verdict always tombstones, even with no entry to evict | Evicting alone lets the model's next answer back in. The gateway run showed answers sent past the cache by another eviction's hold being rewritten later. The worst cross-tenant effect is one cache miss |
+| D61 | Verifier LLM calls set `x-bf-cache-type` to the bypass value | Verifier prompts differ only in the claim, so a semantic hit answered for a different claim. Found by the cache experiment |
+| D62 | HL-Claims labels stay `draft_pending_review`; the split is frozen now by hash, and raw FreshQA sheets are not committed | Two independent human labellers can't be replaced by the author of the rules. Splitting by question before tuning keeps the test set honest whatever the labels become. The sheets state no licence |
 
 ## Blockers and inputs needed
 

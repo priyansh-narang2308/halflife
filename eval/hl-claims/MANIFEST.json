@@ -1,0 +1,43 @@
+{
+  "version": "v1",
+  "snapshot_date": "2026-11-04",
+  "salt": "hl-claims-v1",
+  "dev_share": 0.4,
+  "sources": {
+    "freshqa-2024-02-26.csv": "7a2c79e7b4d09bdd383513b70a8f40ccea45d7e5bbf3fb085d02582b5df4ebf1",
+    "freshqa-2026-04-21.csv": "3769244f66bb2666fe5160c8cc235339b7c54c61fc88d360995aa91d4c904789",
+    "recencyqa.json": "5a7c446e59023b6a1a0820e0d451d79c34fd9b49b95cdb4c43af2dea09d8798a"
+  },
+  "counts": {
+    "recently_changed": {
+      "dev": 24,
+      "test": 36
+    },
+    "stable": {
+      "dev": 16,
+      "test": 24
+    },
+    "historical": {
+      "dev": 12,
+      "test": 18
+    },
+    "never_true": {
+      "dev": 12,
+      "test": 18
+    },
+    "conflicting": {
+      "dev": 8,
+      "test": 12
+    },
+    "ambiguous": {
+      "dev": 12,
+      "test": 18
+    },
+    "unverifiable": {
+      "dev": 12,
+      "test": 18
+    }
+  },
+  "dev_ids_sha256": "0e69eef7a08edac39fc080046a9888e2cc94c0f8c61b2f619c9b68ee2ee4f77d",
+  "test_ids_sha256": "4528044b8cff1ab35613e861fbcffa196625bd7219b6570841e52b8bcdd8754f"
+}

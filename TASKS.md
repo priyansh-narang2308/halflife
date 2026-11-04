@@ -93,9 +93,9 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 
 | # | Task | Done when | Needs |
 |---|---|---|---|
-| [ ] 40 | Adaptive verification budget | Per-tenant spend cap drives claim selection; behaviour tested | — |
-| [ ] 41 | Freshness-aware cache | TTL from volatility; evict on OUTDATED; tombstones; deterministic tests | — |
-| [ ] 42 | Fallback and spend experiments | Provider-fallback demo; measured spend and reliability runs | Optional 2nd provider key |
+| [x] 40 | Adaptive verification budget | Per-tenant spend cap drives claim selection; behaviour tested | — |
+| [x] 41 | Freshness-aware cache | TTL from volatility; evict on OUTDATED; tombstones; deterministic tests | — |
+| [x] 42 | Fallback and spend experiments | Provider-fallback demo; measured spend and reliability runs | Optional 2nd provider key |
 
 ## Milestone 5: Evaluation
 

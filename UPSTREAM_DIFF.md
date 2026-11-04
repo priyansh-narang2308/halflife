@@ -74,6 +74,8 @@ git -C bifrost diff --stat upstream halflife -- . ':!docs'
 | `plugins/halflife/metrics.go` | Per-tenant usage, Prometheus text output |
 | `plugins/halflife/list.go` | Report list: filters, paging, summaries |
 | `plugins/halflife/modes.go` | Audit, monitor and protect behaviour |
+| `plugins/halflife/spend.go` | Per-tenant spend cap and the claim selection it drives |
+| `plugins/halflife/tombstone.go` | Tombstones for outdated answers, and what a finished audit does to the cache |
 | `plugins/halflife/testdata/claims/*.json`, `testdata/adversarial/*.json` | Synthetic extraction and injection fixtures (fictional companies) |
 | `plugins/halflife/*_test.go`, `version` | Unit tests; version `0.1.0` |
 | `transports/bifrost-http/handlers/halflife.go`, `halflife_test.go` | `GET /api/halflife/reports/{id}`, `/reports` (list), `/usage` and `/metrics`, resolving the plugin per request like the cache handler |

@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke bench cache relay budget tenants verify m1 llm claims failures operator
+.PHONY: up down status build test smoke bench cache relay budget tenants verify m1 llm claims failures operator experiments dataset
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -53,3 +53,11 @@ failures: ## Retries, circuit breakers, timeouts and budget backoff against scri
 
 operator: ## Injected evidence, audit/monitor/protect modes, report list, usage and metrics endpoints (ports 8090, 9101 and 9102 free)
 	testenv/operator.sh
+
+experiments: ## Fallback, budget, attribution, cache and recursion experiments on generated fixtures (needs Docker, ports 8090, 9101 and 9102 free)
+	testenv/experiments.sh
+
+dataset: ## Rebuild HL-Claims from its pinned sources; fails if the frozen split would change
+	test -d data/hl-claims-sources || eval/hl-claims/fetch.sh
+	python3 eval/hl-claims/build.py
+	cd eval/hl-claims && python3 -m unittest test_review

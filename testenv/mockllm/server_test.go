@@ -137,6 +137,35 @@ func TestInjectedFailures(t *testing.T) {
 	}
 }
 
+func TestOutage(t *testing.T) {
+	_, ts := newTestServer(t, Config{})
+	set := func(body string) int {
+		resp, err := http.Post(ts.URL+"/_mock/outage", "application/json", strings.NewReader(body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+	ask := func(model string) int {
+		resp, _ := post(t, ts, `{"model":"`+model+`","messages":[{"role":"user","content":"hi"}]}`, nil)
+		return resp.StatusCode
+	}
+	if got := set(`{"model":"primary","status":503}`); got != http.StatusNoContent {
+		t.Fatalf("outage: %d", got)
+	}
+	if ask("primary") != 503 || ask("backup") != 200 {
+		t.Errorf("during: primary %d, backup %d", ask("primary"), ask("backup"))
+	}
+	set(`{"model":"primary","status":0}`)
+	if got := ask("primary"); got != 200 {
+		t.Errorf("cleared: %d", got)
+	}
+	if got := set(`{"model":"primary","status":200}`); got != http.StatusBadRequest {
+		t.Errorf("not a failure status: %d", got)
+	}
+}
+
 func TestLatency(t *testing.T) {
 	_, ts := newTestServer(t, Config{})
 	start := time.Now()

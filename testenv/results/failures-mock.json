@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-04T03:18:20Z",
+  "recorded_at": "2026-11-04T04:15:39Z",
   "mode": "mock",
   "note": "Synthetic keys; mock LLM and mock Tavily with scripted faults.",
   "reports": [
@@ -36,7 +36,7 @@
     {
       "name": "mail",
       "outcome": "verifier_unavailable",
-      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T03:18:11Z): rate limited, Retry-After 8s",
+      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T04:15:27Z): rate limited, Retry-After 8s",
       "error": null,
       "claims": []
     },
@@ -73,7 +73,7 @@
     {
       "name": "sheets",
       "outcome": "verifier_unavailable",
-      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T03:18:14Z): Tavily credits exhausted: tavily relay: 432 This request exceeds your plan's set usage limit. Please upgrade your plan or contact support.",
+      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T04:15:31Z): Tavily credits exhausted: tavily relay: 432 This request exceeds your plan's set usage limit. Please upgrade your plan or contact support.",
       "error": null,
       "claims": []
     },
@@ -110,7 +110,7 @@
     {
       "name": "keep",
       "outcome": "verifier_unavailable",
-      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T03:18:19Z): 2 consecutive failures, last: tavily relay: 500 Internal server error.",
+      "outcome_reason": "tavily unavailable (circuit open until 2026-11-04T04:15:35Z): 2 consecutive failures, last: tavily relay: 500 Internal server error.",
       "error": null,
       "claims": []
     },
@@ -162,7 +162,7 @@
     {
       "name": "photos",
       "outcome": "budget_exhausted",
-      "outcome_reason": "verifier budget refused a call (402); audits for this tenant paused until 2026-11-04T03:28:20Z",
+      "outcome_reason": "verifier budget refused a call (402); audits for this tenant paused until 2026-11-04T04:25:37Z",
       "error": null,
       "claims": []
     },

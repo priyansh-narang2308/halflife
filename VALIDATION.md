@@ -1306,3 +1306,60 @@ Bench is a regression check here, not a new measurement, and the recorded result
 - Verdict accuracy, and how much the flagged-source rule costs on real pages (benign pages wrongly flagged): measured with the evaluation set.
 - Live free-model latency decides whether an audit finishes in the 60 s default; a production deployment needs a paid model or a longer `audit_timeout_seconds`.
 - Circuit and budget-pause state is per process and in memory: a restart forgets them.
+
+## Tasks 40–43: spend cap, freshness-aware cache, experiments, HL-Claims
+
+Mock LLM and mock Tavily throughout, with synthetic keys. No live call was made for these tasks, so nothing here is shown against a real provider or a real semantic cache embedding model.
+
+### Task 40: adaptive verification budget
+
+- `spend_cap_usd` on a verifier entry, `spend_window_seconds` (default 1 h, 60 s to 31 days). With `*`, each tenant gets its own cap.
+- Unit tests (`spend_test.go`): window and per-tenant isolation; a table of the 50% and 20% thresholds; with $0.05 at $0.01 a claim, 2 HIGH and 1 MEDIUM are checked and LOW is passed over; with $0.02, only the two HIGH; a used-up cap makes no LLM or search call, and the next window resumes.
+- A test caught a real bug: `withDefaults` rebuilt verifier entries and dropped the new field. Fixed by copying the entry.
+- Gateway (`make experiments`): Initech's $0.02 cap gives `budget_exhausted=2,evidence_found=2`, no refused call, `/usage` reports 2 credits' spend, requests stay 200.
+- The cap counts Tavily credits and LLM cost as the gateway reports it. Mocks report no LLM cost, so LLM spend against the cap is covered by the arithmetic in unit tests only.
+
+### Task 41: freshness-aware cache
+
+- `verify` now reports stale when a claim is OUTDATED. Before this, eviction existed but nothing triggered it.
+- Tests (`tombstone_test.go`, `invalidate_test.go`): repeat of an outdated answer goes past the cache and reuses its report, no audit; another tenant gets its own report; a different answer that passes lifts the tombstone and the cache recovers; a failed audit changes nothing; monitor changes nothing; volatile expiry on the real cache plugin; stale verdict cancels a scheduled expiry; shutdown stops the rest; both tables bounded.
+- Gateway: see the cache and expiry rows below, on Redis.
+- Tombstones and expiry timers are in memory: a restart forgets them. An eviction's settle window still holds its whole partition off the cache, about 31 s at the minimum setting.
+
+### Task 42: experiments (`make experiments`, 24 of 24, `testenv/results/experiments-mock.json`)
+
+| Experiment | Result |
+|---|---|
+| Fallback | Primary verifier model returns 503 mid-run: 8 of 8 audits finished with evidence, answered by the backup (16 backup calls), user requests 200 |
+| Budget | Globex's verifier budget covers 2 searches: 2 credits spent, the rest `budget_exhausted`, user requests 200 |
+| Attribution | Reports 12 / 4 / 4 match the requests each app sent; credits match mock Tavily's per-project count |
+| Cache, monitor | 40 outdated answers requested, 40 served from the cache |
+| Cache, audit | 40 requested, **0** served from the cache, 40 flagged `known-outdated` with no new audit; 10 evictions; current answers keep all 40 hits |
+| Expiry | A HOURS_DAYS answer hit before its 45 s TTL, evicted after it |
+| Recursion | 20 app requests captured out of 69 LLM calls; no report for a verifier key |
+
+These are mechanism results on fixtures where the outdated answers are known by construction, not detection accuracy. The cache result doesn't mean users stop getting outdated answers: the model repeats them, flagged. Each widget has its own cache partition, so the count doesn't depend on audit timing.
+
+The first run of this suite found two real bugs, both fixed:
+
+- **Verifier calls were answered by the semantic cache.** With the cache on, a judge or extraction prompt could get a stored reply for a different claim. Repeat audits were ending in `nothing_to_check`. All verifier calls now bypass the cache.
+- **Answers seen during an eviction hold weren't tombstoned**, so they were written back afterwards. A stale verdict now always tombstones.
+
+The optional live fallback run with a second provider key was not done.
+
+### Task 43: HL-Claims (not finished)
+
+`eval/hl-claims/`: 240 claims (60 / 40 / 30 / 30 / 20 / 30 / 30 by stratum), split 96 dev, 144 test by question, frozen in `MANIFEST.json`; `make dataset` rebuilds identically and fails if the split would change. Sources: FreshQA snapshots of 26 Feb 2024 and 21 Apr 2026 (159 usable changed answers before filtering), RecencyQA at `21b0c3b`, 20 curated disputed facts whose URLs load.
+
+**Not done:** human labelling. Labels are rule-made drafts, there is no Cohen's kappa, and no evaluation result may use them yet. Curated Jan–Oct 2026 changes and HL-Answers were not added. FreshQA's data licence is unstated, so check it before publishing the dataset.
+
+### Regression
+
+`make build`, then on the final binary: plugin tests under `-race` (96.1% coverage), gofmt and vet clean; handlers, server and lib tests; `testenv` tests; and all suites: smoke 142, cache 70, relay 23, budget 18, tenants 16, verify 21, m1 22, llm 10, claims 35, failures 28, operator 33, experiments 24, dataset, bench. All pass.
+
+Bench is a regression check, and the recorded result files are unchanged. This run: paired median +66.5 µs at concurrency 1, +215.6 µs at 16, 2,000 of 2,000 bodies identical, no audit dropped. Request-path cost of this batch: one atomic load with no tombstones, as in that bench. With tombstones live, each request adds a SHA-256 of the question and a mutex-guarded lookup, not benchmarked separately.
+
+### Not shown yet
+
+- Verdict accuracy on any of this: Task 45, after the review.
+- Spend caps and expiries across several gateway instances: each process keeps its own.

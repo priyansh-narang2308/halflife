@@ -1,0 +1,68 @@
+{
+  "recorded_at": "2026-11-04T04:19:05Z",
+  "mode": "mock",
+  "note": "Synthetic keys; mock LLM and mock Tavily on generated fixtures, so the outdated answers are known by construction. The rates show the mechanism, not real-world detection accuracy.",
+  "fallback": {
+    "audits_after_outage": "evidence_found=8",
+    "backup_calls": 16,
+    "primary_attempts_during_outage": 16
+  },
+  "budget": {
+    "outcomes": "budget_exhausted=2,evidence_found=2"
+  },
+  "spend_cap": {
+    "outcomes": "budget_exhausted=2,evidence_found=2"
+  },
+  "attribution": [
+    {
+      "tenant": "vk-acme",
+      "audits": 12,
+      "tavily_credits": 12,
+      "tavily_usd": 0.09600000000000003,
+      "verifier": "vk-verifier-acme"
+    },
+    {
+      "tenant": "vk-globex",
+      "audits": 4,
+      "tavily_credits": 2,
+      "tavily_usd": 0.016,
+      "verifier": "vk-verifier-globex"
+    },
+    {
+      "tenant": "vk-initech",
+      "audits": 4,
+      "tavily_credits": 2,
+      "tavily_usd": 0.016,
+      "verifier": "vk-verifier-initech"
+    }
+  ],
+  "cache": {
+    "monitor": {
+      "mode": "monitor",
+      "outdated_requests": 40,
+      "outdated_served_from_cache": 40,
+      "outdated_regenerated": 0,
+      "flagged_known_outdated": 0,
+      "current_served_from_cache": 40,
+      "evictions": 0,
+      "tombstone_bypasses": 0,
+      "tombstone_reuses": 0
+    },
+    "audit": {
+      "mode": "audit",
+      "outdated_requests": 40,
+      "outdated_served_from_cache": 0,
+      "outdated_regenerated": 40,
+      "flagged_known_outdated": 40,
+      "current_served_from_cache": 40,
+      "evictions": 10,
+      "tombstone_bypasses": 40,
+      "tombstone_reuses": 40
+    },
+    "note": "Audit stops the cache serving outdated answers; the model still gives them, flagged known-outdated."
+  },
+  "recursion": {
+    "captured": 20,
+    "llm_calls": 67
+  }
+}

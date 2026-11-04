@@ -15,6 +15,10 @@
 // contains, so a structured prompt need not be copied whole. Anything else
 // gets a fixed echo reply. Response IDs are derived
 // from the request body, so identical requests produce byte-identical bodies.
+//
+// POST /_mock/outage {"model":"m","status":503} makes every request for model m
+// fail with that status until a status of 0 clears it, as a provider going down
+// mid-run would.
 package mockllm
 
 import (
@@ -53,16 +57,18 @@ type Server struct {
 	total      int
 	byModel    map[string]int
 	lastFormat string // response_format of the last request: "", "json_object" or "json_schema:<name>[:strict]"
+	outages    map[string]int // model -> status it fails with
 }
 
 // New returns a Server for cfg.
 func New(cfg Config) *Server {
-	s := &Server{cfg: cfg, mux: http.NewServeMux(), byModel: map[string]int{}}
+	s := &Server{cfg: cfg, mux: http.NewServeMux(), byModel: map[string]int{}, outages: map[string]int{}}
 	s.mux.HandleFunc("POST /v1/chat/completions", s.chatCompletions)
 	s.mux.HandleFunc("POST /v1/embeddings", s.embeddings)
 	s.mux.HandleFunc("GET /v1/models", s.models)
 	s.mux.HandleFunc("GET /_mock/requests", s.requests)
 	s.mux.HandleFunc("POST /_mock/reset", s.reset)
+	s.mux.HandleFunc("POST /_mock/outage", s.outage)
 	return s
 }
 
@@ -128,6 +134,11 @@ func (s *Server) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	s.setFormat(formatLabel(req))
 
 	b := parseModel(req.Model)
+	s.mu.Lock()
+	if status := s.outages[req.Model]; status != 0 {
+		b.failStatus = status
+	}
+	s.mu.Unlock()
 	if b.latency > 0 {
 		select {
 		case <-time.After(b.latency):
@@ -280,10 +291,30 @@ func (s *Server) requests(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"total": total, "by_model": byModel, "last_response_format": s.LastResponseFormat()})
 }
 
+func (s *Server) outage(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Model  string `json:"model"`
+		Status int    `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Model == "" || (req.Status != 0 && (req.Status < 400 || req.Status > 599)) {
+		writeError(w, http.StatusBadRequest, "invalid_request", "mock: outage needs a model and a status of 0 or 400-599")
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if req.Status == 0 {
+		delete(s.outages, req.Model)
+	} else {
+		s.outages[req.Model] = req.Status
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) reset(w http.ResponseWriter, _ *http.Request) {
 	s.mu.Lock()
 	s.total = 0
 	s.byModel = map[string]int{}
+	s.outages = map[string]int{}
 	s.lastFormat = ""
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
