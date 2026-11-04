@@ -1370,7 +1370,7 @@ Status: harness, dashboard and stack verified. The accuracy pilot is live but on
 
 **Pilot (live, free models, draft labels).** `LIVE=1 make eval`, 14 dev claims, caps 60 LLM and 30 Tavily: 44 LLM-side and 23 Tavily calls. Stale F1: S0 0.00, S1 0.40, S2 0.00, S3 0.00, on 2 positives. Retry: `ONLY=S3 STRATA=recently_changed VERIFIER_MAX_TOKENS=8192`, 3 LLM and 1 Tavily call, no OUTDATED verdict.
 
-**Replay (no key, no network).** Pilot and retry replayed; every verdict matched in S0–S3 and in the retry.
+**Replay (no key, no network).** Pilot (`REC=eval/recordings VERIFIER_EFFORT=low`) and retry replayed; every verdict matched in S0–S3 and in the retry.
 
 **Secret scan.** A recording of OpenRouter's `/v1/auth/key` held a masked key label. It and the model listings were deleted before any commit, and the proxy no longer stores such responses (`TestAccountResponsesAreNotRecorded`). A scan of `eval/recordings*` and `eval/runs*` for `tvly-`, `sk-or-`, `sk-bf-` and `Bearer ` then found nothing.
 
@@ -1381,3 +1381,5 @@ Status: harness, dashboard and stack verified. The accuracy pilot is live but on
 **Dashboard.** In a browser against that stack: stats, tenants, reports, and a report sheet with quotes, sources and the history quote all render from live API data. After this check two labels changed wording, and `tsc`, oxlint and `vite build` passed; the image was not rebuilt for that.
 
 **Regression.** `testenv` and plugin tests under `-race` (96.1% coverage), gofmt and vet clean; Python tests; smoke 142, cache 70, claims 35, tenants 16. Other suites were not rerun in this batch: only `verify_all` (off by default) changed in the plugin since their last pass.
+
+**Reasoning off (live, 3 small probes).** `reasoning.effort: none` with a strict schema: 3 of 4 free models returned valid JSON in about 2 s at 67–88 completion tokens and 0 reasoning tokens; LFM 2.5 answered 400 (reasoning mandatory). Extraction only; judging is untested this way. The free tier then showed 46 of 50 used before the probes. `eval/run.sh` now defaults to `none` in `eval/recordings-v2`; pilot replay rechecked, same verdicts.

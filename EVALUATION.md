@@ -15,7 +15,7 @@
 | S2 | Halflife with priority skipping off (`verify_all`) |
 | S3 | Halflife as shipped |
 
-**Run.** Live on 2026-11-04: real Tavily, free OpenRouter models, capped at 60 LLM and 30 Tavily calls by the recording proxy. Each claim is sent through the gateway as a mock model's answer. Responses are in `eval/recordings`; `make eval` replays them with no key or network, and the replay gave the same verdict for every claim in every system. "Stale" means a draft label of OUTDATED, so **only 2 of the 14 claims are positives**.
+**Run.** Live on 2026-11-04: real Tavily, free OpenRouter models, capped at 60 LLM and 30 Tavily calls by the recording proxy. Each claim is sent through the gateway as a mock model's answer. Responses are in `eval/recordings`; `REC=eval/recordings RUNS=/tmp/pilot VERIFIER_EFFORT=low make eval` replays them with no key or network, and the replay gave the same verdict for every claim in every system. "Stale" means a draft label of OUTDATED, so **only 2 of the 14 claims are positives**.
 
 | System | Exact verdict | Stale precision | Stale recall | Stale F1 (95% CI) | Coverage | Tavily credits | LLM calls |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -43,11 +43,24 @@ The two recently changed claims were rerun on S3 at 8,192 tokens, 4 calls in all
 
 **So no live run has yet produced an OUTDATED verdict on a recently changed fact in this evaluation.** The OUTDATED path is proven only with scripted model replies (`make claims`, `make experiments`).
 
+### The cause, found after the pilot
+
+The pilot sent `reasoning.effort: low`. One probe each with `none`, on a two-claim extraction with a strict schema: Nemotron 3.5 Super, Xing 4.0 and Dots 3 Note each returned valid JSON with both claims in about 2 seconds, using 67–88 tokens and no reasoning tokens. LFM 2.5 refuses to turn reasoning off. That is 3 small probes, not an evaluation: whether judging holds up without reasoning is untested.
+
+### Next run, free models only
+
+`none` is now the default, in a new recording set (`eval/recordings-v2`, seeded with the pilot's replies so nothing is paid for twice). The free tier allows 50 requests a day and recording resumes, so this runs once a day until the proxy reports no misses:
+
+```bash
+LIVE=1 PER_STRATUM=6 MAX_LLM=45 MAX_TAVILY=60 make eval
+```
+
+Results land in `eval/runs-v2`. The estimate is about 130 LLM calls for 42 claims, so about 3 days.
+
 ### What a real result needs
 
 1. Two people label `eval/hl-claims/review-sheet.csv` independently; compute Cohen's kappa with `eval/hl-claims/review.py`.
-2. A model that does not spend its output budget on reasoning, with `verifier_max_tokens` tuned on the dev split.
-3. The whole dev split, then the one test run.
+2. The run above, then the one test run, which will have to be a sample that fits the daily cap.
 
 ## Operational results
 

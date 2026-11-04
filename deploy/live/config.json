@@ -257,7 +257,8 @@
           "openrouter/nvidia/nemotron-3.5-super-vl:free",
           "openrouter/xingchen-agi/xing4.0-29b-a4b:free",
           "openrouter/openrouter/free"
-        ]
+        ],
+        "verifier_reasoning_effort": "none"
       }
     }
   ],
