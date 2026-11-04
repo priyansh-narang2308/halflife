@@ -61,15 +61,16 @@ config() { # verify_all -> config path
 }
 
 wanted() { [[ " $ONLY " == *" $1 "* ]]; }
-for system in S0 S1; do
-  wanted "$system" && python3 "$ROOT/eval/run.py" "$system" --out "$RUNS/$system.jsonl" "${select[@]}"
-done
+# Halflife first: a daily cap should run out on the baseline, not on the system under test.
+baseline() { if wanted "$1"; then python3 "$ROOT/eval/run.py" "$1" --out "$RUNS/$1.jsonl" "${select[@]}"; fi; }
+baseline S0
 for system in S3 S2; do
   wanted "$system" || continue
   start_gateway "$(config "$([ "$system" = S2 ] && echo true || echo false)")" "$ROOT/logs/eval-$(echo "$system" | tr A-Z a-z)-gateway.log"
   python3 "$ROOT/eval/run.py" "$system" --out "$RUNS/$system.jsonl" "${select[@]}"
   stop_gateway
 done
+baseline S1
 
 curl -s "$PROXY/_replay/stats"; echo
 python3 "$ROOT/eval/score.py" "$RUNS" --out "$RUNS/results.json" > /dev/null

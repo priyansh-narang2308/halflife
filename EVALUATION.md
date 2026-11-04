@@ -32,10 +32,10 @@ S1 did not earn its recall. It called 8 of 14 claims stale, 6 of them wrongly, a
 
 | Finding | Evidence | Status |
 | --- | --- | --- |
-| Extraction failed on 6 of 14 answers, including both recently changed facts | The free reasoning model spent its 4,096 token limit and returned empty content (`finish_reason: length`); the report says `extraction_failed` instead of guessing | Open: needs a different model |
+| Extraction failed on 6 of 14 answers, including both recently changed facts | The free reasoning model spent its 4,096 token limit and returned empty content (`finish_reason: length`); the report says `extraction_failed` instead of guessing | Cause found, see below; re-measure in the next run |
 | The judge returned "the evidence does not say" on most claims that were extracted | S2: 6 UNVERIFIABLE of 8 audited | Open: not yet separated from weak retrieval |
 | Priority skipping cost 2 correct verdicts | S2 got one CONFLICTING and one CONTRADICTED right on claims S3 skipped, because extraction tagged them HISTORICAL | Open: a design weakness, not a model limit |
-| The strict span check rejected a real stale claim | Retry below: "asserted value is not in the span" | Open: precision is being paid for in recall |
+| The strict span check rejected a real stale claim | Retry below: "asserted value is not in the span" | Fixed, re-measure in the next run |
 
 ### Capped retry
 
@@ -45,7 +45,11 @@ The two recently changed claims were rerun on S3 at 8,192 tokens, 4 calls in all
 
 ### The cause, found after the pilot
 
-The pilot sent `reasoning.effort: low`. One probe each with `none`, on a two-claim extraction with a strict schema: Nemotron 3.5 Super, Xing 4.0 and Dots 3 Note each returned valid JSON with both claims in about 2 seconds, using 67–88 tokens and no reasoning tokens. LFM 2.5 refuses to turn reasoning off. That is 3 small probes, not an evaluation: whether judging holds up without reasoning is untested.
+The pilot sent `reasoning.effort: low`. One probe each with `none`, on a two-claim extraction with a strict schema: Nemotron 3.5 Super, Xing 4.0 and Dots 3 Note each returned valid JSON with both claims in about 2 seconds, using 67–88 tokens and no reasoning tokens. LFM 2.5 refuses to turn reasoning off. That is 3 small probes, not an evaluation.
+
+One judge probe followed, a direct call with the real prompt and schema on the Berber year claim, using the real Tavily evidence from the retry. In 3.7 seconds and 110 tokens Nemotron answered CONTRADICTS with a current value of 2976 and quoted Wikipedia's calendar table, and also found a history quote. It did not go through the gateway, so the quote check and comparators did not run on it. It is the first stale fact caught on a live model, and it is one example.
+
+The span rejection is fixed: a span that stops short of its value now grows to the sentence holding both, and a value in another sentence stays rejected (`TestSpanGrowsToTheSentenceHoldingTheValue`).
 
 ### Next run, free models only
 

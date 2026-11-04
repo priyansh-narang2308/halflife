@@ -1383,3 +1383,7 @@ Status: harness, dashboard and stack verified. The accuracy pilot is live but on
 **Regression.** `testenv` and plugin tests under `-race` (96.1% coverage), gofmt and vet clean; Python tests; smoke 142, cache 70, claims 35, tenants 16. Other suites were not rerun in this batch: only `verify_all` (off by default) changed in the plugin since their last pass.
 
 **Reasoning off (live, 3 small probes).** `reasoning.effort: none` with a strict schema: 3 of 4 free models returned valid JSON in about 2 s at 67–88 completion tokens and 0 reasoning tokens; LFM 2.5 answered 400 (reasoning mandatory). Extraction only; judging is untested this way. The free tier then showed 46 of 50 used before the probes. `eval/run.sh` now defaults to `none` in `eval/recordings-v2`; pilot replay rechecked, same verdicts.
+
+**Judge with reasoning off (live, 1 direct call).** Real judge prompt and schema, real Tavily evidence, Nemotron: CONTRADICTS, current value 2976 against the claimed 2974, 3.7 s, 110 completion tokens. Not through the gateway. It used the day's last free request (49 of 50 before it).
+
+**Span fix.** Red first (`widenSpan` undefined), then green. Plugin tests under `-race`, 96.1% coverage; smoke, claims, verify, m1, llm, failures and operator all pass on the rebuilt gateway. The other suites were not rerun for this change.
