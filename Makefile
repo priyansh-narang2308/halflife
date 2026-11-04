@@ -1,4 +1,4 @@
-.PHONY: up down status build test smoke bench cache relay budget tenants verify m1 llm claims failures operator experiments dataset
+.PHONY: up down status build test smoke bench cache relay budget tenants verify m1 llm claims failures operator experiments dataset eval
 
 up:      ## Start Redis, mock LLM, mock Tavily and the gateway
 	scripts/dev-stack.sh up
@@ -61,3 +61,7 @@ dataset: ## Rebuild HL-Claims from its pinned sources; fails if the frozen split
 	test -d data/hl-claims-sources || eval/hl-claims/fetch.sh
 	python3 eval/hl-claims/build.py
 	cd eval/hl-claims && python3 -m unittest test_review
+
+eval:    ## Baselines over the HL-Claims dev split from recordings, no keys (LIVE=1 records what is missing)
+	eval/run.sh
+	cd eval && python3 -m unittest test_score

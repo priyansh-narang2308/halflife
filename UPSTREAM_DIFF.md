@@ -81,6 +81,8 @@ git -C bifrost diff --stat upstream halflife -- . ':!docs'
 | `transports/bifrost-http/handlers/halflife.go`, `halflife_test.go` | `GET /api/halflife/reports/{id}`, `/reports` (list), `/usage` and `/metrics`, resolving the plugin per request like the cache handler |
 - **Upstream:** everything else, unchanged.
 
+UI additions: `ui/app/workspace/halflife/` (page and views), `ui/lib/store/apis/halflifeApi.ts`, `ui/lib/types/halflife.ts`.
+
 ## Modified upstream files (v1)
 
 Four upstream files, nothing removed or rewritten: three in fork commit `e3e1f1c` (extended in Task 19), `server.go` in Task 25.
@@ -91,6 +93,8 @@ Four upstream files, nothing removed or rewritten: three in fork commit `e3e1f1c
 | `transports/bifrost-http/lib/config.go` | +1 import; `halflife.PluginName` appended to `builtinPluginNames` | That list is the single source of truth for built-ins. Being in it stops the custom-plugin loader from loading Halflife a second time, and keeps its fixed placement from being overridden by config. |
 | `transports/bifrost-http/server/server.go` | +1 import; +8 lines building the Halflife handler (plugin looked up per request with `lib.FindPluginAs`, as for the cache handler); +1 line registering its routes with the same middlewares as every `/api` route | Plugins can't add HTTP routes. Sharing the middlewares means the reports endpoint gets the same dashboard auth as the rest of `/api`. |
 | `transports/go.mod` | `require …/plugins/halflife v0.1.0` + `replace … => ../plugins/halflife` | Release builds run with `GOWORK=off` and resolve published versions; the local module needs an explicit `replace`. `go.sum` unchanged: the plugin adds no dependency the gateway didn't already have (its JSON Schema validator is the gateway's own `jsonschema/v6 v6.0.2`). |
+| `ui/components/sidebar.tsx` | +7 lines: a Halflife item under Observability, behind the Logs permission | The dashboard page needs an entry |
+| `ui/lib/store/apis/index.ts` | +1 line: exports `halflifeApi` | Same pattern as every other API slice |
 
 ## Checks after the change
 

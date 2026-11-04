@@ -4,8 +4,8 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 
 ## Current state
 
-- **Last completed:** Tasks 40–42 (spend cap, freshness-aware cache, fallback and spend experiments), 4 Nov 2026. Task 43 is built but not finished: the HL-Claims labels are drafts until your labelling review. M1 decision: **GO** ([M1_REPORT.md](M1_REPORT.md)).
-- **Next:** the HL-Claims labelling review ([eval/hl-claims/README.md](eval/hl-claims/README.md)), then Task 44.
+- **Last completed:** Tasks 44, 46 and 47 (replay harness, evaluation write-up, dashboard page), plus the Compose stack and docs parts of Tasks 48 and 49, 4 Nov 2026. Task 45 is a pilot only: Halflife produced no correct stale verdict in it, and the labels are still drafts ([EVALUATION.md](EVALUATION.md)). M1 decision: **GO** ([M1_REPORT.md](M1_REPORT.md)).
+- **Next, and only you can do these:** two people label HL-Claims, choose a better verifier model and run the evaluation, choose hosting, record the video, submit ([SUBMISSION.md](SUBMISSION.md)).
 
 ## Completed
 
@@ -54,6 +54,12 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | 41 | 2026-11-04 | Freshness-aware cache: an OUTDATED claim evicts the answer; other answers expire at their most volatile claim's band (`volatility_ttl_seconds` overrides); a tombstone keeps an outdated answer's question off the cache and reuses its report for identical repeats, until a new answer passes. Fixed along the way: verifier calls were being answered by the semantic cache |
 | 42 | 2026-11-04 | `make experiments` (24 checks, generated fixtures, mock only): fallback 8 of 8 audits finished during an outage; budget and spend cap leave user requests at 200; per-tenant credits match mock Tavily; 0 audits from verifier traffic; outdated answers served from the cache 40 → 0 of 40 |
 | 43 (partial) | 2026-11-04 | HL-Claims v1 built: 240 claims in 7 strata, 400-question RecencyQA sample, dev/test split frozen by hash, review sheet and kappa script. **Labels are rule-made drafts; no human review or kappa yet, so the task stays open** |
+| 44 | 2026-11-04 | `eval/run.sh`, `run.py`, `score.py`, `testenv/replay`: S0–S3 over the dev split; a recording proxy with call caps; `make eval` replays with no key or network and reproduces every verdict |
+| 45 (pilot) | 2026-11-04 | 14 dev claims live on free models, plus a 4-call retry. S3 stale F1 0.00 on 2 draft positives; S1 0.40. Extraction failed on 6 of 14 (token limit). Numbers and causes in EVALUATION.md |
+| 46 | 2026-11-04 | `EVALUATION.md` states methods, numbers and limits, and that no accuracy result exists yet |
+| 47 | 2026-11-04 | `/workspace/halflife` in Bifrost's dashboard: spend, cache events, tenants, reports filtered by verdict, a report sheet with claims, quotes and sources. Checked in a browser against the Compose stack |
+| 48 (partial) | 2026-11-04 | `docker-compose.yml`, `deploy/demo`, `deploy/live`, `deploy/demo.sh`, `testenv/Dockerfile`. Demo stack built and ran the full stale-to-evicted loop on mocks; the live config booted with no request sent. Not hosted |
+| 49 (partial) | 2026-11-04 | README, ARCHITECTURE, DEMO, SUBMISSION. Video not recorded |
 
 ## Decisions
 
@@ -122,6 +128,10 @@ Task plan: [TASKS.md](TASKS.md). Evidence for each task: [VALIDATION.md](VALIDAT
 | D60 | Tombstones key on cache partition and normalised question, are tenant-checked for report reuse, and are in memory (bounded at 10,000). A stale verdict always tombstones, even with no entry to evict | Evicting alone lets the model's next answer back in. The gateway run showed answers sent past the cache by another eviction's hold being rewritten later. The worst cross-tenant effect is one cache miss |
 | D61 | Verifier LLM calls set `x-bf-cache-type` to the bypass value | Verifier prompts differ only in the claim, so a semantic hit answered for a different claim. Found by the cache experiment |
 | D62 | HL-Claims labels stay `draft_pending_review`; the split is frozen now by hash, and raw FreshQA sheets are not committed | Two independent human labellers can't be replaced by the author of the rules. Splitting by question before tuning keeps the test set honest whatever the labels become. The sheets state no licence |
+| D63 | The pilot's weak result is reported as it stands; no retuning against it | 14 claims and 2 positives can't support tuning, and the labels are drafts |
+| D64 | The recording proxy keeps only completions, embeddings, search and extract, and only those count against call caps | A key-info response carried a masked key label into a recording. It was deleted before any commit. Startup model listings also used up a cap |
+| D65 | Dashboard reads Halflife reports under the Logs permission | Reports hold audited answers, which are log data |
+| D66 | Compose binds the gateway to loopback by default, and mock providers set `allow_private_network` | The keys in `deploy/` are synthetic; Bifrost refuses private addresses otherwise, and that default stays on in the live config |
 
 ## Blockers and inputs needed
 

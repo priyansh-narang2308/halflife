@@ -1,0 +1,22 @@
+{
+  "S3": {
+    "claims": 2,
+    "coverage": 0.5,
+    "exact_verdict_rate": 0.0,
+    "latency_ms_p50": 103998,
+    "latency_ms_p95": 103998,
+    "llm_calls": 3,
+    "stale_f1": 0.0,
+    "stale_f1_ci95": [
+      0.0,
+      0.0
+    ],
+    "stale_precision": null,
+    "stale_recall": 0.0,
+    "tavily_credits": 1,
+    "verdicts": {
+      "NOT_CHECKED": 1,
+      "UNVERIFIABLE": 1
+    }
+  }
+}

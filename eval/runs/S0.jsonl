@@ -1,0 +1,14 @@
+{"expected_verdict": "CURRENT", "id": "hlc-017f404b8c01", "latency_ms": 0, "stratum": "historical", "verdict": "CURRENT"}
+{"expected_verdict": "UNVERIFIABLE", "id": "hlc-0315f2de330d", "latency_ms": 0, "stratum": "ambiguous", "verdict": "CURRENT"}
+{"expected_verdict": "OUTDATED", "id": "hlc-04ccd4962308", "latency_ms": 0, "stratum": "recently_changed", "verdict": "CURRENT"}
+{"expected_verdict": "CURRENT", "id": "hlc-0d3ed3ab161d", "latency_ms": 0, "stratum": "historical", "verdict": "CURRENT"}
+{"expected_verdict": "OUTDATED", "id": "hlc-0d725cdc4830", "latency_ms": 0, "stratum": "recently_changed", "verdict": "CURRENT"}
+{"expected_verdict": "CURRENT", "id": "hlc-0e173dc7898f", "latency_ms": 0, "stratum": "stable", "verdict": "CURRENT"}
+{"expected_verdict": "CURRENT", "id": "hlc-0e976b5e8b79", "latency_ms": 0, "stratum": "stable", "verdict": "CURRENT"}
+{"expected_verdict": "UNVERIFIABLE", "id": "hlc-10a194e6c016", "latency_ms": 0, "stratum": "unverifiable", "verdict": "CURRENT"}
+{"expected_verdict": "UNVERIFIABLE", "id": "hlc-14aebc0a1abf", "latency_ms": 0, "stratum": "unverifiable", "verdict": "CURRENT"}
+{"expected_verdict": "UNVERIFIABLE", "id": "hlc-1bab630e6014", "latency_ms": 0, "stratum": "ambiguous", "verdict": "CURRENT"}
+{"expected_verdict": "CONFLICTING", "id": "hlc-200fecfc1e04", "latency_ms": 0, "stratum": "conflicting", "verdict": "CURRENT"}
+{"expected_verdict": "CONFLICTING", "id": "hlc-396c1d3d7d11", "latency_ms": 0, "stratum": "conflicting", "verdict": "CURRENT"}
+{"expected_verdict": "CONTRADICTED", "id": "hlc-43a3dab1207c", "latency_ms": 0, "stratum": "never_true", "verdict": "CURRENT"}
+{"expected_verdict": "CONTRADICTED", "id": "hlc-626fbdbe784c", "latency_ms": 0, "stratum": "never_true", "verdict": "CURRENT"}

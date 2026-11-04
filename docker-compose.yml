@@ -1,0 +1,52 @@
+# Halflife on Bifrost: the gateway (with its dashboard), Redis for the semantic
+# cache, and, in the demo profile, mock providers that make no external call.
+#
+#   docker compose --profile demo up --build                                 mocks, no keys
+#   HALFLIFE_CONFIG=./deploy/live/config.json docker compose up --build      real providers, keys from .env
+#
+# The virtual keys and setup token in deploy/ are synthetic. Replace them
+# before exposing the gateway to anyone.
+name: halflife
+
+services:
+  gateway:
+    build:
+      context: ./bifrost
+      dockerfile: transports/Dockerfile.local
+    ports:
+      - "${GATEWAY_BIND:-127.0.0.1}:${GATEWAY_PORT:-8080}:8080" # loopback until the deploy/ keys are replaced
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ${HALFLIFE_CONFIG:-./deploy/demo/config.json}:/app/data/config.json:ro
+      - gateway-data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:8.2.2 # search and vectorset modules, needed by the semantic cache
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  mockllm:
+    profiles: [demo]
+    build: ./testenv
+    command: ["mockllm", "-addr", "0.0.0.0:9101", "-fixtures", "/fixtures/llm.json"]
+    environment:
+      MOCK_LLM_API_KEY: sk-halflife-mock # synthetic
+
+  mocktavily:
+    profiles: [demo]
+    build: ./testenv
+    command: ["mocktavily", "-addr", "0.0.0.0:9102", "-fixtures", "/fixtures/tavily.json"]
+    environment:
+      MOCK_TAVILY_API_KEY: tvly-mock # synthetic
+
+volumes:
+  gateway-data:

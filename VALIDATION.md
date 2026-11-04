@@ -1363,3 +1363,21 @@ Bench is a regression check, and the recorded result files are unchanged. This r
 
 - Verdict accuracy on any of this: Task 45, after the review.
 - Spend caps and expiries across several gateway instances: each process keeps its own.
+
+## Tasks 44–49: replay harness, pilot, dashboard, deployment, docs
+
+Status: harness, dashboard and stack verified. The accuracy pilot is live but on draft labels; EVALUATION.md is the record of it.
+
+**Pilot (live, free models, draft labels).** `LIVE=1 make eval`, 14 dev claims, caps 60 LLM and 30 Tavily: 44 LLM-side and 23 Tavily calls. Stale F1: S0 0.00, S1 0.40, S2 0.00, S3 0.00, on 2 positives. Retry: `ONLY=S3 STRATA=recently_changed VERIFIER_MAX_TOKENS=8192`, 3 LLM and 1 Tavily call, no OUTDATED verdict.
+
+**Replay (no key, no network).** Pilot and retry replayed; every verdict matched in S0–S3 and in the retry.
+
+**Secret scan.** A recording of OpenRouter's `/v1/auth/key` held a masked key label. It and the model listings were deleted before any commit, and the proxy no longer stores such responses (`TestAccountResponsesAreNotRecorded`). A scan of `eval/recordings*` and `eval/runs*` for `tvly-`, `sk-or-`, `sk-bf-` and `Bearer ` then found nothing.
+
+**Stack (mocks).** `docker compose --profile demo up --build` from an empty volume, on port 8095 because 8080 was in use here. `deploy/demo.sh`: first request `queued`; report OUTDATED with price "USD 20 vs USD 29", CONTRADICTED on the version, UNVERIFIABLE on storage, 1 skipped, 1 rejected; second request `known-outdated`. `/usage`: Invalidated 1, TombstoneBypasses 1.
+
+**Stack (live config).** Booted with keys from `.env`; `/health` 200 and `halflife: initialized`. No request was sent, so this shows it starts, not that it works live.
+
+**Dashboard.** In a browser against that stack: stats, tenants, reports, and a report sheet with quotes, sources and the history quote all render from live API data. After this check two labels changed wording, and `tsc`, oxlint and `vite build` passed; the image was not rebuilt for that.
+
+**Regression.** `testenv` and plugin tests under `-race` (96.1% coverage), gofmt and vet clean; Python tests; smoke 142, cache 70, claims 35, tenants 16. Other suites were not rerun in this batch: only `verify_all` (off by default) changed in the plugin since their last pass.

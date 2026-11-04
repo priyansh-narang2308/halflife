@@ -1,0 +1,309 @@
+{
+  "$schema": "https://www.getbifrost.ai/schema",
+  "providers": {
+    "openai": {
+      "keys": [
+        {
+          "name": "mock",
+          "value": "sk-halflife-mock",
+          "models": [
+            "ok",
+            "slow-250",
+            "slow-1000",
+            "fail-429",
+            "fail-500",
+            "fail-503",
+            "mock-embed"
+          ],
+          "weight": 1.0
+        }
+      ],
+      "network_config": {
+        "base_url": "http://mockllm:9101",
+        "default_request_timeout_in_seconds": 10,
+        "max_retries": 0,
+        "allow_private_network": true
+      }
+    }
+  },
+  "governance": {
+    "customers": [
+      {
+        "id": "cust-acme",
+        "name": "Acme"
+      },
+      {
+        "id": "cust-globex",
+        "name": "Globex"
+      },
+      {
+        "id": "cust-initech",
+        "name": "Initech"
+      }
+    ],
+    "virtual_keys": [
+      {
+        "name": "Acme app",
+        "id": "vk-acme",
+        "value": "sk-bf-halflife-acme",
+        "is_active": true,
+        "customer_id": "cust-acme",
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "fail-500"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
+      },
+      {
+        "name": "Globex app",
+        "id": "vk-globex",
+        "value": "sk-bf-halflife-globex",
+        "is_active": true,
+        "customer_id": "cust-globex",
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "fail-500"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
+      },
+      {
+        "name": "Initech app",
+        "id": "vk-initech",
+        "value": "sk-bf-halflife-initech",
+        "is_active": true,
+        "customer_id": "cust-initech",
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok",
+              "fail-500"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
+      },
+      {
+        "name": "Halflife verifier for Acme",
+        "id": "vk-verifier-acme",
+        "value": "sk-bf-halflife-verifier-acme",
+        "is_active": true,
+        "customer_id": "cust-acme",
+        "relay_grants": [
+          {
+            "relay_name": "tavily"
+          }
+        ],
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
+      },
+      {
+        "name": "Halflife verifier for Globex",
+        "id": "vk-verifier-globex",
+        "value": "sk-bf-halflife-verifier-globex",
+        "is_active": true,
+        "customer_id": "cust-globex",
+        "relay_grants": [
+          {
+            "relay_name": "tavily"
+          }
+        ],
+        "provider_configs": [
+          {
+            "provider": "openai",
+            "allowed_models": [
+              "ok"
+            ],
+            "key_ids": [
+              "*"
+            ],
+            "weight": 1.0
+          }
+        ]
+      },
+      {
+        "name": "Halflife verifier for Initech",
+        "id": "vk-verifier-initech",
+        "value": "sk-bf-halflife-verifier-initech",
+        "is_active": true,
+        "customer_id": "cust-initech",
+        "relay_grants": [
+          {
+            "relay_name": "tavily"
+          }
+        ]
+      }
+    ],
+    "budgets": [
+      {
+        "id": "budget-app-acme",
+        "max_limit": 1,
+        "reset_duration": "1h",
+        "virtual_key_id": "vk-acme"
+      },
+      {
+        "id": "budget-app-globex",
+        "max_limit": 1,
+        "reset_duration": "1h",
+        "virtual_key_id": "vk-globex"
+      },
+      {
+        "id": "budget-app-initech",
+        "max_limit": 1,
+        "reset_duration": "1h",
+        "virtual_key_id": "vk-initech"
+      },
+      {
+        "id": "budget-verifier-acme",
+        "max_limit": 10,
+        "reset_duration": "1h",
+        "virtual_key_id": "vk-verifier-acme"
+      },
+      {
+        "id": "budget-verifier-globex",
+        "max_limit": 10,
+        "reset_duration": "1h",
+        "virtual_key_id": "vk-verifier-globex"
+      },
+      {
+        "id": "budget-verifier-initech",
+        "max_limit": 10,
+        "reset_duration": "1h",
+        "virtual_key_id": "vk-verifier-initech"
+      },
+      {
+        "id": "budget-cust-acme",
+        "max_limit": 1,
+        "reset_duration": "1h",
+        "customer_id": "cust-acme"
+      },
+      {
+        "id": "budget-cust-globex",
+        "max_limit": 1,
+        "reset_duration": "1h",
+        "customer_id": "cust-globex"
+      },
+      {
+        "id": "budget-cust-initech",
+        "max_limit": 1,
+        "reset_duration": "1h",
+        "customer_id": "cust-initech"
+      }
+    ]
+  },
+  "plugins": [
+    {
+      "enabled": true,
+      "name": "semantic_cache",
+      "config": {
+        "provider": "openai",
+        "embedding_model": "mock-embed",
+        "dimension": 64,
+        "ttl": "5m",
+        "threshold": 0.8,
+        "default_cache_key": "halflife-demo",
+        "vector_store_namespace": "HalflifeDemo"
+      }
+    },
+    {
+      "enabled": true,
+      "name": "halflife",
+      "config": {
+        "queue_size": 256,
+        "workers": 2,
+        "max_claims_per_response": 5,
+        "tavily_relay": "tavily",
+        "gateway_url": "http://localhost:8080",
+        "verifiers": [
+          {
+            "tenant": "vk-acme",
+            "virtual_key_id": "vk-verifier-acme",
+            "virtual_key": "sk-bf-halflife-verifier-acme"
+          },
+          {
+            "tenant": "vk-globex",
+            "virtual_key_id": "vk-verifier-globex",
+            "virtual_key": "sk-bf-halflife-verifier-globex"
+          }
+        ],
+        "verifier_models": [
+          "openai/ok"
+        ],
+        "tavily_credit_usd": 0.008
+      }
+    }
+  ],
+  "relays": [
+    {
+      "name": "tavily",
+      "description": "Tavily Search and Extract for Halflife evidence (mock Tavily in tests)",
+      "base_url": "http://mocktavily:9102",
+      "auth": {
+        "type": "bearer"
+      },
+      "credential": {
+        "value": "tvly-mock"
+      },
+      "network": {
+        "timeout_seconds": 30,
+        "allow_private_network": true
+      },
+      "usage": {
+        "units_path": "usage.credits",
+        "cost_per_unit": 0.008
+      },
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/search"
+        },
+        {
+          "method": "POST",
+          "path": "/extract"
+        },
+        {
+          "method": "GET",
+          "path": "/usage",
+          "billable": false
+        }
+      ]
+    }
+  ],
+  "setup_token": "halflife-test-setup-token",
+  "vector_store": {
+    "enabled": true,
+    "type": "redis",
+    "config": {
+      "addr": "redis:6379"
+    }
+  }
+}

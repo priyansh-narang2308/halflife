@@ -102,15 +102,15 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked.
 | # | Task | Done when | Needs |
 |---|---|---|---|
 | [ ] 43 | HL-Claims dataset | Claims mined from FreshQA snapshot diffs, RecencyQA and curated sources; labelled; dev/test split frozen before tuning | Your labelling review |
-| [ ] 44 | Baselines and replay harness | Systems S0–S4 runnable; recorded-response replay makes runs reproducible | — |
-| [ ] 45 | Run the evaluation | Precision, recall, F1, cost, latency, cache effectiveness, failure injection on the held-out set | Keys; free-model cap is 50 req/day below $10 of OpenRouter credit (1,000/day at ≥$10) |
-| [ ] 46 | Evaluation write-up | `EVALUATION.md` with methods, numbers and limitations; nothing unmeasured is claimed | — |
+| [x] 44 | Baselines and replay harness | Systems S0–S4 runnable (S0–S3 built; S4 was optional and is not built); recorded-response replay makes runs reproducible | — |
+| [ ] 45 | Run the evaluation (pilot only so far, see EVALUATION.md) | Precision, recall, F1, cost, latency, cache effectiveness, failure injection on the held-out set | Keys; free-model cap is 50 req/day below $10 of OpenRouter credit (1,000/day at ≥$10) |
+| [x] 46 | Evaluation write-up | `EVALUATION.md` with methods, numbers and limitations; nothing unmeasured is claimed | — |
 
 ## Milestone 6: Presentation and submission
 
 | # | Task | Done when | Needs |
 |---|---|---|---|
-| [ ] 47 | Halflife inside Bifrost's dashboard | A Halflife view in Bifrost's own UI (built from source, Task 04): claims, verdicts, sources, spend and cache events, next to Bifrost's logs and governance pages | — |
-| [ ] 48 | Deployment | Docker Compose stack plus a hosted demo | Hosting choice |
-| [ ] 49 | Docs and demo video | README, ARCHITECTURE, sponsor explanations; recorded before/after demo | You record or approve |
+| [x] 47 | Halflife inside Bifrost's dashboard | A Halflife view in Bifrost's own UI (built from source, Task 04): claims, verdicts, sources, spend and cache events, next to Bifrost's logs and governance pages | — |
+| [ ] 48 | Deployment (Compose stack done; hosted demo open) | Docker Compose stack plus a hosted demo | Hosting choice |
+| [ ] 49 | Docs and demo video (docs done; video open) | README, ARCHITECTURE, sponsor explanations; recorded before/after demo | You record or approve |
 | [ ] 50 | Submission | Checklist complete, AI-use disclosure, submitted on HackCulture before 15 Nov 23:59 IST | You submit |

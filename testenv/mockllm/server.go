@@ -56,7 +56,7 @@ type Server struct {
 	mu         sync.Mutex
 	total      int
 	byModel    map[string]int
-	lastFormat string // response_format of the last request: "", "json_object" or "json_schema:<name>[:strict]"
+	lastFormat string         // response_format of the last request: "", "json_object" or "json_schema:<name>[:strict]"
 	outages    map[string]int // model -> status it fails with
 }
 

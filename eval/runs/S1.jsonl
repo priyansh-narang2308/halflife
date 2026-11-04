@@ -1,0 +1,14 @@
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-017f404b8c01", "latency_ms": 5887, "llm_calls": 1, "stratum": "historical", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-0315f2de330d", "latency_ms": 10974, "llm_calls": 1, "stratum": "ambiguous", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-04ccd4962308", "latency_ms": 6521, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-0d3ed3ab161d", "latency_ms": 17685, "llm_calls": 1, "stratum": "historical", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-0d725cdc4830", "latency_ms": 3848, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-0e173dc7898f", "latency_ms": 5476, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-0e976b5e8b79", "latency_ms": 4146, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-10a194e6c016", "latency_ms": 4750, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-14aebc0a1abf", "latency_ms": 6712, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-1bab630e6014", "latency_ms": 66160, "llm_calls": 3, "stratum": "ambiguous", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-200fecfc1e04", "latency_ms": 3981, "llm_calls": 1, "stratum": "conflicting", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-396c1d3d7d11", "latency_ms": 17749, "llm_calls": 1, "stratum": "conflicting", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-43a3dab1207c", "latency_ms": 5652, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-626fbdbe784c", "latency_ms": 4210, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}

@@ -1,0 +1,84 @@
+{
+  "S0": {
+    "claims": 14,
+    "coverage": 1.0,
+    "exact_verdict_rate": 0.2857142857142857,
+    "latency_ms_p50": 0,
+    "latency_ms_p95": 0,
+    "llm_calls": 0,
+    "stale_f1": 0.0,
+    "stale_f1_ci95": [
+      0.0,
+      0.0
+    ],
+    "stale_precision": null,
+    "stale_recall": 0.0,
+    "tavily_credits": 0,
+    "verdicts": {
+      "CURRENT": 14
+    }
+  },
+  "S1": {
+    "claims": 14,
+    "coverage": 1.0,
+    "exact_verdict_rate": 0.42857142857142855,
+    "latency_ms_p50": 5887,
+    "latency_ms_p95": 66160,
+    "llm_calls": 16,
+    "stale_f1": 0.4,
+    "stale_f1_ci95": [
+      0.0,
+      0.7272727272727273
+    ],
+    "stale_precision": 0.25,
+    "stale_recall": 1.0,
+    "tavily_credits": 14,
+    "verdicts": {
+      "CONTRADICTED": 8,
+      "CURRENT": 6
+    }
+  },
+  "S2": {
+    "claims": 14,
+    "coverage": 1.0,
+    "exact_verdict_rate": 0.35714285714285715,
+    "latency_ms_p50": 510,
+    "latency_ms_p95": 21170,
+    "llm_calls": 22,
+    "stale_f1": 0.0,
+    "stale_f1_ci95": [
+      0.0,
+      0.0
+    ],
+    "stale_precision": null,
+    "stale_recall": 0.0,
+    "tavily_credits": 8,
+    "verdicts": {
+      "CONFLICTING": 1,
+      "CONTRADICTED": 1,
+      "UNVERIFIABLE": 6,
+      "not_judged": 6
+    }
+  },
+  "S3": {
+    "claims": 14,
+    "coverage": 0.6428571428571429,
+    "exact_verdict_rate": 0.14285714285714285,
+    "latency_ms_p50": 28453,
+    "latency_ms_p95": 42623,
+    "llm_calls": 17,
+    "stale_f1": 0.0,
+    "stale_f1_ci95": [
+      0.0,
+      0.0
+    ],
+    "stale_precision": null,
+    "stale_recall": 0.0,
+    "tavily_credits": 3,
+    "verdicts": {
+      "NOT_CHECKED": 5,
+      "UNVERIFIABLE": 3,
+      "not_judged": 6
+    }
+  }
+}
