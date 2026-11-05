@@ -27,6 +27,9 @@ S1_MODELS = ["nvidia/nemotron-3.5-super-vl:free", "xingchen-agi/xing4.0-29b-a4b:
 
 
 def question(claim):
+    # An ambiguous claim says "It is currently ...", so it needs its real question.
+    if claim["stratum"] == "ambiguous" and claim["question"]:
+        return claim["question"]
     return "Fact check " + claim["id"]
 
 

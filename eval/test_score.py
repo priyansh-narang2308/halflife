@@ -15,10 +15,14 @@ class ScoreTest(unittest.TestCase):
         pairs = [(True, True)] * 5 + [(True, False)] * 2 + [(False, True)]
         self.assertEqual(interval(pairs), interval(pairs))
 
-    def test_s1_counts_false_as_stale(self):
+    def test_every_system_flags_the_same_way(self):
         rows = [{"expected_verdict": "OUTDATED", "verdict": "CONTRADICTED"}]
-        self.assertEqual(score("S1", rows)["stale_recall"], 1)
-        self.assertEqual(score("S3", rows)["stale_recall"], 0)
+        self.assertEqual(score(rows)["stale_recall"], 1)
+        self.assertEqual(score(rows)["strict_recall"], 0)
+
+    def test_contradicted_on_a_claim_not_labelled_stale_is_a_false_alarm(self):
+        rows = [{"expected_verdict": "OUTDATED", "verdict": "OUTDATED"}, {"expected_verdict": "CONFLICTING", "verdict": "CONTRADICTED"}]
+        self.assertEqual(score(rows)["stale_precision"], 0.5)
 
 
 if __name__ == "__main__":
