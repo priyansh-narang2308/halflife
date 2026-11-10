@@ -305,5 +305,11 @@
     "config": {
       "addr": "redis:6379"
     }
+  },
+  "framework": {
+    "pricing": {
+      "pricing_url": "file:///app/catalog/pricing.json",
+      "model_parameters_url": "file:///app/catalog/model-parameters.json"
+    }
   }
 }
