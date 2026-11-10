@@ -1,6 +1,6 @@
 # Evaluation
 
-**Read this first.** No accuracy result for Halflife exists yet. What is here is a small pilot on free models, scored against draft labels that no person has reviewed. It shows the harness works and exposes real weaknesses. It does not show that Halflife catches stale facts on live models. Halflife scored worse than the simple baseline in this pilot. The operational results further down are measured, but mostly against mocks.
+**Read this first.** These are early results from free models, scored against draft labels that no person has reviewed yet. In the 42-claim dev run below, Halflife as shipped (S3) had the best stale-answer F1 of the four systems: 0.77, against 0.53 for the simple baseline. It also used fewer Tavily credits than verifying every claim. But the set has only 6 stale claims, the confidence interval runs from 0.43 to 1.0, and the scoring rule changed after the first day (details below). Read it as a promising signal, not a finding. The smaller pilot that came first, where Halflife lost to the baseline, is kept below with its cause and fix. The operational results further down are measured, but mostly against mocks.
 
 ## Accuracy pilot
 
@@ -51,20 +51,33 @@ One judge probe followed, a direct call with the real prompt and schema on the B
 
 The span rejection is fixed: a span that stops short of its value now grows to the sentence holding both, and a value in another sentence stays rejected (`TestSpanGrowsToTheSentenceHoldingTheValue`).
 
-### Next run, free models only
+## Dev-split run, free models
 
-`none` is now the default, in a new recording set (`eval/recordings-v2`, seeded with the pilot's replies so nothing is paid for twice). The free tier allows 50 requests a day and recording resumes, so this runs once a day until the proxy reports no misses:
+**Data.** 42 claims from the dev split (6 per stratum), with draft labels. 6 of them are labelled OUTDATED. The test split has not been run.
 
-```bash
-LIVE=1 PER_STRATUM=6 MAX_LLM=45 MAX_TAVILY=60 make eval
-```
+**Setup.** The models were free OpenRouter models with reasoning set to `none`, plus real Tavily (basic depth). The run was recorded over two days by the replay proxy (`eval/recordings-v2`), so `make eval` replays it offline with no keys. Results are in `eval/runs-v2/results.json`.
 
-Results land in `eval/runs-v2`. The estimate is about 130 LLM calls for 42 claims, so about 3 days.
+| System | Stale F1 (95% CI) | Precision | Recall | Coverage | LLM calls | Tavily credits |
+| --- | --- | --- | --- | --- | --- | --- |
+| S0 always current | 0.00 | n/a | 0.00 | 1.00 | 0 | 0 |
+| S1 simple checker | 0.53 (0.20 to 0.77) | 0.38 | 0.83 | 0.48 | 88 | 42 |
+| S2 Halflife, verify all | 0.71 (0.36 to 0.93) | 0.62 | 0.83 | 0.90 | 89 | 38 |
+| **S3 Halflife as shipped** | **0.77 (0.43 to 1.00)** | **0.71** | 0.83 | 0.43 | 60 | 18 |
 
-### What a real result needs
+**What it shows.** S3 caught 5 of the 6 stale claims and raised 2 false alarms, for 60 LLM calls and 18 Tavily credits. That is fewer than half the credits S2 used for verifying everything. Coverage is lower because S3 chooses not to check claims it scores as low risk. Halflife is designed to spend that way.
 
-1. Two people label `eval/hl-claims/review-sheet.csv` independently; compute Cohen's kappa with `eval/hl-claims/review.py`.
-2. The run above, then the one test run, which will have to be a sample that fits the daily cap.
+**Caveats.**
+
+- The labels are drafts. With 6 positives, one verdict moves F1 by about 0.1.
+- The scoring rule was changed after the first day's results. Originally only an OUTDATED verdict counted as a flag for Halflife. Now every system is flagged for OUTDATED or CONTRADICTED. S1 could only ever say CONTRADICTED, so the old rule was unfair to Halflife. Strict recall (OUTDATED only) is reported separately, and it is 0 for every system. No live claim reached OUTDATED, because that needs a verified quote showing the old value was once true.
+- In the same change, cache eviction began to cover CONTRADICTED with STRONG or MODERATE evidence (`knownWrong`). The mock-based cache experiments in VALIDATION.md have not been rerun since then.
+- S1 is incomplete: 22 claims went unchecked when the daily free quota ran out. Its F1 is computed on what it judged.
+- The one stale claim S3 missed (Patch Tuesday) was tagged HISTORICAL and skipped. Its 2 false alarms (the Hubble constant, and La Paz as capital) are labelled CONFLICTING, which is arguably a labelling question.
+
+### What a reviewed result needs
+
+1. Two people label `eval/hl-claims/review-sheet.csv` independently. Then compute Cohen's kappa with `eval/hl-claims/review.py`.
+2. Then the one test-split run, as a sample that fits the free daily cap.
 
 ## Operational results
 
@@ -83,6 +96,6 @@ The cache figures depend on scripted verdicts, so they show what the cache does 
 
 ## What must not be claimed
 
-- Any precision, recall or F1 for Halflife as a finding.
-- That Halflife beats a simple checker. In this pilot it did not.
 - Any figure as measured on reviewed labels or on the test split.
+- That the dev-run F1 difference is significant. The confidence intervals overlap.
+- That Halflife detects OUTDATED (once-true) facts on live models. Strict recall is 0.

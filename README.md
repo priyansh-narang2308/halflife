@@ -40,7 +40,9 @@ The keys and setup token in `deploy/` are synthetic and public. Never expose the
 
 ## What was verified
 
-[VALIDATION.md](VALIDATION.md) records the command, output and live-or-mock status of every check. `make test` runs the unit tests; `make smoke cache relay budget tenants verify m1 llm claims failures operator experiments` run the suites through a real gateway against mocks. [EVALUATION.md](EVALUATION.md) has the accuracy evaluation and its limits, which you should read before quoting any number from it.
+[VALIDATION.md](VALIDATION.md) records the command, output and live-or-mock status of every check. `make test` runs the unit tests; `make smoke cache relay budget tenants verify m1 llm claims failures operator experiments` run the suites through a real gateway against mocks. [EVALUATION.md](EVALUATION.md) has the accuracy evaluation and its limits. Read it before quoting any number from it.
+
+On 42 dev claims checked against live Tavily with free models, Halflife as shipped scored a stale-answer F1 of 0.77. The simple search-and-judge baseline scored 0.53. Halflife also used 18 Tavily credits, against 38 for verifying every claim. These figures rest on draft labels, with only 6 stale claims, and the confidence intervals overlap.
 
 ## Repository
 
