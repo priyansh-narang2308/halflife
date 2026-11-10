@@ -70,7 +70,7 @@ The span rejection is fixed: a span that stops short of its value now grows to t
 
 - The labels are drafts. With 6 positives, one verdict moves F1 by about 0.1.
 - The scoring rule was changed after the first day's results. Originally only an OUTDATED verdict counted as a flag for Halflife. Now every system is flagged for OUTDATED or CONTRADICTED. S1 could only ever say CONTRADICTED, so the old rule was unfair to Halflife. Strict recall (OUTDATED only) is reported separately, and it is 0 for every system. No live claim reached OUTDATED, because that needs a verified quote showing the old value was once true.
-- In the same change, cache eviction began to cover CONTRADICTED with STRONG or MODERATE evidence (`knownWrong`). The mock-based cache experiments in VALIDATION.md have not been rerun since then.
+- In the same change, cache eviction began to cover CONTRADICTED with STRONG or MODERATE evidence (`knownWrong`). The mock-based cache experiments were rerun after it (10 Nov): all pass with unchanged figures.
 - S1 is incomplete: 22 claims went unchecked when the daily free quota ran out. Its F1 is computed on what it judged.
 - The one stale claim S3 missed (Patch Tuesday) was tagged HISTORICAL and skipped. Its 2 false alarms (the Hubble constant, and La Paz as capital) are labelled CONFLICTING, which is arguably a labelling question.
 
