@@ -29,3 +29,10 @@ logs/*.log
 /research/vendor/
 video/
 pitch/
+
+# Markdown documents (except README and ARCHITECTURE)
+*.md
+!README.md
+!**/README.md
+!ARCHITECTURE.md
+!**/ARCHITECTURE.md
