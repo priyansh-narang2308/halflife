@@ -104,7 +104,7 @@ The keys and setup token in `deploy/` are synthetic and public. Never expose the
 | **Judge** | CURRENT, OUTDATED, CONTRADICTED, CONFLICTING or UNVERIFIABLE. A quote must exist verbatim, and numbers are compared by code |
 | **Act** | Evicts the stale cache entry and keeps the question off the cache for a TTL |
 
-The full design is in [ARCHITECTURE.md](ARCHITECTURE.md). Every change to Bifrost, with its reason, is in [UPSTREAM_DIFF.md](UPSTREAM_DIFF.md).
+The full design is in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Repository
 
@@ -115,8 +115,7 @@ The full design is in [ARCHITECTURE.md](ARCHITECTURE.md). Every change to Bifros
 | `testenv/` | Mock LLM, mock Tavily, the recording proxy and the suites |
 | `deploy/`, `docker-compose.yml` | The demo and live stacks |
 | `docs/` | The diagrams in this README, with their HTML sources (`docs/diagrams/render.sh`) |
-| `ARCHITECTURE.md`, `EVALUATION.md`, `VALIDATION.md`, `DEMO.md` | Design, numbers and limits, evidence, demo script |
-| `TASKS.md`, `PROGRESS.md`, `SUBMISSION.md` | The plan, the decisions, the submission |
+| `ARCHITECTURE.md`, `EVALUATION.md`, `VALIDATION.md` | Design, numbers and limits, evidence |
 
 ## License
 
