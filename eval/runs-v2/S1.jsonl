@@ -1,42 +1,42 @@
-{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-017f404b8c01", "latency_ms": 23, "llm_calls": 1, "stratum": "historical", "verdict": "CURRENT"}
-{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-0315f2de330d", "latency_ms": 1, "llm_calls": 1, "stratum": "ambiguous", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-017f404b8c01", "latency_ms": 22, "llm_calls": 1, "stratum": "historical", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-0315f2de330d", "latency_ms": 2, "llm_calls": 1, "stratum": "ambiguous", "verdict": "CURRENT"}
 {"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-04ccd4962308", "latency_ms": 1, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
 {"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-0d3ed3ab161d", "latency_ms": 1, "llm_calls": 1, "stratum": "historical", "verdict": "CURRENT"}
 {"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-0d725cdc4830", "latency_ms": 1, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
 {"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-0e173dc7898f", "latency_ms": 1, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
-{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-0e3511ec2c26", "latency_ms": 19134, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
-{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-0e976b5e8b79", "latency_ms": 3, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
-{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-10a194e6c016", "latency_ms": 2, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-0e3511ec2c26", "latency_ms": 1, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-0e976b5e8b79", "latency_ms": 2, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-10a194e6c016", "latency_ms": 1, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
 {"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-14aebc0a1abf", "latency_ms": 2, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
-{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-167b3d960ade", "latency_ms": 6455, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
-{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-18fb1410a87b", "latency_ms": 2359, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
-{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-1bab630e6014", "latency_ms": 3, "llm_calls": 3, "stratum": "ambiguous", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-167b3d960ade", "latency_ms": 2, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-18fb1410a87b", "latency_ms": 1, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-1bab630e6014", "latency_ms": 2, "llm_calls": 3, "stratum": "ambiguous", "verdict": "CONTRADICTED"}
 {"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-200fecfc1e04", "latency_ms": 1, "llm_calls": 1, "stratum": "conflicting", "verdict": "CURRENT"}
-{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-224be09b21fc", "latency_ms": 3341, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
-{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-28488bb07551", "latency_ms": 3027, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
-{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-2bf981e2a62e", "latency_ms": 1960, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "OUTDATED", "id": "hlc-2dbc46d4e906", "latency_ms": 4, "llm_calls": 3, "stratum": "recently_changed", "verdict": "NOT_CHECKED"}
-{"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-396c1d3d7d11", "latency_ms": 2, "llm_calls": 1, "stratum": "conflicting", "verdict": "CONTRADICTED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CURRENT", "id": "hlc-421641206bad", "latency_ms": 3, "llm_calls": 3, "stratum": "historical", "verdict": "NOT_CHECKED"}
-{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-43a3dab1207c", "latency_ms": 2, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "UNVERIFIABLE", "id": "hlc-4977f7f2261b", "latency_ms": 3, "llm_calls": 3, "stratum": "unverifiable", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CONFLICTING", "id": "hlc-4ac8ae6b82bc", "latency_ms": 3, "llm_calls": 3, "stratum": "conflicting", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "UNVERIFIABLE", "id": "hlc-4be55b283f95", "latency_ms": 1, "llm_calls": 3, "stratum": "ambiguous", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "UNVERIFIABLE", "id": "hlc-522a06522d46", "latency_ms": 2, "llm_calls": 3, "stratum": "ambiguous", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "UNVERIFIABLE", "id": "hlc-56ac9d80b22a", "latency_ms": 2, "llm_calls": 3, "stratum": "ambiguous", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "UNVERIFIABLE", "id": "hlc-57667b386913", "latency_ms": 2, "llm_calls": 3, "stratum": "unverifiable", "verdict": "NOT_CHECKED"}
-{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-626fbdbe784c", "latency_ms": 1, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CONTRADICTED", "id": "hlc-639f170ad8d1", "latency_ms": 2, "llm_calls": 3, "stratum": "never_true", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CONFLICTING", "id": "hlc-65ba794bc62c", "latency_ms": 2, "llm_calls": 3, "stratum": "conflicting", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CURRENT", "id": "hlc-66f5319c1381", "latency_ms": 2, "llm_calls": 3, "stratum": "historical", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "UNVERIFIABLE", "id": "hlc-7031586b02dd", "latency_ms": 2, "llm_calls": 3, "stratum": "ambiguous", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CURRENT", "id": "hlc-74deceea849b", "latency_ms": 2, "llm_calls": 3, "stratum": "stable", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CURRENT", "id": "hlc-7b240fe43cc0", "latency_ms": 2, "llm_calls": 3, "stratum": "historical", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CURRENT", "id": "hlc-841a84080df2", "latency_ms": 2, "llm_calls": 3, "stratum": "historical", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CURRENT", "id": "hlc-8d310984ad47", "latency_ms": 2, "llm_calls": 3, "stratum": "stable", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CONFLICTING", "id": "hlc-95b584f0341a", "latency_ms": 2, "llm_calls": 3, "stratum": "conflicting", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CURRENT", "id": "hlc-9dac273e6154", "latency_ms": 1, "llm_calls": 3, "stratum": "stable", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CONFLICTING", "id": "hlc-9f7756a416f3", "latency_ms": 2, "llm_calls": 3, "stratum": "conflicting", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CONTRADICTED", "id": "hlc-a4c8543a8994", "latency_ms": 1, "llm_calls": 3, "stratum": "never_true", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CONTRADICTED", "id": "hlc-dc3fba33e081", "latency_ms": 1, "llm_calls": 3, "stratum": "never_true", "verdict": "NOT_CHECKED"}
-{"credits": 1, "error": "no usable reply", "expected_verdict": "CONTRADICTED", "id": "hlc-dd15fc20d5ec", "latency_ms": 1, "llm_calls": 3, "stratum": "never_true", "verdict": "NOT_CHECKED"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-224be09b21fc", "latency_ms": 1, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-28488bb07551", "latency_ms": 1, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-2bf981e2a62e", "latency_ms": 1, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "OUTDATED", "id": "hlc-2dbc46d4e906", "latency_ms": 16924, "llm_calls": 1, "stratum": "recently_changed", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-396c1d3d7d11", "latency_ms": 3, "llm_calls": 1, "stratum": "conflicting", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-421641206bad", "latency_ms": 10199, "llm_calls": 1, "stratum": "historical", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-43a3dab1207c", "latency_ms": 3, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-4977f7f2261b", "latency_ms": 5525, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-4ac8ae6b82bc", "latency_ms": 3232, "llm_calls": 1, "stratum": "conflicting", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-4be55b283f95", "latency_ms": 3483, "llm_calls": 1, "stratum": "ambiguous", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-522a06522d46", "latency_ms": 12741, "llm_calls": 1, "stratum": "ambiguous", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-56ac9d80b22a", "latency_ms": 8957, "llm_calls": 1, "stratum": "ambiguous", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-57667b386913", "latency_ms": 2498, "llm_calls": 1, "stratum": "unverifiable", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-626fbdbe784c", "latency_ms": 2, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-639f170ad8d1", "latency_ms": 4779, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-65ba794bc62c", "latency_ms": 13092, "llm_calls": 1, "stratum": "conflicting", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-66f5319c1381", "latency_ms": 4794, "llm_calls": 1, "stratum": "historical", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "UNVERIFIABLE", "id": "hlc-7031586b02dd", "latency_ms": 4684, "llm_calls": 1, "stratum": "ambiguous", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-74deceea849b", "latency_ms": 13724, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-7b240fe43cc0", "latency_ms": 24658, "llm_calls": 3, "stratum": "historical", "verdict": "CURRENT"}
+{"credits": 1, "error": "no usable reply", "expected_verdict": "CURRENT", "id": "hlc-841a84080df2", "latency_ms": 44249, "llm_calls": 3, "stratum": "historical", "verdict": "NOT_CHECKED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-8d310984ad47", "latency_ms": 3282, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-95b584f0341a", "latency_ms": 3521, "llm_calls": 1, "stratum": "conflicting", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CURRENT", "id": "hlc-9dac273e6154", "latency_ms": 12400, "llm_calls": 1, "stratum": "stable", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "CONFLICTING", "id": "hlc-9f7756a416f3", "latency_ms": 3475, "llm_calls": 1, "stratum": "conflicting", "verdict": "CURRENT"}
+{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-a4c8543a8994", "latency_ms": 1993, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-dc3fba33e081", "latency_ms": 1658, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}
+{"credits": 1, "expected_verdict": "CONTRADICTED", "id": "hlc-dd15fc20d5ec", "latency_ms": 2268, "llm_calls": 1, "stratum": "never_true", "verdict": "CONTRADICTED"}

@@ -1,0 +1,1 @@
+{"path":"/v1/chat/completions","status":404,"body":{"error":{"message":"xingchen-agi/xing4.0-29b-a4b:free is no longer available on OpenRouter: no provider serves this model anymore. See available models at https://openrouter.ai/models","code":404},"user_id":"user_30lPUvduCD8TFrKjV66uT8ZYkva"}}

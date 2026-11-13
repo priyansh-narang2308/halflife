@@ -43,9 +43,9 @@ Every report shows up on a **Halflife page inside Bifrost's own dashboard**, wit
 
 ## Results
 
-<p align="center"><img src="docs/images/results.png" alt="Results: stale-answer F1 0.77 for Halflife vs 0.53 for a simple checker; 18 vs 38 Tavily credits; 0 of 40 stale answers re-served vs 40 of 40; +66 µs median latency" width="100%"></p>
+<p align="center"><img src="docs/images/results.png" alt="Results: stale-answer F1 0.77 for Halflife vs 0.33 for a simple checker; 18 vs 38 Tavily credits; 0 of 40 stale answers re-served vs 40 of 40; +66 µs median latency" width="100%"></p>
 
-On 42 dev claims checked with live Tavily and free models, Halflife scored a **stale-answer F1 of 0.77**, against **0.53** for a simple search-and-judge checker. It used **18 Tavily credits instead of 38**. These figures rest on draft labels and a small sample, and the confidence intervals overlap. [EVALUATION.md](EVALUATION.md) has the method and every limit. Read it before quoting a number.
+On 42 dev claims checked with live Tavily and free models, Halflife scored a **stale-answer F1 of 0.77**, against **0.33** for a simple search-and-judge checker. It used **18 Tavily credits instead of 38**. These figures rest on draft labels and a small sample, and the confidence intervals still overlap slightly. [EVALUATION.md](EVALUATION.md) has the method and every limit. Read it before quoting a number.
 
 ## Why inside the gateway
 

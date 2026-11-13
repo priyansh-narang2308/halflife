@@ -40,7 +40,7 @@
   </div>
 </div>
 <script>
-const B=[["Always current",0,null,"#2A3541"],["Simple checker",.53,[.2,.77],"#45525F"],["Halflife, check all",.71,[.36,.93],"#1B8FA3"],["Halflife, shipped",.77,[.43,1],"#22D3EE"]];
+const B=[["Always current",0,null,"#2A3541"],["Simple checker",.33,[.1,.53],"#45525F"],["Halflife, check all",.71,[.36,.93],"#1B8FA3"],["Halflife, shipped",.77,[.43,1],"#22D3EE"]];
 const base=650,sc=400,x0=110,slot=195,bw=104;let h='<line x1="90" y1="'+base+'" x2="880" y2="'+base+'" stroke="#2A3541" stroke-width="2"/>';
 B.forEach(([n,v,ci,c],i)=>{const mx=x0+slot*i+slot/2,hh=v*sc;
  if(hh)h+=`<rect x="${mx-bw/2}" y="${base-hh}" width="${bw}" height="${hh}" rx="6" fill="${c}" ${i==3?'style="filter:drop-shadow(0 0 18px #22D3EE88)"':''}/>`;

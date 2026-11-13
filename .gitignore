@@ -30,9 +30,14 @@ logs/*.log
 video/
 pitch/
 
-# Markdown documents (except README and ARCHITECTURE)
+# Markdown documents (except README, ARCHITECTURE, EVALUATION, and VALIDATION)
 *.md
 !README.md
 !**/README.md
 !ARCHITECTURE.md
 !**/ARCHITECTURE.md
+!EVALUATION.md
+!**/EVALUATION.md
+!VALIDATION.md
+!**/VALIDATION.md
+
