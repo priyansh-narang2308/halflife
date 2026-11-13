@@ -1,0 +1,105 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+.canvas{width:1600px;height:960px}
+.step{position:absolute;top:520px;width:104px;height:104px;border:1px solid var(--line2);background:linear-gradient(180deg,#121A24,#0E141B);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.step i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan);font-weight:700}
+.step b{font-size:16px;margin-top:4px}
+.step span{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.25;padding:0 6px}
+.lbl{position:absolute;font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:1.6px;font-weight:700;color:var(--dim)}
+.note{position:absolute;font-size:13px;color:var(--muted);line-height:1.35}
+</style></head><body>
+<div class="canvas">
+  <div class="abs kicker" style="left:60px;top:46px">Architecture</div>
+  <div class="abs title" style="left:60px;top:70px">Halflife runs inside the Bifrost gateway</div>
+
+  <!-- apps -->
+  <div class="lbl" style="left:60px;top:250px">YOUR APPS</div>
+  <div class="box" style="left:60px;top:280px;width:210px;height:58px"><b style="font-size:17px">Support bot</b></div>
+  <div class="box" style="left:60px;top:356px;width:210px;height:58px"><b style="font-size:17px">Search app</b></div>
+  <div class="box" style="left:60px;top:432px;width:210px;height:58px"><b style="font-size:17px">Internal agent</b></div>
+  <div class="note" style="left:60px;top:504px;width:220px">Only change: the base URL<br>points at Bifrost.</div>
+  <div class="note" style="left:60px;top:600px;width:230px"><span style="color:var(--text);font-weight:600">Answer, served at once</span><br><span class="mono" style="font-size:12px;color:var(--cyan)">X-Halflife-Report<br>X-Halflife-Status</span></div>
+
+  <!-- bifrost container -->
+  <div class="abs" style="left:330px;top:150px;width:900px;height:770px;border:1.5px solid rgba(34,211,238,.55);border-radius:22px;background:rgba(13,17,23,.55)"></div>
+  <div class="abs" style="left:356px;top:168px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:22px;font-weight:800">Bifrost gateway</span>
+    <span class="chip" style="color:var(--muted);border:1px solid var(--line2)">FORK OF v2.4.0 · APACHE-2.0</span>
+  </div>
+
+  <div class="lbl" style="left:356px;top:214px">REQUEST PATH</div>
+  <div class="abs chip" style="left:484px;top:210px;color:var(--cyan);background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.4)">+66 µs MEDIAN</div>
+  <div class="box hot" style="left:356px;top:240px;width:250px;height:90px"><b>Halflife hooks</b><span>copy the answer, set headers</span></div>
+  <div class="box" style="left:646px;top:240px;width:250px;height:90px"><b>Semantic cache</b><span>Redis vectors</span></div>
+  <div class="box" style="left:936px;top:240px;width:268px;height:90px"><b>Provider routing</b><span>any model, any provider</span></div>
+
+  <div class="box" style="left:936px;top:352px;width:268px;height:72px;border-color:rgba(59,130,246,.55)">
+    <b style="font-size:17px">Governance</b><span>virtual key + budget per tenant</span>
+  </div>
+
+  <!-- audit engine -->
+  <div class="abs" style="left:356px;top:462px;width:848px;height:278px;border:1.5px dashed var(--line2);border-radius:16px"></div>
+  <div class="lbl" style="left:452px;top:480px;color:var(--cyan)">HALFLIFE AUDIT ENGINE · OFF THE REQUEST PATH</div>
+  <div class="step" style="left:378px"><i>00</i><b>Queue</b><span>bounded, worker pool</span></div>
+  <div class="step" style="left:494px"><i>01</i><b>Extract</b><span>atomic claims</span></div>
+  <div class="step" style="left:610px"><i>02</i><b>Prioritise</b><span>worth paying to check?</span></div>
+  <div class="step" style="left:726px;border-color:rgba(59,130,246,.6)"><i style="color:var(--blue)">03</i><b>Search</b><span>Tavily Search + Extract</span></div>
+  <div class="step" style="left:842px"><i>04</i><b>Judge</b><span>no quote, no verdict</span></div>
+  <div class="step" style="left:958px"><i>05</i><b>Report</b><span>verdict + evidence</span></div>
+  <div class="step hot" style="left:1074px"><i>06</i><b>Act</b><span>evict stale answer</span></div>
+  <div class="abs" style="left:378px;top:660px;display:flex;gap:10px;flex-wrap:wrap;width:560px">
+    <span class="chip" style="color:var(--muted);border:1px solid var(--line2)">SPEND CAP PER TENANT</span>
+    <span class="chip" style="color:var(--muted);border:1px solid var(--line2)">CIRCUIT BREAKERS</span>
+    <span class="chip" style="color:var(--muted);border:1px solid var(--line2)">PAGE TEXT FENCED AS UNTRUSTED</span>
+    <span class="chip" style="color:var(--muted);border:1px solid var(--line2)">FAILS OPEN</span>
+  </div>
+
+  <!-- outputs -->
+  <div class="box" style="left:356px;top:790px;width:410px;height:96px"><b>Halflife page in the Bifrost dashboard</b><span>claims, verdicts, sources, spend per tenant</span></div>
+  <div class="box" style="left:794px;top:790px;width:410px;height:96px"><b>Report store</b><span class="mono" style="font-size:13px">SQLite · /api/halflife</span></div>
+
+  <!-- outside -->
+  <div class="box" style="left:1320px;top:240px;width:230px;height:90px"><b>LLM providers</b><span>the app's own model</span></div>
+  <div class="box" style="left:1320px;top:470px;width:230px;height:90px"><b>Verifier LLM</b><span>extract and judge</span></div>
+  <div class="box" style="left:1320px;top:610px;width:230px;height:90px;border-color:rgba(59,130,246,.7);box-shadow:0 0 30px rgba(59,130,246,.15)"><b>Tavily</b><span>Search + Extract</span></div>
+  <div class="note" style="left:1320px;top:716px;width:240px;font-size:12.5px">Both called with the tenant's own virtual key, so spend is capped and attributed per tenant.</div>
+
+  <svg width="1600" height="960">
+    <defs>
+      <marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#22D3EE"/></marker>
+      <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7C8894"/></marker>
+      <marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7C8894"/></marker>
+      <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3B82F6"/></marker>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#F5A524"/></marker>
+    </defs>
+    <g fill="none" stroke-width="2">
+      <!-- apps to hooks -->
+      <path d="M270 309 C 310 309, 310 268, 352 268" stroke="#22D3EE" marker-end="url(#c)"/>
+      <path d="M270 385 C 315 385, 312 272, 352 272" stroke="#22D3EE" stroke-opacity=".7"/>
+      <path d="M270 461 C 320 461, 314 276, 352 276" stroke="#22D3EE" stroke-opacity=".5"/>
+      <!-- response -->
+      <path d="M356 312 C 300 330, 300 590, 240 604" stroke="#7C8894" stroke-dasharray="5 6" marker-end="url(#m)"/>
+      <!-- request path -->
+      <path d="M606 285 H 642" stroke="#22D3EE" marker-end="url(#c)"/>
+      <path d="M896 285 H 932" stroke="#22D3EE" marker-end="url(#c)"/>
+      <path d="M1204 285 H 1316" stroke="#22D3EE" marker-end="url(#c)"/>
+      <!-- hooks to queue -->
+      <path d="M430 330 V 516" stroke="#7C8894" stroke-dasharray="5 6" marker-end="url(#m)"/>
+      <!-- pipeline -->
+      <path d="M483 572 H 493" stroke="#7C8894" marker-end="url(#s)"/><path d="M599 572 H 609" stroke="#7C8894" marker-end="url(#s)"/><path d="M715 572 H 725" stroke="#7C8894" marker-end="url(#s)"/><path d="M831 572 H 841" stroke="#7C8894" marker-end="url(#s)"/><path d="M947 572 H 957" stroke="#7C8894" marker-end="url(#s)"/><path d="M1063 572 H 1073" stroke="#7C8894" marker-end="url(#s)"/>
+      <!-- act to cache -->
+      <path d="M1126 520 V 448 H 771 V 334" stroke="#F5A524" marker-end="url(#a)"/>
+      <!-- engine to verifier and tavily -->
+      <path d="M1204 515 H 1316" stroke="#7C8894" marker-end="url(#m)"/>
+      <path d="M1204 655 H 1316" stroke="#3B82F6" marker-end="url(#b)"/>
+      <!-- report to store, store to dashboard -->
+      <path d="M1010 624 V 786" stroke="#7C8894" marker-end="url(#m)"/>
+      <path d="M794 838 H 770" stroke="#7C8894" marker-end="url(#m)"/>
+    </g>
+  </svg>
+  <div class="note" style="left:440px;top:400px;font-size:12.5px">copy + enqueue,<br>never wait</div>
+  <div class="note" style="left:790px;top:438px;font-size:12.5px;color:var(--amber);background:var(--bg);padding:0 6px">evict, and keep the question off the cache for a while</div>
+  <div class="note" style="left:1242px;top:478px;font-size:12px;line-height:1.2">via the<br>gateway</div>
+  <div class="note" style="left:1242px;top:618px;font-size:12px;color:#8DB4F7;line-height:1.2">via Bifrost<br>relay</div>
+</div>
+</body></html>

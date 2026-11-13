@@ -1,0 +1,50 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>.canvas{width:1600px;height:820px}
+.card{position:absolute;border:1px solid var(--line2);border-radius:16px;background:linear-gradient(180deg,var(--panel2),var(--panel));padding:26px 30px}
+.k{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:2px;font-weight:700;color:var(--cyan)}
+.big{font-size:54px;font-weight:800;letter-spacing:-1.5px}
+.sm{font-size:15px;color:var(--muted);line-height:1.4}
+</style></head><body>
+<div class="canvas">
+  <div class="abs kicker" style="left:60px;top:46px">Results · measured</div>
+  <div class="abs title" style="left:60px;top:70px">What we measured, with its limits</div>
+
+  <div class="card" style="left:60px;top:150px;width:840px;height:600px">
+    <div class="k">STALE-ANSWER F1 · 42 DEV CLAIMS</div>
+    <div class="sm" style="margin-top:6px">Live Tavily, free models, the same claims for every system. Whiskers: 95% CI.</div>
+  </div>
+  <svg width="1600" height="820" id="bars"></svg>
+
+  <div class="card" style="left:930px;top:150px;width:610px;height:226px">
+    <div class="k" style="color:var(--blue)">TAVILY CREDITS · SAME 42 CLAIMS</div>
+    <div style="display:flex;justify-content:space-between;margin-top:22px;font-size:17px;color:var(--muted)"><span>Check every claim</span><b style="font-size:24px">38</b></div>
+    <div style="height:14px;border-radius:7px;background:#45525F;margin-top:6px"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:17px"><span>Halflife, prioritised</span><b style="font-size:24px;color:var(--cyan)">18</b></div>
+    <div style="height:14px;border-radius:7px;background:var(--line);margin-top:6px"><div style="width:47.4%;height:100%;border-radius:7px;background:var(--cyan)"></div></div>
+  </div>
+
+  <div class="card" style="left:930px;top:396px;width:295px;height:200px">
+    <div class="k">CACHE EXPERIMENT</div>
+    <div class="big" style="margin-top:12px">0<span style="font-size:28px;color:var(--muted)"> / 40</span></div>
+    <div class="sm">stale answers re-served with Halflife, vs <b style="color:var(--text)">40 / 40</b> without. Mock verdicts.</div>
+  </div>
+  <div class="card" style="left:1245px;top:396px;width:295px;height:200px">
+    <div class="k">REQUEST PATH</div>
+    <div class="big" style="margin-top:12px">+66<span style="font-size:28px;color:var(--muted)"> µs</span></div>
+    <div class="sm">median added latency, concurrency 1. +216 µs at 16. Mock upstream.</div>
+  </div>
+
+  <div class="card" style="left:930px;top:616px;width:610px;height:134px;border-color:rgba(245,165,36,.5);background:linear-gradient(180deg,#17130A,#0F0D08)">
+    <div class="k" style="color:var(--amber)">READ WITH CARE</div>
+    <div style="font-size:16.5px;margin-top:10px;line-height:1.5;color:#E8E1D2">Draft labels, not yet reviewed by people. Only 6 stale claims in the set. The 95% intervals overlap. Method and limits: EVALUATION.md.</div>
+  </div>
+</div>
+<script>
+const B=[["Always current",0,null,"#2A3541"],["Simple checker",.53,[.2,.77],"#45525F"],["Halflife, check all",.71,[.36,.93],"#1B8FA3"],["Halflife, shipped",.77,[.43,1],"#22D3EE"]];
+const base=650,sc=400,x0=110,slot=195,bw=104;let h='<line x1="90" y1="'+base+'" x2="880" y2="'+base+'" stroke="#2A3541" stroke-width="2"/>';
+B.forEach(([n,v,ci,c],i)=>{const mx=x0+slot*i+slot/2,hh=v*sc;
+ if(hh)h+=`<rect x="${mx-bw/2}" y="${base-hh}" width="${bw}" height="${hh}" rx="6" fill="${c}" ${i==3?'style="filter:drop-shadow(0 0 18px #22D3EE88)"':''}/>`;
+ if(ci)h+=`<g stroke="#F3F6F9" stroke-opacity=".7" stroke-width="2"><line x1="${mx}" y1="${base-ci[1]*sc}" x2="${mx}" y2="${base-ci[0]*sc}"/><line x1="${mx-14}" y1="${base-ci[1]*sc}" x2="${mx+14}" y2="${base-ci[1]*sc}"/><line x1="${mx-14}" y1="${base-ci[0]*sc}" x2="${mx+14}" y2="${base-ci[0]*sc}"/></g>`;
+ h+=`<text x="${mx}" y="${base+46}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="34" fill="${i==3?'#22D3EE':i==1?'#F3F6F9':'#9AA6B3'}">${v.toFixed(2)}</text><text x="${mx}" y="${base+72}" text-anchor="middle" font-family="Inter" font-size="15" fill="#9AA6B3">${n}</text>`});
+document.getElementById('bars').innerHTML=h;
+</script></body></html>
